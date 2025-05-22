@@ -30,7 +30,7 @@ const queryClient = new QueryClient();
 // Animation wrapper component
 const PageTransition = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  
+
   return (
     <AnimatePresence mode="sync">
       <motion.div
@@ -55,37 +55,84 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="hidden md:block w-64">
         <Sidebar />
       </div>
-      <div className="flex-1">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
     </div>
   );
 };
 
 const AppRoutes = () => {
-  const {isAuthenticated} = useAuth();
+  const { isAuthenticated } = useAuth();
   return (
     <PageTransition>
       <Routes>
         <Route path="/" element={<Index />} />
-        {!isAuthenticated ? 
-        <>
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify" element={<Verify />} />
-        </>
-         :
-        <>
-          <Route path="/dashboard" element={<AuthLayout><Dashboard /></AuthLayout>} />
-          <Route path="/wallet" element={<AuthLayout><Wallet /></AuthLayout>} />
-          <Route path="/transfer" element={<AuthLayout><Transfer /></AuthLayout>} />
-          <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
-          <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
-          <Route path="/profile" element={<AuthLayout><ProfilePage /></AuthLayout>} />
-          <Route path="/setting" element={<AuthLayout><Settings /></AuthLayout>} />
-        </> 
-        }
-         <Route path="*" element={<NotFound />} />
+        {!isAuthenticated ? (
+          <>
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+          </>
+        ) : (
+          <>
+            <Route path="/verify" element={<Verify />} />
+            <Route
+              path="/dashboard"
+              element={
+                <AuthLayout>
+                  <Dashboard />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/wallet"
+              element={
+                <AuthLayout>
+                  <Wallet />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/transfer"
+              element={
+                <AuthLayout>
+                  <Transfer />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <AuthLayout>
+                  <History />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AuthLayout>
+                  <AdminPanel />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AuthLayout>
+                  <ProfilePage />
+                </AuthLayout>
+              }
+            />
+            <Route
+              path="/setting"
+              element={
+                <AuthLayout>
+                  <Settings />
+                </AuthLayout>
+              }
+            />
+          </>
+        )}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </PageTransition>
   );

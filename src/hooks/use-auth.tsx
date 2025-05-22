@@ -25,7 +25,7 @@ type AuthContextType = {
     password: string
   ) => Promise<boolean>;
   signout: () => void;
-  verifyAccount: (code: string) => Promise<boolean>;
+  verifyAccount: (code: string, verification_type: string) => Promise<boolean>;
   isAdmin: boolean;
 };
 
@@ -164,11 +164,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Verify account function
-  const verifyAccount = async (code: string): Promise<boolean> => {
+  const verifyAccount = async (
+    code: string,
+    verification_type: string
+  ): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      await authService.verifyAccount(code);
+      await authService.verifyAccount(code, verification_type);
 
       // Update local user state
       const updatedUser = { ...user, isVerified: true };

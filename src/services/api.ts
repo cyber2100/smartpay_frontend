@@ -91,8 +91,8 @@ export const authService = {
     return response.data;
   },
 
-  verifyAccount: async (code: string) => {
-    const response = await api.post("/auth/verify", { code });
+  verifyAccount: async (code: string, verfication_type: string) => {
+    const response = await api.post("/auth/verify", { code, verfication_type });
     return response.data;
   },
 
