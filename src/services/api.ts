@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base API configuration
-const API_URL = "http://localhost:8000/api/v1";
+const API_URL = "http://146.19.215.133:8000/api/v1";
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -75,14 +75,14 @@ export const authService = {
     formData.append("username", email); // FastAPI OAuth expects 'username'
     formData.append("password", password);
 
-    const response = await axios.post(`${API_URL}/auth/token`, formData);
+    const response = await axios.post(`${API_URL}/auth/login`, formData);
     localStorage.setItem("auth_token", response.data.access_token);
     localStorage.setItem("refresh_token", response.data.refresh_token);
     return response.data;
   },
 
   signup: async (name: string, phone: string, email: string, password: string) => {
-    const response = await api.post("/auth/users/register", {
+    const response = await api.post("/auth/register", {
       name,
       phone,
       email,
@@ -92,12 +92,12 @@ export const authService = {
   },
 
   verifyAccount: async (code: string) => {
-    const response = await api.post("/auth/users/verify", { code });
+    const response = await api.post("/auth/verify", { code });
     return response.data;
   },
 
   getCurrentUser: async () => {
-    const response = await api.get("/auth/users/me");
+    const response = await api.get("/auth/me");
     return response.data;
   },
 
