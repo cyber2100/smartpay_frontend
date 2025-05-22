@@ -53,7 +53,9 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const newAccessToken = await refreshToken();
-        axios.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
+        axios.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
@@ -81,7 +83,12 @@ export const authService = {
     return response.data;
   },
 
-  signup: async (name: string, phone: string, email: string, password: string) => {
+  signup: async (
+    name: string,
+    phone: string,
+    email: string,
+    password: string
+  ) => {
     const response = await api.post("/auth/register", {
       name,
       phone,
@@ -92,7 +99,9 @@ export const authService = {
   },
 
   verifyAccount: async (code: string, verfication_type: string) => {
-    const response = await api.post("/auth/verify", { code, verfication_type });
+    const response = await api.post(`/auth/verify/${verfication_type}`, {
+      code,
+    });
     return response.data;
   },
 

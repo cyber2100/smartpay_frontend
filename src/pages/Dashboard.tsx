@@ -5,14 +5,9 @@ import {
   ArrowUp, 
   CreditCard,
   DollarSign, 
-  Home,
-  RefreshCw, 
-  Wallet, 
-  Clock,
-  Send,
   Check,
-  Plus,
-  X
+  User,
+  Wallet,
 } from "lucide-react";
 import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +17,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { PaymentCard, Transaction, MonthlyData, FinancialData } from '@/types/payment';
+
+// Updated transaction type to properly distinguish between account transfers and card operations
+interface AccountTransaction extends Omit<Transaction, 'cardUsed'> {
+  type: 'sent' | 'received' | 'deposit' | 'withdrawal';
+  // For sent/received: other user account details
+  otherUser?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+  // For deposit/withdrawal: card used
+  cardUsed?: PaymentCard;
+  // Transaction fee (if any)
+  fee?: number;
+  // Reference/memo
+  reference?: string;
+}
 
 const currencyData: MonthlyData[] = [
   { name: 'Jan', received: 2000, sent: 1200, balance: 800 },
@@ -92,39 +104,64 @@ const Dashboard: React.FC = () => {
     balance: month.received - month.sent // FIXED: balance = received - sent for each month
   }));
   
-  // Recent transactions for the dashboard
-  const recentTransactions: Transaction[] = [
+  // FIXED: Recent transactions now properly separate account transfers from card operations
+  const recentTransactions: AccountTransaction[] = [
     { 
       id: 'tx1', 
-      title: 'Freelance Payment', 
+      title: 'Payment from Alex', 
       amount: 750.00, 
       type: 'received', 
       date: new Date(2025, 4, 20, 14, 30),
-      from: 'Alex Johnson'
+      otherUser: {
+        id: 'user_alex_123',
+        name: 'Alex Johnson',
+        email: 'alex.johnson@email.com'
+      },
+      reference: 'Freelance work - May project'
     },
     { 
       id: 'tx2', 
-      title: 'Rent Payment', 
-      amount: -1200.00, 
+      title: 'Sent to landlord', 
+      amount: 1200.00, 
       type: 'sent', 
       date: new Date(2025, 4, 18, 9, 15),
-      cardUsed: paymentCards.find(card => card.id === 'card1')
+      otherUser: {
+        id: 'user_landlord_456',
+        name: 'Property Management LLC',
+        email: 'payments@propertymanagement.com'
+      },
+      reference: 'Monthly rent - May 2025'
     },
     { 
       id: 'tx3', 
-      title: 'Client Invoice #1082', 
+      title: 'Payment from TechSolutions', 
       amount: 1200.00, 
       type: 'received', 
       date: new Date(2025, 4, 15, 16, 45),
-      from: 'TechSolutions Inc.'
+      otherUser: {
+        id: 'user_techsol_789',
+        name: 'TechSolutions Inc.',
+        email: 'billing@techsolutions.com'
+      },
+      reference: 'Invoice #1082 - Development services'
     },
     { 
       id: 'tx4', 
-      title: 'Grocery Shopping', 
-      amount: -85.43, 
-      type: 'sent', 
+      title: 'Account funding', 
+      amount: 500.00, 
+      type: 'deposit', 
       date: new Date(2025, 4, 12, 17, 30),
-      cardUsed: paymentCards.find(card => card.id === 'card2')
+      cardUsed: paymentCards.find(card => card.id === 'card1'),
+      reference: 'Top up account balance'
+    },
+    { 
+      id: 'tx5', 
+      title: 'Cash withdrawal', 
+      amount: 200.00, 
+      type: 'withdrawal', 
+      date: new Date(2025, 4, 10, 11, 20),
+      cardUsed: paymentCards.find(card => card.id === 'card2'),
+      reference: 'Transfer to bank account'
     },
   ];
   
@@ -152,12 +189,73 @@ const Dashboard: React.FC = () => {
   
   // Handle navigation - Navigate to '/settings'
   const handleNavigation = (path: string): void => {
-    if (path === '/settings') {
-      navigate('/settings');
+    if (path === '/setting') {
+      navigate('/setting');
     } else if (path === '/dashboard') {
       window.location.reload();
     } else {
       navigate(path);
+    }
+  };
+
+  // Get appropriate icon for transaction type
+  const getTransactionIcon = (transaction: AccountTransaction) => {
+    switch (transaction.type) {
+      case 'sent':
+        return <ArrowUp className="h-4 w-4 text-red-500" />;
+      case 'received':
+        return <ArrowDown className="h-4 w-4 text-green-500" />;
+      case 'deposit':
+        return <Wallet className="h-4 w-4 text-blue-500" />;
+      case 'withdrawal':
+        return <CreditCard className="h-4 w-4 text-orange-500" />;
+      default:
+        return <DollarSign className="h-4 w-4" />;
+    }
+  };
+
+  // Get transaction amount display
+  const getTransactionAmount = (transaction: AccountTransaction) => {
+    const isNegative = transaction.type === 'sent' || transaction.type === 'withdrawal';
+    const prefix = isNegative ? '-' : '+';
+    const colorClass = isNegative ? 'text-destructive' : 'text-primary';
+    
+    return (
+      <p className={`font-medium ${colorClass}`}>
+        {prefix}${transaction.amount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}
+      </p>
+    );
+  };
+
+  // Get transaction details for display
+  const getTransactionDetails = (transaction: AccountTransaction) => {
+    switch (transaction.type) {
+      case 'sent':
+      case 'received':
+        return (
+          <Badge variant="outline" className="text-xs">
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {transaction.type === 'sent' ? 'To: ' : 'From: '}
+              {transaction.otherUser?.name}
+            </span>
+          </Badge>
+        );
+      case 'deposit':
+      case 'withdrawal':
+        return (
+          <Badge variant="outline" className="text-xs">
+            <span className="flex items-center gap-1">
+              <CreditCard className="h-3 w-3" />
+              {transaction.cardUsed?.name || 'Card'}
+            </span>
+          </Badge>
+        );
+      default:
+        return null;
     }
   };
   
@@ -169,7 +267,7 @@ const Dashboard: React.FC = () => {
         <div className="container px-4 pt-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Welcome back, {user?.name || 'User'}</h1>
-            <p className="text-muted-foreground">Here's an overview of your finances</p>
+            <p className="text-muted-foreground">Here's an overview of your account</p>
           </div>
           
           {/* Currency stats cards */}
@@ -178,7 +276,7 @@ const Dashboard: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-600/10 z-0"></div>
               <CardHeader className="relative z-10 pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Current Balance</CardTitle>
+                  <CardTitle>Account Balance</CardTitle>
                   <DollarSign className="h-5 w-5 text-blue-500" />
                 </div>
               </CardHeader>
@@ -189,7 +287,7 @@ const Dashboard: React.FC = () => {
                     maximumFractionDigits: 2
                   })}
                 </h3>
-                <p className="text-sm text-muted-foreground">Received minus sent transactions</p>
+                <p className="text-sm text-muted-foreground">Available for transfers and withdrawals</p>
               </CardContent>
             </Card>
             
@@ -208,7 +306,7 @@ const Dashboard: React.FC = () => {
                     maximumFractionDigits: 2
                   })}
                 </h3>
-                <p className="text-sm text-muted-foreground">Total money received this year</p>
+                <p className="text-sm text-muted-foreground">Money received from other users</p>
               </CardContent>
             </Card>
             
@@ -227,7 +325,7 @@ const Dashboard: React.FC = () => {
                     maximumFractionDigits: 2
                   })}
                 </h3>
-                <p className="text-sm text-muted-foreground">Total money sent this year</p>
+                <p className="text-sm text-muted-foreground">Money sent to other users</p>
               </CardContent>
             </Card>
           </div>
@@ -236,7 +334,7 @@ const Dashboard: React.FC = () => {
           <Card className="mb-8">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Monthly Transaction Overview</CardTitle>
+                <CardTitle>Monthly Account Activity</CardTitle>
                 <Tabs defaultValue="balance" value={activeTab} onValueChange={(value) => setActiveTab(value as 'balance' | 'received' | 'sent')} className="w-auto">
                   <TabsList className="grid grid-cols-3 w-80">
                     <TabsTrigger value="balance">Balance</TabsTrigger>
@@ -246,7 +344,7 @@ const Dashboard: React.FC = () => {
                 </Tabs>
               </div>
               <CardDescription>
-                Monthly financial activity breakdown for the year
+                Monthly transfer activity between user accounts
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -299,11 +397,14 @@ const Dashboard: React.FC = () => {
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Recent Transactions</CardTitle>
+                    <CardTitle>Recent Activity</CardTitle>
                     <Button variant="outline" size="sm" onClick={() => handleNavigation('/history')}>
                       View All
                     </Button>
                   </div>
+                  <CardDescription>
+                    Account transfers, deposits, and withdrawals
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -313,14 +414,8 @@ const Dashboard: React.FC = () => {
                         className="flex items-center justify-between p-3 rounded-lg border bg-card"
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full 
-                            ${tx.type === 'sent' ? 'bg-destructive/10' : 'bg-primary/10'}`
-                          }>
-                            {tx.type === 'sent' ? (
-                              <ArrowUp className="h-4 w-4" />
-                            ) : (
-                              <ArrowDown className="h-4 w-4" />
-                            )}
+                          <div className="p-2 rounded-full bg-muted">
+                            {getTransactionIcon(tx)}
                           </div>
                           
                           <div>
@@ -329,36 +424,23 @@ const Dashboard: React.FC = () => {
                               <p className="text-xs text-muted-foreground">
                                 {formatDate(tx.date)}
                               </p>
-                              {tx.type === 'sent' && tx.cardUsed && (
-                                <Badge variant="outline" className="text-xs">
-                                  <span className="flex items-center gap-1">
-                                    <CreditCard className="h-3 w-3" />
-                                    {tx.cardUsed.name}
-                                  </span>
-                                </Badge>
-                              )}
-                              {tx.type === 'received' && tx.from && (
-                                <Badge variant="outline" className="text-xs">
-                                  <span className="flex items-center gap-1">
-                                    <ArrowDown className="h-3 w-3" />
-                                    From: {tx.from}
-                                  </span>
-                                </Badge>
-                              )}
+                              {getTransactionDetails(tx)}
                             </div>
+                            {tx.reference && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {tx.reference}
+                              </p>
+                            )}
                           </div>
                         </div>
                         
                         <div className="text-right">
-                          <p className={`font-medium 
-                            ${tx.type === 'sent' ? 'text-destructive' : 'text-primary'}`
-                          }>
-                            {tx.type === 'sent' ? '-' : '+'}
-                            ${Math.abs(tx.amount).toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </p>
+                          {getTransactionAmount(tx)}
+                          {tx.fee && (
+                            <p className="text-xs text-muted-foreground">
+                              Fee: ${tx.fee.toFixed(2)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -367,17 +449,17 @@ const Dashboard: React.FC = () => {
               </Card>
             </div>
             
-            {/* User's Payment Cards - Read Only */}
+            {/* User's Payment Cards - For deposits/withdrawals only */}
             <div>
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle>Your Payment Cards</CardTitle>
+                    <CardTitle>Linked Cards</CardTitle>
                     <Button variant="outline" size="sm" onClick={() => handleNavigation('/setting')}>
                       Manage
                     </Button>
                   </div>
-                  <CardDescription>Cards linked to your account</CardDescription>
+                  <CardDescription>Cards for deposits and withdrawals</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {paymentCards.map((card) => (

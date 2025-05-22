@@ -1,15 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowUp, Clock, CreditCard, DollarSign, RefreshCw } from "lucide-react";
-import { AnimatedBackground } from '@/components/animated-background';
+import React, { useState } from 'react';
+import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Minus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuth } from '@/hooks/use-auth';
-import { useWallet } from '@/hooks/use-wallet';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from 'react-router-dom';
 
 // Type definitions
 interface Transaction {
@@ -17,121 +10,82 @@ interface Transaction {
   title: string;
   amount: number;
   date: Date;
+  type: 'deposit' | 'withdrawal' | 'transfer_in' | 'transfer_out';
+  description?: string;
 }
 
-interface PlatformData {
-  name: string;
-  balance: number;
+interface User {
+  id: string;
   email: string;
-  accountId: string;
-  color: string;
-  buttonColor: string;
-  icon: React.ReactNode;
-  url: string;
-  transactions: Transaction[];
+  name: string;
 }
-
-type PlatformType = 'paypal' | 'stripe' | 'payoneer';
-type ReceiverType = 'email' | 'phone';
 
 const Wallet: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { balance, transactions } = useWallet();
-  const navigate = useNavigate();
-  
-  const [selectedPlatform, setSelectedPlatform] = useState<PlatformType>('paypal');
-  const [isTransferOpen, setIsTransferOpen] = useState<boolean>(false);
-  const [transferAmount, setTransferAmount] = useState<string>('');
-  const [receiverInfo, setReceiverInfo] = useState<string>('');
-  const [receiverType, setReceiverType] = useState<ReceiverType>('email');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  
-  // Platform-specific data
-  const platformData: Record<PlatformType, PlatformData> = {
-    paypal: {
-      name: 'PayPal',
-      balance: 1254.75,
-      email: user?.email || 'user@example.com',
-      accountId: 'PP-' + (user?.id || '12345678'),
-      color: 'from-blue-500/20 to-blue-600/10',
-      buttonColor: 'bg-blue-500',
-      icon: <DollarSign className="h-6 w-6 text-blue-500" />,
-      url: 'https://www.paypal.com',
-      transactions: [
-        { id: 'pp1', title: 'eBay Purchase', amount: -89.99, date: new Date(2025, 4, 19, 14, 30) },
-        { id: 'pp2', title: 'Freelance Payment', amount: 350.00, date: new Date(2025, 4, 17, 9, 15) },
-        { id: 'pp3', title: 'Online Store Refund', amount: 24.50, date: new Date(2025, 4, 15, 16, 45) },
-        { id: 'pp4', title: 'Subscription Renewal', amount: -12.99, date: new Date(2025, 4, 10, 7, 30) },
-      ]
-    },
-    stripe: {
-      name: 'Stripe',
-      balance: 3782.40,
-      email: user?.email || 'user@example.com',
-      accountId: 'ST-' + (user?.id || '87654321'),
-      color: 'from-purple-500/20 to-purple-600/10',
-      buttonColor: 'bg-purple-600',
-      icon: <CreditCard className="h-6 w-6 text-purple-600" />,
-      url: 'https://dashboard.stripe.com',
-      transactions: [
-        { id: 'st1', title: 'Client Invoice #1082', amount: 1200.00, date: new Date(2025, 4, 20, 11, 25) },
-        { id: 'st2', title: 'Platform Fee', amount: -35.80, date: new Date(2025, 4, 20, 11, 25) },
-        { id: 'st3', title: 'Client Invoice #1075', amount: 850.00, date: new Date(2025, 4, 15, 14, 10) },
-        { id: 'st4', title: 'Platform Fee', amount: -25.50, date: new Date(2025, 4, 15, 14, 10) },
-      ]
-    },
-    payoneer: {
-      name: 'Payoneer',
-      balance: 945.20,
-      email: user?.email || 'user@example.com',
-      accountId: 'PN-' + (user?.id || '23456789'),
-      color: 'from-red-500/20 to-red-600/10',
-      buttonColor: 'bg-red-500',
-      icon: <RefreshCw className="h-6 w-6 text-red-500" />,
-      url: 'https://myaccount.payoneer.com',
-      transactions: [
-        { id: 'py1', title: 'Marketplace Earnings', amount: 427.50, date: new Date(2025, 4, 18, 17, 20) },
-        { id: 'py2', title: 'Withdrawal to Bank', amount: -300.00, date: new Date(2025, 4, 14, 10, 45) },
-        { id: 'py3', title: 'Client Payment', amount: 180.00, date: new Date(2025, 4, 9, 13, 15) },
-        { id: 'py4', title: 'Annual Fee', amount: -29.95, date: new Date(2025, 4, 5, 0, 0) },
-      ]
-    }
+  // Mock user data - replace with actual auth hook
+  const user: User = {
+    id: 'user123',
+    email: 'user@example.com',
+    name: 'John Doe'
   };
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/signin');
-    }
-  }, [isAuthenticated, navigate]);
+  const navigator = useNavigate();
   
-  const handleTransfer = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-    const amount = parseFloat(transferAmount);
-    if (isNaN(amount) || amount <= 0) return;
-    if (!receiverInfo.trim()) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to the selected platform
-      window.open(platformData[selectedPlatform].url, '_blank');
-      setIsTransferOpen(false);
-      setTransferAmount('');
-      setReceiverInfo('');
-    } catch (error) {
-      console.error('Transfer error:', error);
-    } finally {
-      setIsSubmitting(false);
+  // Mock wallet data
+  const [balance] = useState<number>(2847.65);
+  const [transactions] = useState<Transaction[]>([
+    {
+      id: 'tx1',
+      title: 'Deposit from Visa Card',
+      amount: 500.00,
+      date: new Date(2025, 4, 21, 14, 30),
+      type: 'deposit',
+      description: 'Card ending in 4242'
+    },
+    {
+      id: 'tx2',
+      title: 'Transfer to Alice Smith',
+      amount: -150.00,
+      date: new Date(2025, 4, 20, 11, 15),
+      type: 'transfer_out',
+      description: 'Payment for services'
+    },
+    {
+      id: 'tx3',
+      title: 'Received from Bob Johnson',
+      amount: 275.50,
+      date: new Date(2025, 4, 19, 16, 45),
+      type: 'transfer_in',
+      description: 'Project payment'
+    },
+    {
+      id: 'tx4',
+      title: 'Withdrawal to Mastercard',
+      amount: -200.00,
+      date: new Date(2025, 4, 18, 9, 20),
+      type: 'withdrawal',
+      description: 'Card ending in 5678'
+    },
+    {
+      id: 'tx5',
+      title: 'Deposit from American Express',
+      amount: 800.00,
+      date: new Date(2025, 4, 17, 13, 10),
+      type: 'deposit',
+      description: 'Card ending in 9012'
+    },
+    {
+      id: 'tx6',
+      title: 'Transfer to Sarah Wilson',
+      amount: -89.99,
+      date: new Date(2025, 4, 15, 18, 30),
+      type: 'transfer_out',
+      description: 'Dinner split'
     }
-  };
-  
-  const goToPlatform = (): void => {
-    window.open(platformData[selectedPlatform].url, '_blank');
-  };
+  ]);
+
+  const handleDirectToPath = (path: string) => {
+    navigator(path);
+  }
 
   // Format date for display
   const formatDate = (date: Date): string => {
@@ -143,277 +97,211 @@ const Wallet: React.FC = () => {
     }).format(date);
   };
 
-  const handlePlatformChange = (value: string): void => {
-    setSelectedPlatform(value as PlatformType);
+  // Get transaction icon and color
+  const getTransactionDisplay = (transaction: Transaction) => {
+    switch (transaction.type) {
+      case 'deposit':
+        return {
+          icon: <Plus className="h-4 w-4" />,
+          bgColor: 'bg-green-500/10',
+          textColor: 'text-green-600',
+          amountColor: 'text-green-600'
+        };
+      case 'withdrawal':
+        return {
+          icon: <Minus className="h-4 w-4" />,
+          bgColor: 'bg-red-500/10',
+          textColor: 'text-red-600',
+          amountColor: 'text-red-600'
+        };
+      case 'transfer_in':
+        return {
+          icon: <ArrowDown className="h-4 w-4" />,
+          bgColor: 'bg-blue-500/10',
+          textColor: 'text-blue-600',
+          amountColor: 'text-green-600'
+        };
+      case 'transfer_out':
+        return {
+          icon: <ArrowUp className="h-4 w-4" />,
+          bgColor: 'bg-orange-500/10',
+          textColor: 'text-orange-600',
+          amountColor: 'text-red-600'
+        };
+      default:
+        return {
+          icon: <DollarSign className="h-4 w-4" />,
+          bgColor: 'bg-gray-500/10',
+          textColor: 'text-gray-600',
+          amountColor: 'text-gray-600'
+        };
+    }
   };
 
-  const handleReceiverTypeChange = (type: ReceiverType): void => {
-    setReceiverType(type);
-  };
-
-  const handleTransferAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setTransferAmount(e.target.value);
-  };
-
-  const handleReceiverInfoChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setReceiverInfo(e.target.value);
-  };
-
-  const closeTransferDialog = (): void => {
-    setIsTransferOpen(false);
-  };
-
-  const openTransferDialog = (): void => {
-    setIsTransferOpen(true);
-  };
-
-  // Get platform-specific data
-  const currentPlatform: PlatformData = platformData[selectedPlatform];
-  
   return (
-    <div className="min-h-screen pb-16">
-      <AnimatedBackground />
-      
-      <div className="container px-4 pt-8">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Main wallet card */}
-          <div className="w-full md:w-2/3">
-            <Card className="relative overflow-hidden">
-              <div className={`absolute inset-0 bg-gradient-to-br ${currentPlatform.color} z-0`}></div>
-              
-              <CardHeader className="relative z-10">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl">Your {currentPlatform.name} Account</CardTitle>
-                  {currentPlatform.icon}
-                </div>
-                <CardDescription>Manage your {currentPlatform.name} balance and transactions</CardDescription>
-              </CardHeader>
-              
-              <CardContent className="relative z-10">
-                <Tabs defaultValue="paypal" value={selectedPlatform} onValueChange={handlePlatformChange} className="mb-6">
-                  <TabsList className="grid grid-cols-3">
-                    <TabsTrigger value="paypal">PayPal</TabsTrigger>
-                    <TabsTrigger value="stripe">Stripe</TabsTrigger>
-                    <TabsTrigger value="payoneer">Payoneer</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div>
-                    <p className="text-muted-foreground">{currentPlatform.name} Balance</p>
-                    <h3 className="text-4xl font-bold">
-                      ${currentPlatform.balance.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Account ID: {currentPlatform.accountId}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={openTransferDialog}
-                      className="gap-1"
-                    >
-                      <ArrowUp className="h-4 w-4" /> Transfer
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      onClick={goToPlatform}
-                      className="gap-1"
-                    >
-                      <ArrowRight className="h-4 w-4" /> Go to {currentPlatform.name}
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Transaction history section */}
-                <div className="mt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-xl font-semibold">Recent {currentPlatform.name} Transactions</h4>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={goToPlatform}
-                    >
-                      View all
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {currentPlatform.transactions.length > 0 ? (
-                      currentPlatform.transactions.map((tx: Transaction) => (
-                        <div 
-                          key={tx.id} 
-                          className="flex items-center justify-between p-3 rounded-lg border bg-card"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full 
-                              ${tx.amount < 0 ? 'bg-destructive/10' : 'bg-primary/10'}`
-                            }>
-                              {tx.amount < 0 ? (
-                                <ArrowRight className="h-4 w-4" />
-                              ) : (
-                                <ArrowUp className="h-4 w-4" />
-                              )}
-                            </div>
-                            
-                            <div>
-                              <p className="font-medium">{tx.title}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {currentPlatform.name} transaction
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="text-right">
-                            <p className={`font-medium 
-                              ${tx.amount < 0 ? 'text-destructive' : 'text-primary'}`
-                            }>
-                              {tx.amount < 0 ? '-' : '+'}
-                              ${Math.abs(tx.amount).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                              })}
-                            </p>
-                            <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {formatDate(tx.date)}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center p-4 border rounded-lg">
-                        <p className="text-muted-foreground">No transactions yet</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Side panel */}
-          <div className="w-full md:w-1/3 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button onClick={openTransferDialog} className="w-full justify-start gap-2">
-                  <ArrowRight className="h-4 w-4" />
-                  Transfer Money
-                </Button>
-                <Button variant="outline" onClick={goToPlatform} className="w-full justify-start gap-2">
-                  <Clock className="h-4 w-4" />
-                  View Full {currentPlatform.name} Dashboard
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>{currentPlatform.name} Account</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-sm text-muted-foreground">Account Name</p>
-                  <p className="font-medium">{user?.name || 'User Name'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{currentPlatform.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Account ID</p>
-                  <p className="font-medium">{currentPlatform.accountId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p className="font-medium flex items-center gap-1">
-                    <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                    Connected
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">My Wallet</h1>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">Manage your account balance and transactions</p>
         </div>
-      </div>
-      
-      {/* Transfer dialog */}
-      <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Send Money with {currentPlatform.name}</DialogTitle>
-            <DialogDescription>
-              Enter recipient information and the amount you want to send.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleTransfer}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="receiverType">Send to</Label>
-                <div className="flex gap-2 mb-2">
-                  <Button 
-                    type="button"
-                    variant={receiverType === 'email' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => handleReceiverTypeChange('email')}
-                  >
-                    Email
-                  </Button>
-                  <Button 
-                    type="button"
-                    variant={receiverType === 'phone' ? 'default' : 'outline'} 
-                    size="sm"
-                    onClick={() => handleReceiverTypeChange('phone')}
-                  >
-                    Phone
-                  </Button>
-                </div>
-                <Input
-                  id="receiverInfo"
-                  type={receiverType === 'email' ? 'email' : 'tel'}
-                  placeholder={receiverType === 'email' ? 'recipient@example.com' : '+1 (555) 123-4567'}
-                  value={receiverInfo}
-                  onChange={handleReceiverInfoChange}
-                  required
-                />
+
+        {/* Balance Card */}
+        <Card className="mb-8 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/10 z-0"></div>
+          
+          <CardHeader className="relative z-10">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+                Account Balance
+              </CardTitle>
+            </div>
+            <CardDescription>Your current available balance</CardDescription>
+          </CardHeader>
+          
+          <CardContent className="relative z-10">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div>
+                <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                  ${balance.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Account: {user.email}
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount ($)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="0.00"
-                  min="1"
-                  step="any"
-                  value={transferAmount}
-                  onChange={handleTransferAmountChange}
-                  required
-                />
+              
+              <div className="flex flex-wrap gap-3">
+                <Button 
+                  onClick={()=>handleDirectToPath('/deposit')}
+                  className="gap-2 bg-green-600 hover:bg-green-700"
+                >
+                  <Plus className="h-4 w-4" /> 
+                  Deposit
+                </Button>
+                
+                <Button 
+                  onClick={()=>handleDirectToPath('/withdraw')}
+                  variant="outline"
+                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+                >
+                  <Minus className="h-4 w-4" /> 
+                  Withdraw
+                </Button>
+                
+                <Button 
+                  onClick={()=>handleDirectToPath('/transfer')}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ArrowRight className="h-4 w-4" /> 
+                  Transfer
+                </Button>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeTransferDialog}>
-                Cancel
+          </CardContent>
+        </Card>
+
+        {/* Supported Cards Info */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Supported Payment Methods
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <CreditCard className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium">Visa</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-950 rounded-lg">
+                <CreditCard className="h-4 w-4 text-red-600" />
+                <span className="text-sm font-medium">Mastercard</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg">
+                <CreditCard className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium">American Express</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Transaction History */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">Recent Transactions</CardTitle>
+              <Button variant="ghost" size="sm" onClick={()=>handleDirectToPath('/history')}>
+                View all
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-primary hover:bg-primary/90"
-              >
-                {isSubmitting ? "Processing..." : "Send Money"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </div>
+            <CardDescription>Your recent account activity</CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <div className="space-y-4">
+              {transactions.length > 0 ? (
+                transactions.map((transaction: Transaction) => {
+                  const display = getTransactionDisplay(transaction);
+                  
+                  return (
+                    <div 
+                      key={transaction.id} 
+                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-full ${display.bgColor}`}>
+                          <div className={display.textColor}>
+                            {display.icon}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-slate-900 dark:text-slate-100">
+                            {transaction.title}
+                          </p>
+                          {transaction.description && (
+                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                              {transaction.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className={`font-semibold ${display.amountColor}`}>
+                          {transaction.amount < 0 ? '-' : '+'}
+                          ${Math.abs(transaction.amount).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                          })}
+                        </p>
+                        <p className="text-xs flex items-center justify-end gap-1 text-slate-500 dark:text-slate-400 mt-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(transaction.date)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center p-8 border rounded-lg">
+                  <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+                  <p className="text-slate-600 dark:text-slate-400">No transactions yet</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
+                    Start by making a deposit or transfer
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

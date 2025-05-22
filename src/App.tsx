@@ -66,72 +66,16 @@ const AppRoutes = () => {
     <PageTransition>
       <Routes>
         <Route path="/" element={<Index />} />
-        {!isAuthenticated ? (
-          <>
-            <Route path="/signin" element={<Signin />} />
-            <Route path="/signup" element={<Signup />} />
-          </>
-        ) : (
-          <>
-            <Route path="/verify" element={<Verify />} />
-            <Route
-              path="/dashboard"
-              element={
-                <AuthLayout>
-                  <Dashboard />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/wallet"
-              element={
-                <AuthLayout>
-                  <Wallet />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/transfer"
-              element={
-                <AuthLayout>
-                  <Transfer />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/history"
-              element={
-                <AuthLayout>
-                  <History />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AuthLayout>
-                  <AdminPanel />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <AuthLayout>
-                  <ProfilePage />
-                </AuthLayout>
-              }
-            />
-            <Route
-              path="/setting"
-              element={
-                <AuthLayout>
-                  <Settings />
-                </AuthLayout>
-              }
-            />
-          </>
-        )}
+        <Route path="/signin" element={<Signin />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/dashboard" element={<AuthLayout><Dashboard /></AuthLayout>} />
+        <Route path="/wallet" element={<AuthLayout><Wallet /></AuthLayout>} />
+        <Route path="/transfer" element={<AuthLayout><Transfer /></AuthLayout>} />
+        <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
+        <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
+        <Route path="/profile" element={<AuthLayout><ProfilePage /></AuthLayout>} />
+        <Route path="/setting" element={<AuthLayout><Settings /></AuthLayout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageTransition>

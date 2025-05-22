@@ -196,14 +196,6 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
               <CreditCard className="h-5 w-5" />
               <DialogTitle>Add New Payment Card</DialogTitle>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
           <DialogDescription>
             Add a new payment card to your account. All information is securely stored.
