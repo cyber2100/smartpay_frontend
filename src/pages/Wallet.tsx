@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Mi
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
+import { AnimatedBackground } from '@/components/animated-background';
 
 // Type definitions
 interface Transaction {
@@ -139,168 +140,172 @@ const Wallet: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">My Wallet</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">Manage your account balance and transactions</p>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto pb-16">
+        <AnimatedBackground />
+        
+        <div className="container px-4 pt-8 max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold">My Wallet</h1>
+            <p className="text-muted-foreground">Manage your account balance and transactions</p>
+          </div>
 
-        {/* Balance Card */}
-        <Card className="mb-8 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/10 z-0"></div>
-          
-          <CardHeader className="relative z-10">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <DollarSign className="h-6 w-6 text-blue-600" />
-                Account Balance
-              </CardTitle>
-            </div>
-            <CardDescription>Your current available balance</CardDescription>
-          </CardHeader>
-          
-          <CardContent className="relative z-10">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div>
-                <h2 className="text-5xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-                  ${balance.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  })}
-                </h2>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Account: {user.email}
-                </p>
+          {/* Balance Card */}
+          <Card className="mb-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/10 z-0"></div>
+            
+            <CardHeader className="relative z-10">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <DollarSign className="h-6 w-6 text-blue-600" />
+                  Account Balance
+                </CardTitle>
               </div>
-              
-              <div className="flex flex-wrap gap-3">
-                <Button 
-                  onClick={()=>handleDirectToPath('/deposit')}
-                  className="gap-2 bg-green-600 hover:bg-green-700"
-                >
-                  <Plus className="h-4 w-4" /> 
-                  Deposit
-                </Button>
+              <CardDescription>Your current available balance</CardDescription>
+            </CardHeader>
+            
+            <CardContent className="relative z-10">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div>
+                  <h2 className="text-5xl font-bold mb-2">
+                    ${balance.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Account: {user.email}
+                  </p>
+                </div>
                 
-                <Button 
-                  onClick={()=>handleDirectToPath('/withdraw')}
-                  variant="outline"
-                  className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-                >
-                  <Minus className="h-4 w-4" /> 
-                  Withdraw
-                </Button>
-                
-                <Button 
-                  onClick={()=>handleDirectToPath('/transfer')}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700"
-                >
-                  <ArrowRight className="h-4 w-4" /> 
-                  Transfer
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Supported Cards Info */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Supported Payment Methods
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                <CreditCard className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium">Visa</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-950 rounded-lg">
-                <CreditCard className="h-4 w-4 text-red-600" />
-                <span className="text-sm font-medium">Mastercard</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg">
-                <CreditCard className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium">American Express</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Transaction History */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Recent Transactions</CardTitle>
-              <Button variant="ghost" size="sm" onClick={()=>handleDirectToPath('/history')}>
-                View all
-              </Button>
-            </div>
-            <CardDescription>Your recent account activity</CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <div className="space-y-4">
-              {transactions.length > 0 ? (
-                transactions.map((transaction: Transaction) => {
-                  const display = getTransactionDisplay(transaction);
+                <div className="flex flex-wrap gap-3">
+                  <Button 
+                    onClick={()=>handleDirectToPath('/deposit')}
+                    className="gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="h-4 w-4" /> 
+                    Deposit
+                  </Button>
                   
-                  return (
-                    <div 
-                      key={transaction.id} 
-                      className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-full ${display.bgColor}`}>
-                          <div className={display.textColor}>
-                            {display.icon}
+                  <Button 
+                    onClick={()=>handleDirectToPath('/withdraw')}
+                    variant="outline"
+                    className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+                  >
+                    <Minus className="h-4 w-4" /> 
+                    Withdraw
+                  </Button>
+                  
+                  <Button 
+                    onClick={()=>handleDirectToPath('/transfer')}
+                    className="gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <ArrowRight className="h-4 w-4" /> 
+                    Transfer
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Supported Cards Info */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Supported Payment Methods
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <CreditCard className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium">Visa</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-950 rounded-lg">
+                  <CreditCard className="h-4 w-4 text-red-600" />
+                  <span className="text-sm font-medium">Mastercard</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <CreditCard className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium">American Express</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Transaction History */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl">Recent Transactions</CardTitle>
+                <Button variant="ghost" size="sm" onClick={()=>handleDirectToPath('/history')}>
+                  View all
+                </Button>
+              </div>
+              <CardDescription>Your recent account activity</CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              <div className="space-y-4">
+                {transactions.length > 0 ? (
+                  transactions.map((transaction: Transaction) => {
+                    const display = getTransactionDisplay(transaction);
+                    
+                    return (
+                      <div 
+                        key={transaction.id} 
+                        className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-2 rounded-full ${display.bgColor}`}>
+                            <div className={display.textColor}>
+                              {display.icon}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium">
+                              {transaction.title}
+                            </p>
+                            {transaction.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {transaction.description}
+                              </p>
+                            )}
                           </div>
                         </div>
                         
-                        <div>
-                          <p className="font-medium text-slate-900 dark:text-slate-100">
-                            {transaction.title}
+                        <div className="text-right">
+                          <p className={`font-semibold ${display.amountColor}`}>
+                            {transaction.amount < 0 ? '-' : '+'}
+                            ${Math.abs(transaction.amount).toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
                           </p>
-                          {transaction.description && (
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                              {transaction.description}
-                            </p>
-                          )}
+                          <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground mt-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDate(transaction.date)}
+                          </p>
                         </div>
                       </div>
-                      
-                      <div className="text-right">
-                        <p className={`font-semibold ${display.amountColor}`}>
-                          {transaction.amount < 0 ? '-' : '+'}
-                          ${Math.abs(transaction.amount).toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
-                        </p>
-                        <p className="text-xs flex items-center justify-end gap-1 text-slate-500 dark:text-slate-400 mt-1">
-                          <Clock className="h-3 w-3" />
-                          {formatDate(transaction.date)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center p-8 border rounded-lg">
-                  <DollarSign className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">No transactions yet</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
-                    Start by making a deposit or transfer
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    );
+                  })
+                ) : (
+                  <div className="text-center p-8 border rounded-lg">
+                    <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">No transactions yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Start by making a deposit or transfer
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
