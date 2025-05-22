@@ -8,7 +8,8 @@ import {
   User,
   Wallet, 
   Clock,
-  Send 
+  Send,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +31,7 @@ export const Sidebar: React.FC = () => {
   const menuItems: MenuItem[] = [
     { id: 'dashboard', name: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/dashboard' },
     { id: 'wallet', name: 'Wallet', icon: <Wallet className="h-5 w-5" />, path: '/wallet' },
+    { id: 'card', name: 'Card', icon: <CreditCard className="h-5 w-5" />, path: '/card' },
     { id: 'transfer', name: 'Transfer', icon: <Send className="h-5 w-5" />, path: '/transfer' },
     { id: 'history', name: 'History', icon: <Clock className="h-5 w-5" />, path: '/history' }
   ];

@@ -20,7 +20,7 @@ import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import React from "react";
 import ProfilePage from "./pages/Profile";
-import Settings from "./pages/Settings";
+import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
 import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -75,7 +75,7 @@ const AppRoutes = () => {
         <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
         <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
         <Route path="/profile" element={<AuthLayout><ProfilePage /></AuthLayout>} />
-        <Route path="/setting" element={<AuthLayout><Settings /></AuthLayout>} />
+        <Route path="/card" element={<AuthLayout><Card /></AuthLayout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageTransition>

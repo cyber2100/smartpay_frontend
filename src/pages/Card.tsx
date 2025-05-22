@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft,
   CreditCard,
   Check,
   Plus,
   Trash2,
-  Star
+  Star,
+  Eye,
+  EyeOff,
+  X
 } from "lucide-react";
 import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +31,7 @@ export interface PaymentCard {
   id: string;
   name: string;
   cardNumber: string;
+  fullCardNumber: string; // Store the full card number
   expireDate: string;
   cvc: string;
   isDefault: boolean;
@@ -36,16 +39,190 @@ export interface PaymentCard {
   cardColor: string;
 }
 
-const Settings: React.FC = () => {
-  const navigate = useNavigate();
+// Card Detail Modal Component
+const CardDetailModal: React.FC<{
+  card: PaymentCard;
+  isOpen: boolean;
+  onClose: () => void;
+  onSetDefault: (cardId: string) => void;
+  onDelete: (cardId: string) => void;
+}> = ({ card, isOpen, onClose, onSetDefault, onDelete }) => {
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
+
+  if (!isOpen) return null;
+
+  const formatCardNumber = (number: string, show: boolean) => {
+    if (show) {
+      // Format full card number with spaces
+      return number.replace(/(.{4})/g, '$1 ').trim();
+    }
+    return card.cardNumber; // Return masked version
+  };
+
+  const formatCVC = (cvc: string, show: boolean) => {
+    if (show) {
+      return cvc;
+    }
+    return card.type === 'amex' ? '****' : '***';
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-md">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold">Card Details</h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Card Visual */}
+        <div className="p-6">
+          <div 
+            className={`relative p-6 rounded-xl text-white shadow-lg ${card.cardColor} mb-6`}
+          >
+            <div className="flex justify-between items-start mb-8">
+              <div className="text-xl font-bold">{card.name}</div>
+              <CreditCard className="h-8 w-8" />
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm opacity-75">Card Number</p>
+                <p className="text-lg font-mono tracking-wider">
+                  {formatCardNumber(card.fullCardNumber, showSensitiveInfo)}
+                </p>
+              </div>
+              
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-sm opacity-75">Expiry Date</p>
+                  <p className="font-mono">{card.expireDate}</p>
+                </div>
+                <div>
+                  <p className="text-sm opacity-75">CVC</p>
+                  <p className="font-mono">{formatCVC('123', showSensitiveInfo)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Toggle Button */}
+          <div className="flex justify-center mb-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+              className="flex items-center gap-2"
+            >
+              {showSensitiveInfo ? (
+                <>
+                  <EyeOff className="h-4 w-4" />
+                  Hide Details
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4" />
+                  Show Details
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Card Status */}
+          <div className="space-y-4 mb-6">
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <span className="font-medium">Default Card</span>
+              {card.isDefault ? (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Check className="h-3 w-3" />
+                  Yes
+                </Badge>
+              ) : (
+                <Badge variant="outline">No</Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <span className="font-medium">Card Type</span>
+              <Badge variant="outline" className="capitalize">
+                {card.type}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            {!card.isDefault && (
+              <Button
+                onClick={() => onSetDefault(card.id)}
+                className="w-full flex items-center gap-2"
+                variant="outline"
+              >
+                <Star className="h-4 w-4" />
+                Set as Default Card
+              </Button>
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Card
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Payment Card</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{card.name}"? This action cannot be undone.
+                    {card.isDefault && (
+                      <span className="block mt-2 text-orange-600 font-medium">
+                        This is your default card. Another card will be set as default.
+                      </span>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      onDelete(card.id);
+                      onClose();
+                    }}
+                    className="bg-destructive hover:bg-destructive/90"
+                  >
+                    Delete Card
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CardPage: React.FC = () => {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
   const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([
     { 
       id: 'card1', 
       name: 'Chase Sapphire', 
-      cardNumber: '**** **** **** 4567', 
+      cardNumber: '**** **** **** 4567',
+      fullCardNumber: '4532123456784567',
       expireDate: '05/27', 
-      cvc: '***', 
+      cvc: '123', 
       isDefault: true,
       type: 'visa',
       cardColor: 'bg-blue-500'
@@ -53,9 +230,10 @@ const Settings: React.FC = () => {
     { 
       id: 'card2', 
       name: 'Citibank Premier', 
-      cardNumber: '**** **** **** 8923', 
+      cardNumber: '**** **** **** 8923',
+      fullCardNumber: '5412345678908923',
       expireDate: '11/26', 
-      cvc: '***', 
+      cvc: '456', 
       isDefault: false,
       type: 'mastercard',
       cardColor: 'bg-purple-500'
@@ -63,9 +241,10 @@ const Settings: React.FC = () => {
     { 
       id: 'card3', 
       name: 'American Express', 
-      cardNumber: '**** ****** 61005', 
+      cardNumber: '**** ****** 61005',
+      fullCardNumber: '374245455400001',
       expireDate: '03/28', 
-      cvc: '****', 
+      cvc: '1234', 
       isDefault: false,
       type: 'amex',
       cardColor: 'bg-green-500'
@@ -130,19 +309,8 @@ const Settings: React.FC = () => {
         <div className="container px-4 pt-8">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
-              </Button>
-            </div>
-            <h1 className="text-3xl font-bold">Payment Settings</h1>
-            <p className="text-muted-foreground">Manage your payment cards and preferences</p>
+            <h1 className="text-3xl font-bold">Payment Cards</h1>
+            <p className="text-muted-foreground">Manage your payment cards</p>
           </div>
 
           {/* Payment Cards Section */}
@@ -150,9 +318,9 @@ const Settings: React.FC = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Payment Cards</CardTitle>
+                  <CardTitle>Your Cards</CardTitle>
                   <CardDescription>
-                    Manage your connected payment cards. You can set a default card and add new ones.
+                    Add, remove, and manage your payment cards. Click on a card to view details.
                   </CardDescription>
                 </div>
                 <Button 
@@ -182,9 +350,10 @@ const Settings: React.FC = () => {
                   {paymentCards.map((card) => (
                     <div 
                       key={card.id} 
-                      className={`relative overflow-hidden rounded-lg p-4 border ${
+                      className={`relative overflow-hidden rounded-lg p-4 border cursor-pointer transition-all hover:shadow-md ${
                         card.isDefault ? 'ring-2 ring-primary' : ''
                       }`}
+                      onClick={() => setSelectedCard(card)}
                     >
                       <div className={`absolute top-0 left-0 h-full w-2 ${card.cardColor}`}></div>
                       
@@ -208,12 +377,12 @@ const Settings: React.FC = () => {
                             <p className="text-sm text-muted-foreground">{card.cardNumber}</p>
                             <div className="flex gap-4 mt-1">
                               <p className="text-xs">Exp: {card.expireDate}</p>
-                              <p className="text-xs">CVC: {card.cvc}</p>
+                              <p className="text-xs">CVC: ***</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                           {!card.isDefault && (
                             <Button
                               variant="outline"
@@ -268,63 +437,26 @@ const Settings: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Additional Settings Section */}
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>
-                Configure your account preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <h4 className="font-medium">Notifications</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications for transactions
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Configure
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <h4 className="font-medium">Security</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Manage your account security settings
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Configure
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <h4 className="font-medium">Account</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Manage your account information
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Configure
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
           <AddCardDialog
             isOpen={isAddCardOpen}
-            onClose={()=>setIsAddCardOpen(false)}
+            onClose={() => setIsAddCardOpen(false)}
             onAddCard={handleAddCard} 
           />
+
+          {/* Card Detail Modal */}
+          {selectedCard && (
+            <CardDetailModal
+              card={selectedCard}
+              isOpen={!!selectedCard}
+              onClose={() => setSelectedCard(null)}
+              onSetDefault={handleSetDefault}
+              onDelete={handleDeleteCard}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export default Settings;
+export default CardPage;
