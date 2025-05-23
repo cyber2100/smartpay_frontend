@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft,
   CreditCard,
@@ -8,13 +8,15 @@ import {
   Star,
   Eye,
   EyeOff,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AddCardDialog } from '@/components/AddCardDialog';
+import { useToast } from "@/components/ui/use-toast";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +33,151 @@ export interface PaymentCard {
   id: string;
   name: string;
   cardNumber: string;
-  fullCardNumber: string; // Store the full card number
+  fullCardNumber: string;
   expireDate: string;
   cvc: string;
   isDefault: boolean;
   type: 'visa' | 'mastercard' | 'amex';
   cardColor: string;
 }
+
+// API Service Functions
+const cardApi = {
+  // Get all cards
+  getCards: async (): Promise<PaymentCard[]> => {
+    try {
+      const response = await fetch('/api/cards', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch cards');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+      throw error;
+    }
+  },
+
+  // Add new card
+  addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
+    try {
+      const response = await fetch('/api/cards', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cardData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add card');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error adding card:', error);
+      throw error;
+    }
+  },
+
+  // Update card (set as default)
+  updateCard: async (cardId: string, updateData: Partial<PaymentCard>): Promise<PaymentCard> => {
+    try {
+      const response = await fetch(`/api/cards/${cardId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update card');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating card:', error);
+      throw error;
+    }
+  },
+
+  // Set card as default
+  setDefaultCard: async (cardId: string): Promise<void> => {
+    try {
+      const response = await fetch(`/api/cards/${cardId}/set-default`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to set default card');
+      }
+    } catch (error) {
+      console.error('Error setting default card:', error);
+      throw error;
+    }
+  },
+
+  // Delete card
+  deleteCard: async (cardId: string): Promise<void> => {
+    try {
+      const response = await fetch(`/api/cards/${cardId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete card');
+      }
+    } catch (error) {
+      console.error('Error deleting card:', error);
+      throw error;
+    }
+  },
+
+  // Get card details (including sensitive info)
+  getCardDetails: async (cardId: string): Promise<PaymentCard> => {
+    try {
+      const response = await fetch(`/api/cards/${cardId}/details`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch card details');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching card details:', error);
+      throw error;
+    }
+  },
+};
 
 // Card Detail Modal Component
 const CardDetailModal: React.FC<{
@@ -48,22 +188,55 @@ const CardDetailModal: React.FC<{
   onDelete: (cardId: string) => void;
 }> = ({ card, isOpen, onClose, onSetDefault, onDelete }) => {
   const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
+  const [cardDetails, setCardDetails] = useState<PaymentCard | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen && card) {
+      setCardDetails(card);
+    }
+  }, [isOpen, card]);
+
+  const handleShowSensitiveInfo = async () => {
+    if (!showSensitiveInfo && cardDetails) {
+      setIsLoading(true);
+      try {
+        const fullCardDetails = await cardApi.getCardDetails(cardDetails.id);
+        setCardDetails(fullCardDetails);
+        setShowSensitiveInfo(true);
+        toast({
+          title: "Card details revealed",
+          description: "Full card information is now visible.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load card details. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setShowSensitiveInfo(false);
+    }
+  };
+
+  if (!isOpen || !cardDetails) return null;
 
   const formatCardNumber = (number: string, show: boolean) => {
-    if (show) {
-      // Format full card number with spaces
-      return number.replace(/(.{4})/g, '$1 ').trim();
+    if (show && cardDetails.fullCardNumber) {
+      return cardDetails.fullCardNumber.replace(/(.{4})/g, '$1 ').trim();
     }
-    return card.cardNumber; // Return masked version
+    return cardDetails.cardNumber;
   };
 
   const formatCVC = (cvc: string, show: boolean) => {
-    if (show) {
-      return cvc;
+    if (show && cardDetails.cvc) {
+      return cardDetails.cvc;
     }
-    return card.type === 'amex' ? '****' : '***';
+    return cardDetails.type === 'amex' ? '****' : '***';
   };
 
   return (
@@ -85,10 +258,10 @@ const CardDetailModal: React.FC<{
         {/* Card Visual */}
         <div className="p-6">
           <div 
-            className={`relative p-6 rounded-xl text-white shadow-lg ${card.cardColor} mb-6`}
+            className={`relative p-6 rounded-xl text-white shadow-lg ${cardDetails.cardColor} mb-6`}
           >
             <div className="flex justify-between items-start mb-8">
-              <div className="text-xl font-bold">{card.name}</div>
+              <div className="text-xl font-bold">{cardDetails.name}</div>
               <CreditCard className="h-8 w-8" />
             </div>
             
@@ -96,18 +269,18 @@ const CardDetailModal: React.FC<{
               <div>
                 <p className="text-sm opacity-75">Card Number</p>
                 <p className="text-lg font-mono tracking-wider">
-                  {formatCardNumber(card.fullCardNumber, showSensitiveInfo)}
+                  {formatCardNumber(cardDetails.fullCardNumber || cardDetails.cardNumber, showSensitiveInfo)}
                 </p>
               </div>
               
               <div className="flex justify-between">
                 <div>
                   <p className="text-sm opacity-75">Expiry Date</p>
-                  <p className="font-mono">{card.expireDate}</p>
+                  <p className="font-mono">{cardDetails.expireDate}</p>
                 </div>
                 <div>
                   <p className="text-sm opacity-75">CVC</p>
-                  <p className="font-mono">{formatCVC('123', showSensitiveInfo)}</p>
+                  <p className="font-mono">{formatCVC(cardDetails.cvc, showSensitiveInfo)}</p>
                 </div>
               </div>
             </div>
@@ -117,10 +290,16 @@ const CardDetailModal: React.FC<{
           <div className="flex justify-center mb-6">
             <Button
               variant="outline"
-              onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+              onClick={handleShowSensitiveInfo}
+              disabled={isLoading}
               className="flex items-center gap-2"
             >
-              {showSensitiveInfo ? (
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : showSensitiveInfo ? (
                 <>
                   <EyeOff className="h-4 w-4" />
                   Hide Details
@@ -138,7 +317,7 @@ const CardDetailModal: React.FC<{
           <div className="space-y-4 mb-6">
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <span className="font-medium">Default Card</span>
-              {card.isDefault ? (
+              {cardDetails.isDefault ? (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Check className="h-3 w-3" />
                   Yes
@@ -151,16 +330,16 @@ const CardDetailModal: React.FC<{
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <span className="font-medium">Card Type</span>
               <Badge variant="outline" className="capitalize">
-                {card.type}
+                {cardDetails.type}
               </Badge>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            {!card.isDefault && (
+            {!cardDetails.isDefault && (
               <Button
-                onClick={() => onSetDefault(card.id)}
+                onClick={() => onSetDefault(cardDetails.id)}
                 className="w-full flex items-center gap-2"
                 variant="outline"
               >
@@ -183,8 +362,8 @@ const CardDetailModal: React.FC<{
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Payment Card</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete "{card.name}"? This action cannot be undone.
-                    {card.isDefault && (
+                    Are you sure you want to delete "{cardDetails.name}"? This action cannot be undone.
+                    {cardDetails.isDefault && (
                       <span className="block mt-2 text-orange-600 font-medium">
                         This is your default card. Another card will be set as default.
                       </span>
@@ -195,7 +374,7 @@ const CardDetailModal: React.FC<{
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
-                      onDelete(card.id);
+                      onDelete(cardDetails.id);
                       onClose();
                     }}
                     className="bg-destructive hover:bg-destructive/90"
@@ -215,91 +394,137 @@ const CardDetailModal: React.FC<{
 const CardPage: React.FC = () => {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([
-    { 
-      id: 'card1', 
-      name: 'Chase Sapphire', 
-      cardNumber: '**** **** **** 4567',
-      fullCardNumber: '4532123456784567',
-      expireDate: '05/27', 
-      cvc: '123', 
-      isDefault: true,
-      type: 'visa',
-      cardColor: 'bg-blue-500'
-    },
-    { 
-      id: 'card2', 
-      name: 'Citibank Premier', 
-      cardNumber: '**** **** **** 8923',
-      fullCardNumber: '5412345678908923',
-      expireDate: '11/26', 
-      cvc: '456', 
-      isDefault: false,
-      type: 'mastercard',
-      cardColor: 'bg-purple-500'
-    },
-    { 
-      id: 'card3', 
-      name: 'American Express', 
-      cardNumber: '**** ****** 61005',
-      fullCardNumber: '374245455400001',
-      expireDate: '03/28', 
-      cvc: '1234', 
-      isDefault: false,
-      type: 'amex',
-      cardColor: 'bg-green-500'
-    }
-  ]);
+  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
 
-  const handleSetDefault = (cardId: string) => {
-    setPaymentCards(cards => 
-      cards.map(card => ({
-        ...card,
-        isDefault: card.id === cardId
-      }))
-    );
+  // Load cards on component mount
+  useEffect(() => {
+    loadCards();
+  }, []);
+
+  const loadCards = async () => {
+    setIsLoading(true);
+    try {
+      const cards = await cardApi.getCards();
+      setPaymentCards(cards);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load your cards. Please refresh the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteCard = (cardId: string) => {
-    const cardToDelete = paymentCards.find(card => card.id === cardId);
-    if (cardToDelete?.isDefault && paymentCards.length > 1) {
-      // If deleting default card, set another card as default
-      const otherCard = paymentCards.find(card => card.id !== cardId);
-      if (otherCard) {
-        setPaymentCards(cards => 
-          cards.filter(card => card.id !== cardId)
-            .map(card => ({
-              ...card,
-              isDefault: card.id === otherCard.id
-            }))
-        );
+  const handleSetDefault = async (cardId: string) => {
+    setIsProcessing(true);
+    try {
+      await cardApi.setDefaultCard(cardId);
+      
+      // Update local state
+      setPaymentCards(cards => 
+        cards.map(card => ({
+          ...card,
+          isDefault: card.id === cardId
+        }))
+      );
+
+      toast({
+        title: "Success",
+        description: "Default card updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to set default card. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteCard = async (cardId: string) => {
+    setIsProcessing(true);
+    try {
+      await cardApi.deleteCard(cardId);
+      
+      const cardToDelete = paymentCards.find(card => card.id === cardId);
+      
+      // Update local state
+      if (cardToDelete?.isDefault && paymentCards.length > 1) {
+        // If deleting default card, the backend should handle setting a new default
+        // Reload cards to get the updated default status
+        await loadCards();
+      } else {
+        setPaymentCards(cards => cards.filter(card => card.id !== cardId));
       }
-    } else {
-      setPaymentCards(cards => cards.filter(card => card.id !== cardId));
+
+      toast({
+        title: "Success",
+        description: "Card deleted successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete card. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleAddCard = (newCard: Omit<PaymentCard, 'id'>) => {
-    const cardId = `card${Date.now()}`;
-    const cardWithId: PaymentCard = {
-      ...newCard,
-      id: cardId
-    };
-    
-    // If this is the first card or set as default, make it default
-    if (paymentCards.length === 0 || newCard.isDefault) {
-      setPaymentCards(cards => [
-        ...cards.map(card => ({ ...card, isDefault: false })),
-        cardWithId
-      ]);
-    } else {
-      setPaymentCards(cards => [...cards, cardWithId]);
+  const handleAddCard = async (newCard: Omit<PaymentCard, 'id'>) => {
+    setIsProcessing(true);
+    try {
+      const addedCard = await cardApi.addCard(newCard);
+      
+      // Update local state
+      if (newCard.isDefault || paymentCards.length === 0) {
+        setPaymentCards(cards => [
+          ...cards.map(card => ({ ...card, isDefault: false })),
+          addedCard
+        ]);
+      } else {
+        setPaymentCards(cards => [...cards, addedCard]);
+      }
+
+      toast({
+        title: "Success",
+        description: "Card added successfully.",
+      });
+      
+      setIsAddCardOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add card. Please check your information and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const getCardTypeIcon = (type: string) => {
     return <CreditCard className="h-5 w-5" />;
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your cards...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -325,9 +550,14 @@ const CardPage: React.FC = () => {
                 </div>
                 <Button 
                   onClick={() => setIsAddCardOpen(true)}
+                  disabled={isProcessing}
                   className="flex items-center gap-2"
                 >
-                  <Plus className="h-4 w-4" />
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
                   Add Card
                 </Button>
               </div>
@@ -340,7 +570,10 @@ const CardPage: React.FC = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     Add your first payment card to get started
                   </p>
-                  <Button onClick={() => setIsAddCardOpen(true)}>
+                  <Button 
+                    onClick={() => setIsAddCardOpen(true)}
+                    disabled={isProcessing}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Your First Card
                   </Button>
@@ -352,7 +585,7 @@ const CardPage: React.FC = () => {
                       key={card.id} 
                       className={`relative overflow-hidden rounded-lg p-4 border cursor-pointer transition-all hover:shadow-md ${
                         card.isDefault ? 'ring-2 ring-primary' : ''
-                      }`}
+                      } ${isProcessing ? 'opacity-50 pointer-events-none' : ''}`}
                       onClick={() => setSelectedCard(card)}
                     >
                       <div className={`absolute top-0 left-0 h-full w-2 ${card.cardColor}`}></div>
@@ -388,9 +621,14 @@ const CardPage: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleSetDefault(card.id)}
+                              disabled={isProcessing}
                               className="flex items-center gap-1"
                             >
-                              <Star className="h-3 w-3" />
+                              {isProcessing ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Star className="h-3 w-3" />
+                              )}
                               Set Default
                             </Button>
                           )}
@@ -400,6 +638,7 @@ const CardPage: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                disabled={isProcessing}
                                 className="text-destructive hover:text-destructive"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -440,7 +679,8 @@ const CardPage: React.FC = () => {
           <AddCardDialog
             isOpen={isAddCardOpen}
             onClose={() => setIsAddCardOpen(false)}
-            onAddCard={handleAddCard} 
+            onAddCard={handleAddCard}
+            isLoading={isProcessing}
           />
 
           {/* Card Detail Modal */}

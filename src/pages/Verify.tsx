@@ -33,6 +33,7 @@ const Verify: React.FC = () => {
     } else if (user?.isVerified) {
       navigate("/dashboard");
     }
+    resendCode();
   }, [isAuthenticated, user, navigate]);
 
   // Countdown timer
@@ -105,11 +106,11 @@ const Verify: React.FC = () => {
           </CardTitle>
           <CardDescription className="text-center">
             Choose your verification method and enter the 6-digit code
-            <div className="mt-2 p-2 bg-muted rounded-md text-center text-sm">
-              <strong className="block">Demo code:</strong>
-              Use "123456" for verification
-            </div>
           </CardDescription>
+          <div className="mt-2 p-2 bg-muted rounded-md text-center text-sm">
+            <strong className="block">Demo code:</strong>
+            Use "123456" for verification
+          </div>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">

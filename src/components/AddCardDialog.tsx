@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CreditCard, X } from "lucide-react";
+import { CreditCard, X, Loader2 } from "lucide-react";
 
 export interface PaymentCard {
   id: string;
@@ -35,6 +35,7 @@ interface AddCardDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onAddCard: (card: Omit<PaymentCard, 'id'>) => void;
+  isLoading: boolean;
 }
 
 const cardColors = [
@@ -52,6 +53,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
   isOpen,
   onClose,
   onAddCard,
+  isLoading,
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -170,10 +172,12 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     };
 
     onAddCard(newCard);
-    handleClose();
   };
 
   const handleClose = () => {
+    // Prevent closing dialog while loading
+    if (isLoading) return;
+    
     setFormData({
       name: '',
       cardNumber: '',
@@ -194,11 +198,16 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              <DialogTitle>Add New Payment Card</DialogTitle>
+              <DialogTitle>
+                {isLoading ? 'Saving...' : 'Add New Payment Card'}
+              </DialogTitle>
             </div>
           </div>
           <DialogDescription>
-            Add a new payment card to your account. All information is securely stored.
+            {isLoading 
+              ? 'Please wait while we securely save your card information.'
+              : 'Add a new payment card to your account. All information is securely stored.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -211,6 +220,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               className={errors.name ? 'border-destructive' : ''}
+              disabled={isLoading}
             />
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name}</p>
@@ -226,6 +236,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
               onChange={(e) => handleCardNumberChange(e.target.value)}
               maxLength={19}
               className={errors.cardNumber ? 'border-destructive' : ''}
+              disabled={isLoading}
             />
             {errors.cardNumber && (
               <p className="text-sm text-destructive">{errors.cardNumber}</p>
@@ -242,6 +253,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
                 onChange={(e) => handleExpireDateChange(e.target.value)}
                 maxLength={5}
                 className={errors.expireDate ? 'border-destructive' : ''}
+                disabled={isLoading}
               />
               {errors.expireDate && (
                 <p className="text-sm text-destructive">{errors.expireDate}</p>
@@ -257,6 +269,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
                 onChange={(e) => handleInputChange('cvc', e.target.value.replace(/\D/g, '').substring(0, 4))}
                 maxLength={4}
                 className={errors.cvc ? 'border-destructive' : ''}
+                disabled={isLoading}
               />
               {errors.cvc && (
                 <p className="text-sm text-destructive">{errors.cvc}</p>
@@ -269,6 +282,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
             <Select 
               value={formData.type} 
               onValueChange={(value) => handleInputChange('type', value)}
+              disabled={isLoading}
             >
               <SelectTrigger className={errors.type ? 'border-destructive' : ''}>
                 <SelectValue placeholder="Select card type" />
@@ -289,6 +303,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
             <Select 
               value={formData.cardColor} 
               onValueChange={(value) => handleInputChange('cardColor', value)}
+              disabled={isLoading}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select card color" />
@@ -311,6 +326,7 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
               id="isDefault"
               checked={formData.isDefault}
               onCheckedChange={(checked) => handleInputChange('isDefault', checked as boolean)}
+              disabled={isLoading}
             />
             <Label
               htmlFor="isDefault"
@@ -321,11 +337,26 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button type="submit">
-              Add Card
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Add Card'
+              )}
             </Button>
           </DialogFooter>
         </form>

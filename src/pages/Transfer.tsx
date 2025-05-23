@@ -21,8 +21,7 @@ interface TransferFormData {
 
 const Transfer: React.FC = () => {
   // Mock auth and wallet for demo
-  const user = { name: 'Demo User' };
-  const isAuthenticated = true;
+  const {user , isAuthenticated} = useAuth();
   const balance = 5000;
   const navigate = useNavigate();
 
@@ -45,20 +44,13 @@ const Transfer: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [transferSuccess, setTransferSuccess] = useState<boolean>(false);
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
-  
-  // Mock registered users database
-  const registeredUsers: UserSuggestion[] = [
-    { id: '1', name: 'Jane Smith', email: 'jane@example.com' },
-    { id: '2', name: 'John Doe', email: 'john@example.com' },
-    { id: '3', name: 'Alex Johnson', email: 'alex.johnson@email.com' },
-    { id: '4', name: 'Sarah Wilson', email: 'sarah.wilson@email.com' },
-    { id: '5', name: 'Mike Chen', email: 'mike.chen@email.com' },
-    { id: '6', name: 'Emily Rodriguez', email: 'emily.rodriguez@email.com' },
-  ];
 
   // Remove navigation logic for demo
   useEffect(() => {
     // Mock authentication check
+    if(!user.isVerified){
+      navigate('/verify');
+    }
   }, []);
 
   // Function to verify if user exists in database
@@ -198,7 +190,7 @@ const Transfer: React.FC = () => {
     <div className="mb-8">
       <div className="flex items-center justify-center space-x-4">
         {[1, 2, 3].map((stepNumber) => (
-          <React.Fragment key={stepNumber}>
+          <div key={stepNumber} className="flex items-center">
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 stepNumber <= step ? 'bg-primary text-primary-foreground' : 
@@ -222,11 +214,11 @@ const Transfer: React.FC = () => {
               </span>
             </div>
             {stepNumber < 3 && (
-              <div className={`w-8 h-px ${
+              <div className={`w-8 h-px ml-4 ${
                 stepNumber < step || (stepNumber === 2 && transferSuccess) ? 'bg-primary' : 'bg-muted'
               }`} />
             )}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </div>
