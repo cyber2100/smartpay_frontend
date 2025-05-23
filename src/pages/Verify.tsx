@@ -23,7 +23,7 @@ const Verify: React.FC = () => {
     useState<VerificationType>("email");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(60);
-  const { verifyAccount, user, isAuthenticated } = useAuth();
+  const { verifyAccount, user, isAuthenticated, resendVerification } = useAuth();
   const navigate = useNavigate();
 
   // If user is already verified or not logged in, redirect
@@ -65,9 +65,10 @@ const Verify: React.FC = () => {
     }
   };
 
-  const resendCode = (): void => {
+  const resendCode = async (): Promise<void> => {
     // In a real app, this would trigger an API call to send a new code
     // Include verification_type in the resend request
+    await resendVerification(verificationType);
     setTimeLeft(60);
     console.log(`New code sent via ${verificationType}: 123456`);
   };

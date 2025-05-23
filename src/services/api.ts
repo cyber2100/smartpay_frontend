@@ -105,6 +105,18 @@ export const authService = {
     return response.data;
   },
 
+  findUser: async (emailOrPhone: string) => {
+    const response = await api.get(`/auth/${emailOrPhone}`);
+    return response.data;
+  },
+
+  resendVerification: async (verification_type: "email" | "phone") => {
+    const response = await api.post(
+      `/auth/resend-verification/${verification_type}`
+    );
+    return response.data; // Should return { code: "182712" }
+  },
+
   getCurrentUser: async () => {
     const response = await api.get("/auth/me");
     return response.data;

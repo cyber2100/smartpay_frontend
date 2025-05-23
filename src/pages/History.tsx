@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowUp, Calendar, Search } from "lucide-react";
@@ -9,14 +8,99 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet, Transaction } from '@/hooks/use-wallet';
 
-const History = () => {
+// Mock data for development/fallback
+const mockTransactions: Transaction[] = [
+  {
+    id: '1',
+    senderId: 'user-123',
+    recipientId: 'user-456',
+    senderName: 'John Doe',
+    recipientName: 'Alice Smith',
+    amount: 250.00,
+    description: 'Dinner payment',
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+    status: 'completed'
+  },
+  {
+    id: '2',
+    senderId: 'user-789',
+    recipientId: 'user-123',
+    senderName: 'Bob Wilson',
+    recipientName: 'John Doe',
+    amount: 150.75,
+    description: 'Coffee refund',
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+    status: 'completed'
+  },
+  {
+    id: '3',
+    senderId: 'user-123',
+    recipientId: 'user-321',
+    senderName: 'John Doe',
+    recipientName: 'Sarah Johnson',
+    amount: 75.25,
+    description: 'Lunch split',
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
+    status: 'completed'
+  },
+  {
+    id: '4',
+    senderId: 'user-654',
+    recipientId: 'user-123',
+    senderName: 'Mike Davis',
+    recipientName: 'John Doe',
+    amount: 500.00,
+    description: 'Rent contribution',
+    timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000), // Yesterday
+    status: 'completed'
+  },
+  {
+    id: '5',
+    senderId: 'user-123',
+    recipientId: 'user-987',
+    senderName: 'John Doe',
+    recipientName: 'Emma Brown',
+    amount: 30.50,
+    description: 'Movie tickets',
+    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
+    status: 'completed'
+  },
+  {
+    id: '6',
+    senderId: 'user-111',
+    recipientId: 'user-123',
+    senderName: 'David Lee',
+    recipientName: 'John Doe',
+    amount: 125.80,
+    description: 'Grocery sharing',
+    timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000), // 3 days ago
+    status: 'completed'
+  },
+  {
+    id: '7',
+    senderId: 'user-123',
+    recipientId: 'user-222',
+    senderName: 'John Doe',
+    recipientName: 'Lisa Garcia',
+    amount: 200.00,
+    description: 'Birthday gift contribution',
+    timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+    status: 'completed'
+  }
+];
+
+interface HistoryProps {}
+
+const History: React.FC<HistoryProps> = () => {
   const { user, isAuthenticated } = useAuth();
   const { getTransactions } = useWallet();
   const navigate = useNavigate();
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('all');
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [usesMockData, setUsesMockData] = useState<boolean>(false);
   
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -25,23 +109,39 @@ const History = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  // Get all transactions
+  // Get all transactions with fallback to mock data
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (): Promise<void> => {
+      setIsLoading(true);
       try {
         const transactions = await getTransactions();
-        setAllTransactions(transactions);
+        
+        // Check if we got real data or if the API is not available
+        if (transactions && transactions.length > 0) {
+          setAllTransactions(transactions);
+          setUsesMockData(false);
+        } else {
+          // Fallback to mock data if no transactions or API unavailable
+          console.warn('API not available or no transactions found, using mock data');
+          setAllTransactions(mockTransactions);
+          setUsesMockData(true);
+        }
       } catch (error) {
-        console.error('Error fetching transactions:', error);
-        setAllTransactions([]);
+        console.error('Error fetching transactions, falling back to mock data:', error);
+        setAllTransactions(mockTransactions);
+        setUsesMockData(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    fetchTransactions();
-  }, [getTransactions]);
+    if (isAuthenticated) {
+      fetchTransactions();
+    }
+  }, [getTransactions, isAuthenticated]);
   
   // Apply filters
-  const filteredTransactions = allTransactions.filter((tx) => {
+  const filteredTransactions = allTransactions.filter((tx: Transaction): boolean => {
     // Text search
     const searchMatch = 
       tx.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,7 +160,7 @@ const History = () => {
   });
 
   // Format date for display
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date): string => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
@@ -71,10 +171,10 @@ const History = () => {
   };
 
   // Group transactions by date (for day headers)
-  const groupByDate = (transactions: Transaction[]) => {
+  const groupByDate = (transactions: Transaction[]): [string, Transaction[]][] => {
     const groups: { [key: string]: Transaction[] } = {};
     
-    transactions.forEach((tx) => {
+    transactions.forEach((tx: Transaction) => {
       const date = new Date(tx.timestamp);
       const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
       
@@ -85,9 +185,8 @@ const History = () => {
       groups[dateKey].push(tx);
     });
     
-    // Convert to array of [date, transactions]
+    // Convert to array of [date, transactions] and sort by date (newest first)
     return Object.entries(groups).sort((a, b) => {
-      // Sort by date (newest first)
       return new Date(b[0]).getTime() - new Date(a[0]).getTime();
     });
   };
@@ -95,7 +194,7 @@ const History = () => {
   const groupedTransactions = groupByDate(filteredTransactions);
   
   // Format date for group headers
-  const formatGroupDate = (dateString: string) => {
+  const formatGroupDate = (dateString: string): string => {
     const date = new Date(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -116,6 +215,28 @@ const History = () => {
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-16">
+        <AnimatedBackground />
+        <div className="container px-4 pt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction History</CardTitle>
+              <CardDescription>Loading your transactions...</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pb-16">
       <AnimatedBackground />
@@ -124,7 +245,14 @@ const History = () => {
         <Card>
           <CardHeader>
             <CardTitle>Transaction History</CardTitle>
-            <CardDescription>View all your past transactions</CardDescription>
+            <CardDescription>
+              View all your past transactions
+              {usesMockData && (
+                <span className="block text-xs text-orange-600 mt-1">
+                  • Using demo data (API not available)
+                </span>
+              )}
+            </CardDescription>
           </CardHeader>
           
           <CardContent>
@@ -135,7 +263,7 @@ const History = () => {
                 <Input
                   placeholder="Search transactions..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -143,7 +271,7 @@ const History = () => {
               <div className="w-full md:w-48">
                 <Select
                   value={filterType}
-                  onValueChange={setFilterType}
+                  onValueChange={(value: string) => setFilterType(value)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Filter by" />
@@ -160,7 +288,7 @@ const History = () => {
             {/* Transactions list */}
             <div className="space-y-6">
               {groupedTransactions.length > 0 ? (
-                groupedTransactions.map(([dateKey, txs]) => (
+                groupedTransactions.map(([dateKey, txs]: [string, Transaction[]]) => (
                   <div key={dateKey}>
                     {/* Date header */}
                     <div className="flex items-center gap-2 mb-2">
@@ -170,19 +298,19 @@ const History = () => {
                     
                     {/* Transactions for this date */}
                     <div className="space-y-2">
-                      {txs.map((tx) => (
+                      {txs.map((tx: Transaction) => (
                         <div 
                           key={tx.id} 
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-full 
                               ${tx.senderId === user?.id ? 'bg-destructive/10' : 'bg-primary/10'}`
                             }>
                               {tx.senderId === user?.id ? (
-                                <ArrowRight className="h-4 w-4" />
+                                <ArrowRight className="h-4 w-4 text-destructive" />
                               ) : (
-                                <ArrowUp className="h-4 w-4" />
+                                <ArrowUp className="h-4 w-4 text-primary" />
                               )}
                             </div>
                             
@@ -218,6 +346,11 @@ const History = () => {
               ) : (
                 <div className="text-center p-8">
                   <p className="text-muted-foreground">No matching transactions found</p>
+                  {searchTerm && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -229,4 +362,3 @@ const History = () => {
 };
 
 export default History;
-

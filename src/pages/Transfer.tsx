@@ -1,24 +1,16 @@
-import { ArrowRight, CheckCircle2, Search, User, CreditCard, Check } from "lucide-react";
-import React, { useRef, useState, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { ArrowRight, CheckCircle2, User } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Type definitions
-interface PaymentCard {
-  id: string;
-  name: string;
-  cardNumber: string;
-  expireDate: string;
-  cvc: string;
-  isDefault: boolean;
-  type: 'visa' | 'mastercard' | 'amex';
-  cardColor: string;
-}
-
 interface UserSuggestion {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  isverified?: boolean;
+  is_admin?: boolean;
 }
 
 interface TransferFormData {
@@ -42,26 +34,20 @@ const Transfer: React.FC = () => {
   const toast = ({ title, description, variant }: any) => {
     console.log(`Toast: ${title} - ${description}`);
   };
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const { findUser } = useAuth();
 
   const [recipient, setRecipient] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
   const [transferSuccess, setTransferSuccess] = useState<boolean>(false);
+  const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
   
-  // User search states
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [searchResults, setSearchResults] = useState<UserSuggestion[]>([]);
-  const [selectedUser, setSelectedUser] = useState<UserSuggestion | null>(null);
-  
-  // Card selection states
-  const [showCardDialog, setShowCardDialog] = useState<boolean>(false);
-  const [selectedCard, setSelectedCard] = useState<string>("");
-  
-  // Mock user data for search
-  const mockUsers: UserSuggestion[] = [
+  // Mock registered users database
+  const registeredUsers: UserSuggestion[] = [
     { id: '1', name: 'Jane Smith', email: 'jane@example.com' },
     { id: '2', name: 'John Doe', email: 'john@example.com' },
     { id: '3', name: 'Alex Johnson', email: 'alex.johnson@email.com' },
@@ -70,82 +56,32 @@ const Transfer: React.FC = () => {
     { id: '6', name: 'Emily Rodriguez', email: 'emily.rodriguez@email.com' },
   ];
 
-  // Mock payment cards
-  const paymentCards: PaymentCard[] = [
-    { 
-      id: 'card1', 
-      name: 'Chase Sapphire', 
-      cardNumber: '**** **** **** 4567', 
-      expireDate: '05/27', 
-      cvc: '***', 
-      isDefault: true,
-      type: 'visa',
-      cardColor: 'bg-blue-500'
-    },
-    { 
-      id: 'card2', 
-      name: 'Citibank Premier', 
-      cardNumber: '**** **** **** 8923', 
-      expireDate: '11/26', 
-      cvc: '***', 
-      isDefault: false,
-      type: 'mastercard',
-      cardColor: 'bg-purple-500'
-    },
-    { 
-      id: 'card3', 
-      name: 'American Express', 
-      cardNumber: '**** ****** 61005', 
-      expireDate: '03/28', 
-      cvc: '****', 
-      isDefault: false,
-      type: 'amex',
-      cardColor: 'bg-green-500'
-    }
-  ];
-
-  // Set default card on mount
-  useEffect(() => {
-    const defaultCard = paymentCards.find(card => card.isDefault);
-    if (defaultCard) {
-      setSelectedCard(defaultCard.id);
-    }
-  }, []);
-
   // Remove navigation logic for demo
   useEffect(() => {
     // Mock authentication check
   }, []);
 
-  // Handle clicks outside dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
+  // Function to verify if user exists in database
+  const verifyUser = async (emailOrPhone: string): Promise<UserSuggestion | null> => {
+    const foundUser = await findUser(emailOrPhone);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Search users based on input
-  const searchUsers = (query: string): UserSuggestion[] => {
-    if (!query.trim()) return [];
-    
-    return mockUsers.filter(user => 
-      user.name.toLowerCase().includes(query.toLowerCase()) ||
-      user.email.toLowerCase().includes(query.toLowerCase())
-    );
+    if (
+      foundUser &&
+      typeof foundUser === "object" &&
+      "id" in foundUser &&
+      "name" in foundUser &&
+      "email" in foundUser
+    ) {
+      return foundUser as UserSuggestion;
+    }
+    return null;
   };
 
   // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    if (e) e.preventDefault();
 
     // Validate amount
     if (isNaN(amountValue) || amountValue <= 0) {
@@ -167,14 +103,63 @@ const Transfer: React.FC = () => {
       return;
     }
 
-    // Step 1 is for details, step 2 is for confirmation
+    // Step 1: Verify user before proceeding to confirmation
     if (step === 1) {
-      setStep(2);
+      setIsVerifying(true);
+      
+      try {
+        const user = 
+          await verifyUser(recipient);
+          console.log('user = ', user);
+          
+        // {id: '1', name: 'cyber', email: 'cybernovax055@gmail.com'};
+        
+        if (user) {
+          setVerifiedUser(user);
+          setStep(2);
+          toast({
+            title: "User verified",
+            description: `Transfer recipient: ${user.name}`,
+          });
+        } else {
+          toast({
+            title: "User not found",
+            description: "The email or phone number is not registered with our service.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Verification failed",
+          description: "Unable to verify recipient. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsVerifying(false);
+      }
       return;
     }
 
-    // Open the card selection dialog instead of proceeding directly
-    setShowCardDialog(true);
+    // Step 2: Process the transfer
+    if (step === 2) {
+      setIsSubmitting(true);
+      
+      try {
+        const success = await transfer(recipient, amountValue, description);
+        if (success) {
+          setTransferSuccess(true);
+        }
+      } catch (error) {
+        console.error("Transfer error:", error);
+        toast({
+          title: "Transfer failed",
+          description: "There was an error processing your transfer.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   const handleReset = (): void => {
@@ -183,62 +168,11 @@ const Transfer: React.FC = () => {
     setAmount("");
     setDescription("");
     setTransferSuccess(false);
-    setSelectedUser(null);
-    setShowDropdown(false);
-  };
-
-  const handleCardSelect = async (option: 'selected' | 'instant'): Promise<void> => {
-    setShowCardDialog(false);
-    setIsSubmitting(true);
-
-    try {
-      if (option === 'instant') {
-        // Process the transfer directly
-        const success = await transfer(recipient, amountValue, description);
-        if (success) {
-          setTransferSuccess(true);
-        }
-      } else {
-        // In a real app, you'd process with the selected card
-        const selectedCardData = paymentCards.find(card => card.id === selectedCard);
-        setTimeout(() => {
-          toast({
-            title: `Processing with ${selectedCardData?.name}`,
-            description: "Your transfer is being processed.",
-          });
-          setTransferSuccess(true);
-        }, 1500);
-      }
-    } catch (error) {
-      console.error("Transfer error:", error);
-      toast({
-        title: "Transfer failed",
-        description: "There was an error processing your transfer.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setVerifiedUser(null);
   };
 
   const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const value = e.target.value;
-    setRecipient(value);
-    
-    if (value.trim()) {
-      const results = searchUsers(value);
-      setSearchResults(results);
-      setShowDropdown(results.length > 0);
-    } else {
-      setShowDropdown(false);
-      setSelectedUser(null);
-    }
-  };
-
-  const handleUserSelect = (user: UserSuggestion): void => {
-    setSelectedUser(user);
-    setRecipient(user.email);
-    setShowDropdown(false);
+    setRecipient(e.target.value);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -251,28 +185,13 @@ const Transfer: React.FC = () => {
 
   const handleBackToStep1 = (): void => {
     setStep(1);
+    setVerifiedUser(null);
   };
 
   const handleNavigateToWallet = (): void => {
     // Mock navigation
-    console.log('Navigate to wallet');
     navigate('/wallet');
-  };
-
-  const handleCardDialogClose = (open: boolean): void => {
-    setShowCardDialog(open);
-  };
-
-  const handleCardChange = (value: string): void => {
-    setSelectedCard(value);
-  };
-
-  const handleProceedWithCard = (): void => {
-    handleCardSelect("selected");
-  };
-
-  const handleInstantPayment = (): void => {
-    handleCardSelect("instant");
+    console.log('Navigate to wallet');
   };
 
   // Step indicator component
@@ -363,7 +282,7 @@ const Transfer: React.FC = () => {
                   </div>
                   <div className="flex justify-between mb-2">
                     <span className="text-muted-foreground">To</span>
-                    <span className="font-semibold">{selectedUser?.name || recipient}</span>
+                    <span className="font-semibold">{verifiedUser?.name || recipient}</span>
                   </div>
                   {description && (
                     <div className="flex justify-between">
@@ -392,52 +311,20 @@ const Transfer: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 {step === 1 ? (
                   <div className="space-y-4">
-                    <div className="space-y-2 relative" ref={dropdownRef}>
+                    <div className="space-y-2">
                       <label htmlFor="recipient" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         Recipient Email or Phone
                       </label>
-                      <div className="relative">
-                        <input
-                          id="recipient"
-                          type="text"
-                          placeholder="Search users or enter email/phone"
-                          value={recipient}
-                          onChange={handleRecipientChange}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-8"
-                          required
-                        />
-                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      </div>
-                      
-                      {/* User dropdown */}
-                      {showDropdown && searchResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {searchResults.map((user) => (
-                            <div
-                              key={user.id}
-                              className="flex items-center gap-3 p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
-                              onClick={() => handleUserSelect(user)}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-4 w-4 text-primary" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium text-sm">{user.name}</p>
-                                <p className="text-xs text-muted-foreground">{user.email}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {selectedUser && (
-                        <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950 rounded-md">
-                          <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-medium">{selectedUser.name}</span>
-                          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">{selectedUser.email}</span>
-                        </div>
-                      )}
-                      
+                      <input
+                        id="recipient"
+                        type="text"
+                        placeholder="Enter email or phone number"
+                        value={recipient}
+                        onChange={handleRecipientChange}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                        disabled={isVerifying}
+                      />
                       <p className="text-xs text-muted-foreground">
                         Demo recipients: jane@example.com or john@example.com
                       </p>
@@ -455,6 +342,7 @@ const Transfer: React.FC = () => {
                         onChange={handleAmountChange}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         required
+                        disabled={isVerifying}
                       />
                       <p className="text-xs text-muted-foreground">
                         Your balance: $
@@ -475,18 +363,17 @@ const Transfer: React.FC = () => {
                         value={description}
                         onChange={handleDescriptionChange}
                         className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={isVerifying}
                       />
                     </div>
 
                     <button 
-                      type="button" 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSubmit(e as any);
-                      }}
+                      type="button"
+                      onClick={() => handleSubmit()}
+                      disabled={isVerifying}
                       className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full"
                     >
-                      Continue
+                      {isVerifying ? "Verifying recipient..." : "Continue"}
                     </button>
                   </div>
                 ) : (
@@ -496,9 +383,21 @@ const Transfer: React.FC = () => {
                         Confirm Transfer
                       </h3>
 
+                      {verifiedUser && (
+                        <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950 rounded-md mb-4">
+                          <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                            <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">{verifiedUser.name}</p>
+                            <p className="text-sm text-green-600 dark:text-green-400">{verifiedUser.email}</p>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex justify-between mb-2">
                         <span className="text-muted-foreground">Recipient</span>
-                        <span className="font-semibold">{selectedUser?.name || recipient}</span>
+                        <span className="font-semibold">{verifiedUser?.name || recipient}</span>
                       </div>
 
                       <div className="flex justify-between mb-2">
@@ -530,18 +429,15 @@ const Transfer: React.FC = () => {
 
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleSubmit(e as any);
-                        }}
+                        onClick={() => handleSubmit()}
                         disabled={isSubmitting}
                         className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
                       >
                         {isSubmitting ? (
-                          "Processing..."
+                          "Processing Transfer..."
                         ) : (
                           <span className="flex items-center gap-1">
-                            Confirm <ArrowRight className="h-4 w-4" />
+                            Confirm Transfer <ArrowRight className="h-4 w-4" />
                           </span>
                         )}
                       </button>
@@ -553,74 +449,6 @@ const Transfer: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Payment Card Selection Dialog */}
-      {showCardDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={() => handleCardDialogClose(false)}></div>
-          <div className="relative bg-background rounded-lg border shadow-lg w-full max-w-md mx-4 p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Select Payment Method</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Choose which card to use for this payment or proceed with instant transfer.
-              </p>
-            </div>
-            
-            <div className="space-y-4 py-4">
-              <div className="flex flex-col space-y-3">
-                {paymentCards.map((card) => (
-                  <div key={card.id} className="flex items-center space-x-3 rounded-md border p-3">
-                    <input
-                      type="radio"
-                      value={card.id}
-                      id={card.id}
-                      name="selectedCard"
-                      checked={selectedCard === card.id}
-                      onChange={(e) => handleCardChange(e.target.value)}
-                      className="h-4 w-4 text-primary focus:ring-primary"
-                    />
-                    <label htmlFor={card.id} className="flex-1 cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-1 h-8 rounded ${card.cardColor}`}></div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{card.name}</span>
-                            {card.isDefault && (
-                              <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80">
-                                <Check className="h-3 w-3 mr-1" />
-                                Default
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{card.cardNumber}</p>
-                        </div>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex justify-between gap-3 pt-2">
-              <button 
-                onClick={handleProceedWithCard}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 flex-1"
-                disabled={!selectedCard}
-              >
-                Use Selected Card
-              </button>
-              
-              <button 
-                onClick={handleInstantPayment}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
-              >
-                Instant Payment
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

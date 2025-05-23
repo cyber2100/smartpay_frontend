@@ -25,7 +25,9 @@ type AuthContextType = {
     password: string
   ) => Promise<boolean>;
   signout: () => void;
+  findUser: (emailOrPhone: string) => Promise<object | null>;
   verifyAccount: (code: string, verification_type: string) => Promise<boolean>;
+  resendVerification: (verification_type: 'email' | 'phone') => Promise<boolean>;
   isAdmin: boolean;
 };
 
@@ -94,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Signin failed",
         description:
@@ -141,7 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Registration failed",
         description: error.response?.data?.detail || "Email already in use.",
@@ -158,10 +160,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     authService.signout();
     setUser(null);
     toast({
-      title: "Signged out",
+      title: "Signed out",
       description: "You have been logged out successfully.",
     });
   };
+
+  const findUser = async (emailOrPhone: string): Promise<object | null> => {
+    try {
+      const result = await authService.findUser(emailOrPhone);
+      return result;
+    } catch (error) {
+      const error_res = error.response?.data?.error;
+      toast ({title: 'Warning', description: error_res.message});
+      return null;
+    }
+  }
 
   // Verify account function
   const verifyAccount = async (
@@ -183,11 +196,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Verification failed",
         description:
           error.response?.data?.detail || "Invalid verification code.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Resend verification function
+  const resendVerification = async (
+    verification_type: 'email' | 'phone'
+  ): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to resend verification.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const response = await authService.resendVerification(verification_type);
+      
+      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
+      
+      toast({
+        title: "Verification code sent",
+        description: `A new verification code has been sent to your ${verificationMethod}.`,
+      });
+
+      // Optional: Log the mock code for development (remove in production)
+      if (response?.code) {
+        console.log(`Mock verification code: ${response.code}`);
+      }
+
+      return true;
+    } catch (error: any) {
+      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
+      
+      toast({
+        title: "Failed to resend verification",
+        description:
+          error.response?.data?.detail || 
+          `Could not send verification code to your ${verificationMethod}. Please try again.`,
         variant: "destructive",
       });
       return false;
@@ -200,13 +256,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     isAuthenticated: 
-      true, 
-      // !!user,
+      // true, 
+      !!user,
     isLoading,
     signin,
     signup,
     signout,
     verifyAccount,
+    resendVerification,
+    findUser,
     isAdmin,
   };
 
