@@ -1,19 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useWallet } from "@/hooks/use-wallet";
+import { useCard } from "@/hooks/use-card";
 import { ArrowRight, CheckCircle2, CreditCard, DollarSign, Shield } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Type definitions
-interface PaymentCard {
-  id: string;
-  type: 'visa' | 'mastercard' | 'amex';
-  lastFour: string;
-  expiryMonth: string;
-  expiryYear: string;
-  holderName: string;
-  isDefault?: boolean;
-}
+import { PaymentCard } from "@/types/payment";
 
 interface DepositFormData {
   cardId: string;
@@ -24,37 +16,9 @@ const Deposit: React.FC = () => {
   // Mock auth and wallet for demo
   const { user, isAuthenticated } = useAuth();
   const { deposit: walletDeposit } = useWallet();
-  const balance = 5000;
+  const { balance } = useWallet();
+  const { cards: paymentCards, getCards } = useCard();
   const navigate = useNavigate();
-
-  // Mock payment cards
-  const paymentCards: PaymentCard[] = [
-    {
-      id: '1',
-      type: 'visa',
-      lastFour: '4242',
-      expiryMonth: '12',
-      expiryYear: '2026',
-      holderName: 'John Doe',
-      isDefault: true
-    },
-    {
-      id: '2',
-      type: 'mastercard',
-      lastFour: '5555',
-      expiryMonth: '08',
-      expiryYear: '2025',
-      holderName: 'John Doe'
-    },
-    {
-      id: '3',
-      type: 'amex',
-      lastFour: '1005',
-      expiryMonth: '03',
-      expiryYear: '2027',
-      holderName: 'John Doe'
-    }
-  ];
 
   const deposit = async (cardId: string, amount: number) => {
     // Mock deposit function
@@ -73,12 +37,16 @@ const Deposit: React.FC = () => {
   const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
 
+  useEffect(() => {
+    getCards();
+  }, [])
+
   // Remove navigation logic for demo
   useEffect(() => {
     // Mock authentication check
-    // if (!user?.isVerified) {
-    //   navigate('/verify');
-    // }
+    if (!user?.isVerified) {
+      navigate('/verify');
+    }
     
     // Set default card
     const defaultCard = paymentCards.find(card => card.isDefault);
@@ -337,7 +305,7 @@ const Deposit: React.FC = () => {
                   <div className="flex justify-between mb-2">
                     <span className="text-muted-foreground">Payment Method</span>
                     <span className="font-semibold">
-                      {selectedCard && `${getCardTypeName(selectedCard.type)} •••• ${selectedCard.lastFour}`}
+                      {selectedCard && `${getCardTypeName(selectedCard.type)} ${selectedCard.cardNumber}`}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -412,10 +380,10 @@ const Deposit: React.FC = () => {
                                 </div>
                                 <div>
                                   <p className="font-medium">
-                                    {getCardTypeName(card.type)} •••• {card.lastFour}
+                                    {getCardTypeName(card.type)} {card.cardNumber}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    {card.holderName} • {card.expiryMonth}/{card.expiryYear}
+                                    {card.name} • {card.expireDate}
                                   </p>
                                 </div>
                               </div>
@@ -464,10 +432,10 @@ const Deposit: React.FC = () => {
                           </div>
                           <div>
                             <p className="font-medium">
-                              {getCardTypeName(selectedCard.type)} •••• {selectedCard.lastFour}
+                              {getCardTypeName(selectedCard.type)} {selectedCard.cardNumber}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {selectedCard.holderName}
+                              {selectedCard.name}
                             </p>
                           </div>
                         </div>

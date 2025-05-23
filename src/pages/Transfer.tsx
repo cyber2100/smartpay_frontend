@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useWallet } from "@/hooks/use-wallet";
-import { ArrowRight, CheckCircle2, User } from "lucide-react";
+import { ArrowRight, CheckCircle2, User, DollarSign } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -24,7 +24,7 @@ const Transfer: React.FC = () => {
   // Mock auth and wallet for demo
   const {user , isAuthenticated} = useAuth();
   const {transfer: moneyTransfer} = useWallet();
-  const balance = 5000;
+  const { balance } = useWallet();
   const navigate = useNavigate();
 
   const transfer = async (recipient: string, amount: number, description: string) => {
@@ -51,9 +51,9 @@ const Transfer: React.FC = () => {
   // Remove navigation logic for demo
   useEffect(() => {
     // Mock authentication check
-    // if(!user.isVerified){
-    //   navigate('/verify');
-    // }
+    if(!user.isVerified){
+      navigate('/verify');
+    }
   }, []);
 
   // Function to verify if user exists in database
@@ -253,6 +253,22 @@ const Transfer: React.FC = () => {
 
           <div className="p-6">
             <StepIndicator />
+
+            {/* Current Balance Display */}
+            <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">Current Balance</span>
+                </div>
+                <span className="text-xl font-bold text-primary">
+                  ${balance.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            </div>
             
             {transferSuccess ? (
               <div className="flex flex-col items-center py-6">
