@@ -4,17 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { walletService, transactionService, adminService } from '@/services/api';
 
 // Types
-export type Transaction = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  recipientId: string;
-  recipientName: string;
-  amount: number;
-  status: 'completed' | 'pending' | 'failed';
-  description?: string;
-  timestamp: Date;
-};
+import { Transaction } from '@/types/payment';
 
 export type WalletContextType = {
   balance: number;
@@ -48,19 +38,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setBalance(userBalance);
           
           // Get user transactions
-          const userTransactionData = await transactionService.getUserTransactions();
+          const userTransactionData = await walletService.getTransactions();
           
           // Transform API transactions to our app format
           const formattedTransactions = userTransactionData.map((tx: any) => ({
-            id: tx.id,
+            ...tx,
             senderId: tx.sender_id,
-            senderName: tx.sender_name,
             recipientId: tx.recipient_id,
-            recipientName: tx.recipient_name,
-            amount: tx.amount,
+            cardId: tx.card_id,
             status: tx.status as 'completed' | 'pending' | 'failed',
-            description: tx.description,
-            timestamp: new Date(tx.timestamp)
+            timestamp: tx.created_at
           }));
           
           setTransactions(formattedTransactions);
@@ -70,22 +57,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             try {
               const allTxData = await transactionService.getAllTransactions();
               const formattedAllTx = allTxData.map((tx: any) => ({
-                id: tx.id,
+                ...tx,
                 senderId: tx.sender_id,
-                senderName: tx.sender_name,
                 recipientId: tx.recipient_id,
-                recipientName: tx.recipient_name,
-                amount: tx.amount,
+                cardId: tx.card_id,
                 status: tx.status as 'completed' | 'pending' | 'failed',
-                description: tx.description,
-                timestamp: new Date(tx.timestamp)
+                timestamp: tx.created_at
               }));
               setAllTransactions(formattedAllTx);
               
               const allUsersData = await adminService.getAllUsers();
               const formattedUsers = allUsersData.map((u: any) => ({
                 id: u.id,
-                name: u.name,
+                name: u.fullname,
                 email: u.email,
                 phone: u.phone,
                 isAdmin: u.is_admin,
@@ -121,17 +105,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!isAuthenticated || !user) return;
     
     try {
-      const userTransactionData = await transactionService.getUserTransactions();
+      const userTransactionData = await walletService.getTransactions();
       const formattedTransactions = userTransactionData.map((tx: any) => ({
-        id: tx.id,
+        ...tx,
         senderId: tx.sender_id,
-        senderName: tx.sender_name,
         recipientId: tx.recipient_id,
-        recipientName: tx.recipient_name,
-        amount: tx.amount,
+        cardId: tx.card_id,
         status: tx.status as 'completed' | 'pending' | 'failed',
-        description: tx.description,
-        timestamp: new Date(tx.timestamp)
+        timestamp: tx.created_at
       }));
       setTransactions(formattedTransactions);
     } catch (error) {
@@ -219,15 +200,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
           const allTxData = await transactionService.getAllTransactions();
           const formattedAllTx = allTxData.map((tx: any) => ({
-            id: tx.id,
+            ...tx,
             senderId: tx.sender_id,
-            senderName: tx.sender_name,
             recipientId: tx.recipient_id,
-            recipientName: tx.recipient_name,
-            amount: tx.amount,
+            cardId: tx.card_id,
             status: tx.status as 'completed' | 'pending' | 'failed',
-            description: tx.description,
-            timestamp: new Date(tx.timestamp)
+            timestamp: tx.created_at
           }));
           setAllTransactions(formattedAllTx);
         } catch (adminError) {
@@ -270,12 +248,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!isAuthenticated || !user) return false;
     
     try {
-      const result = await walletService.transfer(recipientIdentifier, amount, description);
+      await walletService.transfer(recipientIdentifier, amount, description);
       
-      // Update local balance
-      setBalance(result.new_balance);
-      
-      // Refresh transactions
       await refreshTransactions();
       
       toast({
@@ -283,6 +257,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been sent.`
       });
       
+      setBalance(balance - amount);
+
       return true;
     } catch (error: any) {
       toast({
@@ -295,27 +271,24 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   // Get user's transactions
-  const getTransactions = () => {
-    if (!user) return Promise.resolve([]);
-    
-    return transactionService.getUserTransactions()
-      .then((userTransactionData: any) => {
-        return userTransactionData.map((tx: any) => ({
-          id: tx.id,
-          senderId: tx.sender_id,
-          senderName: tx.sender_name,
-          recipientId: tx.recipient_id,
-          recipientName: tx.recipient_name,
-          amount: tx.amount,
-          status: tx.status as 'completed' | 'pending' | 'failed',
-          description: tx.description,
-          timestamp: new Date(tx.timestamp)
-        }));
-      })
-      .catch((error) => {
-        console.error('Error fetching transactions:', error);
-        return [];
-      });
+  const getTransactions = async (): Promise<Transaction[]> => {
+    if (!user) return [];
+    try {
+      const userTransactionData = await walletService.getTransactions();
+      const result = userTransactionData.map((tx: any) => ({
+        ...tx,
+        senderId: tx.sender_id,
+        recipientId: tx.recipient_id,
+        cardId: tx.card_id,
+        status: tx.status as 'completed' | 'pending' | 'failed',
+        timestamp: tx.created_at
+      }));
+      setTransactions(result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    }
   };
   
   // Value to provide

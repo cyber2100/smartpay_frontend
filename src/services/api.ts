@@ -158,7 +158,7 @@ export const walletService = {
   // Transfer money (existing function)
   transfer: async (recipientIdentifier: string, amount: number, description?: string): Promise<{ new_balance: number }> => {
     const response = await api.post('/wallet/transfer', {
-      recipient: recipientIdentifier,
+      recipient_identifier: recipientIdentifier,
       amount,
       description
     });
@@ -168,7 +168,7 @@ export const walletService = {
   // Get wallet transactions
   getTransactions: async (): Promise<any[]> => {
     const response = await api.get('/wallet/transactions');
-    return response.data.transactions;
+    return response.data;
   },
 
   // Get user's payment cards (optional - for loading real cards)

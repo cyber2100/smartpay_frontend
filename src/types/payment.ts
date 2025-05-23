@@ -11,13 +11,31 @@ export interface PaymentCard {
 
 export interface Transaction {
   id: string;
-  title: string;
+  senderId?: string;
+  sender?: {
+    id: string,
+    fullname: string,
+    email: string,
+    phone: string|null
+  }|null;
+  recipientId?: string;
+  recipient?: {
+    id: string,
+    fullname: string,
+    email: string,
+    phone: string|null
+  }|null;
+  cardId?: string;
+  card?: {
+    id: string;
+    name: string;
+  }|null;
   amount: number;
-  type: 'received' | 'sent';
-  date: Date;
-  from?: string;
-  cardUsed?: PaymentCard;
-}
+  status: 'completed' | 'pending' | 'failed';
+  description?: string;
+  type: string;
+  timestamp: Date;
+};
 
 export interface MonthlyData {
   name: string;

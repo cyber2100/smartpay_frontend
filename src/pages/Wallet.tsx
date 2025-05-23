@@ -7,95 +7,31 @@ import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
 
-// Type definitions
-interface Transaction {
-  id: string;
-  title: string;
-  amount: number;
-  date: Date;
-  type: 'deposit' | 'withdrawal' | 'transfer_in' | 'transfer_out';
-  description?: string;
-}
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-}
+// Type definitions updated to match backend data structure
+import { Transaction } from '@/types/payment';
 
 const Wallet: React.FC = () => {
-  // Mock user data - replace with actual auth hook
-  const {user, isAuthenticated} = useAuth();
-
+  const { user, isAuthenticated } = useAuth();
+  const { transactions, getTransactions, balance } = useWallet();
+  
   const navigate = useNavigate();
   
-  // Mock wallet data
-  const { balance } = useWallet();
-  const [transactions] = useState<Transaction[]>([
-    {
-      id: 'tx1',
-      title: 'Deposit from Visa Card',
-      amount: 500.00,
-      date: new Date(2025, 4, 21, 14, 30),
-      type: 'deposit',
-      description: 'Card ending in 4242'
-    },
-    {
-      id: 'tx2',
-      title: 'Transfer to Alice Smith',
-      amount: -150.00,
-      date: new Date(2025, 4, 20, 11, 15),
-      type: 'transfer_out',
-      description: 'Payment for services'
-    },
-    {
-      id: 'tx3',
-      title: 'Received from Bob Johnson',
-      amount: 275.50,
-      date: new Date(2025, 4, 19, 16, 45),
-      type: 'transfer_in',
-      description: 'Project payment'
-    },
-    {
-      id: 'tx4',
-      title: 'Withdrawal to Mastercard',
-      amount: -200.00,
-      date: new Date(2025, 4, 18, 9, 20),
-      type: 'withdrawal',
-      description: 'Card ending in 5678'
-    },
-    {
-      id: 'tx5',
-      title: 'Deposit from American Express',
-      amount: 800.00,
-      date: new Date(2025, 4, 17, 13, 10),
-      type: 'deposit',
-      description: 'Card ending in 9012'
-    },
-    {
-      id: 'tx6',
-      title: 'Transfer to Sarah Wilson',
-      amount: -89.99,
-      date: new Date(2025, 4, 15, 18, 30),
-      type: 'transfer_out',
-      description: 'Dinner split'
-    }
-  ]);
-
   useEffect(() => {
-    if(!isAuthenticated){
-      navigate('/signin')
-    } else if (!user.isVerified){
-      navigate('/verify')
+    if (!isAuthenticated) {
+      return navigate('/signin');
+    } else if (!user.isVerified) {
+      return navigate('/verify');
     }
-  }, [])
+    getTransactions();
+  }, []);
 
   const handleDirectToPath = (path: string) => {
     navigate(path);
-  }
+  };
 
-  // Format date for display
-  const formatDate = (date: Date): string => {
+  // Format created_at for display - handling ISO string from backend
+  const formatDate = (dateString: Date): string => {
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -104,37 +40,65 @@ const Wallet: React.FC = () => {
     }).format(date);
   };
 
+  // Get transaction title based on type and parties involved
+  const getTransactionTitle = (transaction: Transaction): string => {
+    switch (transaction.type) {
+      case 'deposit':
+        return 'Deposit to Account';
+      case 'withdraw':
+        return 'Withdrawal from Account';
+      case 'transfer':
+        if (transaction.senderId === user.id) {
+          return `Transfer to ${transaction.recipient?.fullname || transaction.recipient?.email}`;
+        } else {
+          return `Transfer from ${transaction.sender?.fullname || transaction.sender?.email || 'Unknown'}`;
+        }
+      default:
+        return 'Transaction';
+    }
+  };
+
   // Get transaction icon and color
   const getTransactionDisplay = (transaction: Transaction) => {
+    // Determine if this is an incoming or outgoing transaction for the current user
+    const isIncoming = transaction.recipient.id === user.id && 
+                      (transaction.type === 'deposit' || 
+                      (transaction.type === 'transfer' && transaction.senderId !== user.id));
+    
+    const isOutgoing = transaction.type === 'withdraw' || 
+                      (transaction.type === 'transfer' && transaction.senderId === user.id);
+    
     switch (transaction.type) {
       case 'deposit':
         return {
-          icon: <Plus className="h-4 w-4" />,
+          icon: <ArrowDown className="h-4 w-4" />,
           bgColor: 'bg-green-500/10',
           textColor: 'text-green-600',
           amountColor: 'text-green-600'
         };
-      case 'withdrawal':
+      case 'withdraw':
         return {
-          icon: <Minus className="h-4 w-4" />,
+          icon: <ArrowUp className="h-4 w-4" />,
           bgColor: 'bg-red-500/10',
           textColor: 'text-red-600',
           amountColor: 'text-red-600'
         };
-      case 'transfer_in':
-        return {
-          icon: <ArrowDown className="h-4 w-4" />,
-          bgColor: 'bg-blue-500/10',
-          textColor: 'text-blue-600',
-          amountColor: 'text-green-600'
-        };
-      case 'transfer_out':
-        return {
-          icon: <ArrowUp className="h-4 w-4" />,
-          bgColor: 'bg-orange-500/10',
-          textColor: 'text-orange-600',
-          amountColor: 'text-red-600'
-        };
+      case 'transfer':
+        if (isIncoming) {
+          return {
+            icon: <ArrowDown className="h-4 w-4" />,
+            bgColor: 'bg-blue-500/10',
+            textColor: 'text-blue-600',
+            amountColor: 'text-green-600'
+          };
+        } else {
+          return {
+            icon: <ArrowUp className="h-4 w-4" />,
+            bgColor: 'bg-orange-500/10',
+            textColor: 'text-orange-600',
+            amountColor: 'text-red-600'
+          };
+        }
       default:
         return {
           icon: <DollarSign className="h-4 w-4" />,
@@ -143,6 +107,25 @@ const Wallet: React.FC = () => {
           amountColor: 'text-gray-600'
         };
     }
+  };
+
+  // Determine if a transaction amount should display as positive or negative
+  const getTransactionAmount = (transaction: Transaction): number => {
+    if (transaction.type === 'deposit') {
+      return transaction.amount;
+    } else if (transaction.type === 'withdraw') {
+      return -transaction.amount;
+    } else if (transaction.type === 'transfer') {
+      // If user is the recipient, it's a positive amount
+      if (transaction.recipient.id === user.id) {
+        return transaction.amount;
+      } 
+      // If user is the sender, it's a negative amount
+      else if (transaction.senderId === user.id) {
+        return -transaction.amount;
+      }
+    }
+    return transaction.amount;
   };
 
   return (
@@ -187,7 +170,7 @@ const Wallet: React.FC = () => {
                 
                 <div className="flex flex-wrap gap-3">
                   <Button 
-                    onClick={()=>handleDirectToPath('/deposit')}
+                    onClick={() => handleDirectToPath('/deposit')}
                     className="gap-2 bg-green-600 hover:bg-green-700"
                   >
                     <Plus className="h-4 w-4" /> 
@@ -195,7 +178,7 @@ const Wallet: React.FC = () => {
                   </Button>
                   
                   <Button 
-                    onClick={()=>handleDirectToPath('/withdraw')}
+                    onClick={() => handleDirectToPath('/withdraw')}
                     variant="outline"
                     className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
                   >
@@ -204,7 +187,7 @@ const Wallet: React.FC = () => {
                   </Button>
                   
                   <Button 
-                    onClick={()=>handleDirectToPath('/transfer')}
+                    onClick={() => handleDirectToPath('/transfer')}
                     className="gap-2 bg-blue-600 hover:bg-blue-700"
                   >
                     <ArrowRight className="h-4 w-4" /> 
@@ -246,7 +229,7 @@ const Wallet: React.FC = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl">Recent Transactions</CardTitle>
-                <Button variant="ghost" size="sm" onClick={()=>handleDirectToPath('/history')}>
+                <Button variant="ghost" size="sm" onClick={() => handleDirectToPath('/history')}>
                   View all
                 </Button>
               </div>
@@ -255,9 +238,11 @@ const Wallet: React.FC = () => {
             
             <CardContent>
               <div className="space-y-4">
-                {transactions.length > 0 ? (
+                {transactions && transactions.length > 0 ? (
                   transactions.map((transaction: Transaction) => {
                     const display = getTransactionDisplay(transaction);
+                    const amount = getTransactionAmount(transaction);
+                    const title = getTransactionTitle(transaction);
                     
                     return (
                       <div 
@@ -273,27 +258,32 @@ const Wallet: React.FC = () => {
                           
                           <div>
                             <p className="font-medium">
-                              {transaction.title}
+                              {title}
                             </p>
                             {transaction.description && (
                               <p className="text-sm text-muted-foreground">
                                 {transaction.description}
                               </p>
                             )}
+                            {transaction.status && transaction.status !== 'completed' && (
+                              <p className="text-xs text-yellow-600 mt-1">
+                                Status: {transaction.status}
+                              </p>
+                            )}
                           </div>
                         </div>
                         
                         <div className="text-right">
-                          <p className={`font-semibold ${display.amountColor}`}>
-                            {transaction.amount < 0 ? '-' : '+'}
-                            ${Math.abs(transaction.amount).toLocaleString('en-US', {
+                          <p className={`font-semibold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {amount < 0 ? '-' : '+'}
+                            ${Math.abs(amount).toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2
                             })}
                           </p>
                           <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground mt-1">
                             <Clock className="h-3 w-3" />
-                            {formatDate(transaction.date)}
+                            {formatDate(transaction.timestamp)}
                           </p>
                         </div>
                       </div>
