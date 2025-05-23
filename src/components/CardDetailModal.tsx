@@ -41,11 +41,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
   onSetDefault, 
   onDelete 
 }) => {
-  const [showSensitiveInfo, setShowSensitiveInfo] = useState(false);
   const [cardDetails, setCardDetails] = useState<PaymentCard | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const { getCardDetails } = useCard();
 
   useEffect(() => {
     if (isOpen && card) {
@@ -53,46 +49,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
     }
   }, [isOpen, card]);
 
-  const handleShowSensitiveInfo = async () => {
-    if (!showSensitiveInfo && cardDetails) {
-      setIsLoading(true);
-      try {
-        const fullCardDetails = await getCardDetails(cardDetails.id);
-        setCardDetails(fullCardDetails);
-        setShowSensitiveInfo(true);
-        toast({
-          title: "Card details revealed",
-          description: "Full card information is now visible.",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load card details. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setShowSensitiveInfo(false);
-    }
-  };
-
   if (!isOpen || !cardDetails) return null;
-
-  const formatCardNumber = (number: string, show: boolean) => {
-    if (show && cardDetails.cardNumber) {
-      return cardDetails.cardNumber.replace(/(.{4})/g, '$1 ').trim();
-    }
-    return cardDetails.cardNumber;
-  };
-
-  const formatCVC = (cvc: string, show: boolean) => {
-    if (show && cardDetails.cvc) {
-      return cardDetails.cvc;
-    }
-    return cardDetails.type === 'amex' ? '****' : '***';
-  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -124,7 +81,7 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
               <div>
                 <p className="text-sm opacity-75">Card Number</p>
                 <p className="text-lg font-mono tracking-wider">
-                  {formatCardNumber(cardDetails.cardNumber || cardDetails.cardNumber, showSensitiveInfo)}
+                  {cardDetails.cardNumber}
                 </p>
               </div>
               
@@ -135,37 +92,10 @@ export const CardDetailModal: React.FC<CardDetailModalProps> = ({
                 </div>
                 <div>
                   <p className="text-sm opacity-75">CVC</p>
-                  <p className="font-mono">{formatCVC(cardDetails.cvc, showSensitiveInfo)}</p>
+                  <p className="font-mono">{cardDetails.cvc}</p>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Toggle Button */}
-          <div className="flex justify-center mb-6">
-            <Button
-              variant="outline"
-              onClick={handleShowSensitiveInfo}
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : showSensitiveInfo ? (
-                <>
-                  <EyeOff className="h-4 w-4" />
-                  Hide Details
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Show Details
-                </>
-              )}
-            </Button>
           </div>
 
           {/* Card Status */}

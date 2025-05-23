@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   CreditCard,
   Plus,
@@ -21,8 +21,13 @@ const CardPage: React.FC = () => {
     isLoading, 
     addCard, 
     setDefaultCard, 
-    deleteCard 
+    deleteCard,
+    getCards
   } = useCard();
+
+  useEffect(() => {
+    getCards();
+  }, [])
 
   const handleSetDefault = async (cardId: string) => {
     try {

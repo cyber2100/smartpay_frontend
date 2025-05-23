@@ -15,6 +15,7 @@ import Signup from "./pages/Signup";
 import Verify from "./pages/Verify";
 import Wallet from "./pages/Wallet";
 import Transfer from "./pages/Transfer";
+import Deposit from "./pages/Deposit";
 import History from "./pages/History";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
@@ -73,6 +74,7 @@ const AppRoutes = () => {
         <Route path="/dashboard" element={<AuthLayout><Dashboard /></AuthLayout>} />
         <Route path="/wallet" element={<AuthLayout><Wallet /></AuthLayout>} />
         <Route path="/transfer" element={<AuthLayout><Transfer /></AuthLayout>} />
+        <Route path="/deposit" element={<AuthLayout><Deposit /></AuthLayout>} />
         <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
         <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
         <Route path="/profile" element={<AuthLayout><ProfilePage /></AuthLayout>} />

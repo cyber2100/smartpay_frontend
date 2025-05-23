@@ -21,6 +21,7 @@ export type WalletContextType = {
   transactions: Transaction[];
   topUp: (amount: number) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
+  deposit: (cardId: string, amount: number) => Promise<boolean>;
   getTransactions: () => Promise<Transaction[]>;
   allTransactions: Transaction[];
   allUsers: User[];
@@ -115,17 +116,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loadWalletData();
   }, [isAuthenticated, user, isAdmin, toast]);
   
-  // Top up wallet
-  const topUp = async (amount: number): Promise<boolean> => {
-    if (!isAuthenticated || !user) return false;
+  // Helper function to refresh transactions
+  const refreshTransactions = async () => {
+    if (!isAuthenticated || !user) return;
     
     try {
-      const result = await walletService.topUp(amount);
-      
-      // Update local balance
-      setBalance(result.new_balance);
-      
-      // Refresh transactions
       const userTransactionData = await transactionService.getUserTransactions();
       const formattedTransactions = userTransactionData.map((tx: any) => ({
         id: tx.id,
@@ -139,6 +134,23 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         timestamp: new Date(tx.timestamp)
       }));
       setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    }
+  };
+  
+  // Top up wallet
+  const topUp = async (amount: number): Promise<boolean> => {
+    if (!isAuthenticated || !user) return false;
+    
+    try {
+      const result = await walletService.topUp(amount);
+      
+      // Update local balance
+      setBalance(result.new_balance);
+      
+      // Refresh transactions
+      await refreshTransactions();
       
       toast({
         title: "Top up successful",
@@ -155,6 +167,103 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return false;
     }
   };
+
+  // Deposit money with card
+  const deposit = async (cardId: string, amount: number): Promise<boolean> => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to make a deposit.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validate amount
+    if (amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Deposit amount must be greater than zero.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validate cardId
+    if (!cardId) {
+      toast({
+        title: "Payment method required",
+        description: "Please select a payment card.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    try {
+      // Call the deposit API service
+      const result = await walletService.deposit(cardId, amount);
+      
+      // Update local balance with the new balance from the API response
+      if (result.new_balance !== undefined) {
+        setBalance(result.new_balance);
+      } else {
+        // Fallback: add the deposit amount to current balance
+        setBalance(prevBalance => prevBalance + amount);
+      }
+      
+      // Refresh transactions to show the new deposit transaction
+      await refreshTransactions();
+      
+      // If admin, refresh all transactions as well
+      if (isAdmin) {
+        try {
+          const allTxData = await transactionService.getAllTransactions();
+          const formattedAllTx = allTxData.map((tx: any) => ({
+            id: tx.id,
+            senderId: tx.sender_id,
+            senderName: tx.sender_name,
+            recipientId: tx.recipient_id,
+            recipientName: tx.recipient_name,
+            amount: tx.amount,
+            status: tx.status as 'completed' | 'pending' | 'failed',
+            description: tx.description,
+            timestamp: new Date(tx.timestamp)
+          }));
+          setAllTransactions(formattedAllTx);
+        } catch (adminError) {
+          console.error('Error refreshing admin transactions:', adminError);
+        }
+      }
+      
+      toast({
+        title: "Deposit successful",
+        description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been added to your wallet.`
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error('Deposit error:', error);
+      
+      let errorMessage = "Failed to process deposit.";
+      
+      // Handle different types of errors
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Deposit failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      return false;
+    }
+  };
   
   // Transfer money
   const transfer = async (recipientIdentifier: string, amount: number, description?: string): Promise<boolean> => {
@@ -167,19 +276,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setBalance(result.new_balance);
       
       // Refresh transactions
-      const userTransactionData = await transactionService.getUserTransactions();
-      const formattedTransactions = userTransactionData.map((tx: any) => ({
-        id: tx.id,
-        senderId: tx.sender_id,
-        senderName: tx.sender_name,
-        recipientId: tx.recipient_id,
-        recipientName: tx.recipient_name,
-        amount: tx.amount,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        description: tx.description,
-        timestamp: new Date(tx.timestamp)
-      }));
-      setTransactions(formattedTransactions);
+      await refreshTransactions();
       
       toast({
         title: "Transfer successful",
@@ -227,6 +324,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     transactions,
     topUp,
     transfer,
+    deposit,
     getTransactions,
     allTransactions,
     allUsers

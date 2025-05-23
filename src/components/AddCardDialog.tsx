@@ -157,15 +157,13 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
 
     // Mask the card number for display
     const cardNumberDigits = formData.cardNumber.replace(/\s/g, '');
-    const maskedCardNumber = formData.type === 'amex' 
-      ? `**** ****** ${cardNumberDigits.slice(-5)}`
-      : `**** **** **** ${cardNumberDigits.slice(-4)}`;
+    const maskedCardNumber = cardNumberDigits;
 
     const newCard: Omit<PaymentCard, 'id'> = {
       name: formData.name,
       cardNumber: maskedCardNumber,
       expireDate: formData.expireDate,
-      cvc: formData.type === 'amex' ? '****' : '***',
+      cvc: formData.cvc,
       type: formData.type as 'visa' | 'mastercard' | 'amex',
       cardColor: formData.cardColor,
       isDefault: formData.isDefault,

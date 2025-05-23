@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Minus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { AnimatedBackground } from '@/components/animated-background';
+import { useAuth } from '@/hooks/use-auth';
 
 // Type definitions
 interface Transaction {
@@ -23,13 +24,9 @@ interface User {
 
 const Wallet: React.FC = () => {
   // Mock user data - replace with actual auth hook
-  const user: User = {
-    id: 'user123',
-    email: 'user@example.com',
-    name: 'John Doe'
-  };
+  const {user, isAuthenticated} = useAuth();
 
-  const navigator = useNavigate();
+  const navigate = useNavigate();
   
   // Mock wallet data
   const [balance] = useState<number>(2847.65);
@@ -84,8 +81,16 @@ const Wallet: React.FC = () => {
     }
   ]);
 
+  useEffect(() => {
+    if(!isAuthenticated){
+      navigate('/signin')
+    } else if (!user.isVerified){
+      navigate('/verify')
+    }
+  }, [])
+
   const handleDirectToPath = (path: string) => {
-    navigator(path);
+    navigate(path);
   }
 
   // Format date for display

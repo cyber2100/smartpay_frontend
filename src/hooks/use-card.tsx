@@ -12,7 +12,6 @@ type CardContextType = {
   setDefaultCard: (cardId: string) => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
   getCards: () => Promise<PaymentCard[]>;
-  getCardDetails: (cardId: string) => Promise<PaymentCard>;
   refreshCards: () => Promise<void>;
 };
 
@@ -73,14 +72,19 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add new card
   const addCard = async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
     try {
-      const newCard = await cardService.addCard(cardData);
+      const newCardId: string = await cardService.addCard(cardData);
+
+      const newCard = {
+        ...cardData,
+        id: newCardId
+      };
       
       // Update local state
-      if (cardData.isDefault || cards.length === 0) {
+      if (cards.length === 0) {
         // If this is set as default or is the first card, update other cards
         setCards(prevCards => [
-          ...prevCards.map(card => ({ ...card, isDefault: false })),
-          newCard
+          ...prevCards,
+          {...newCard, isDefault: true}
         ]);
       } else {
         setCards(prevCards => [...prevCards, newCard]);
@@ -190,30 +194,6 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Get card details (including sensitive info)
-  const getCardDetails = async (cardId: string): Promise<PaymentCard> => {
-    try {
-      const cardDetails = await cardService.getCardDetails(cardId);
-      
-      // Optionally update the card in local state with full details
-      setCards(prevCards =>
-        prevCards.map(card =>
-          card.id === cardId ? { ...card, ...cardDetails } : card
-        )
-      );
-
-      return cardDetails;
-    } catch (error: any) {
-      console.error('Error fetching card details:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to load card details. Please try again.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   const value = {
     cards,
     isLoading,
@@ -222,7 +202,6 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
     setDefaultCard,
     deleteCard,
     getCards,
-    getCardDetails,
     refreshCards,
   };
 
@@ -236,61 +215,4 @@ export const useCard = () => {
     throw new Error("useCard must be used within a CardProvider");
   }
   return context;
-};
-
-// Export individual functions for backward compatibility with your existing code
-export const useCardFunctions = {
-  getCards: async (): Promise<PaymentCard[]> => {
-    try {
-      return await cardService.getCards();
-    } catch (error) {
-      console.error('Error fetching cards:', error);
-      throw error;
-    }
-  },
-
-  addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
-    try {
-      return await cardService.addCard(cardData);
-    } catch (error) {
-      console.error('Error adding card:', error);
-      throw error;
-    }
-  },
-
-  updateCard: async (cardId: string, updateData: Partial<PaymentCard>): Promise<PaymentCard> => {
-    try {
-      return await cardService.updateCard(cardId, updateData);
-    } catch (error) {
-      console.error('Error updating card:', error);
-      throw error;
-    }
-  },
-
-  setDefaultCard: async (cardId: string): Promise<void> => {
-    try {
-      await cardService.setDefaultCard(cardId);
-    } catch (error) {
-      console.error('Error setting default card:', error);
-      throw error;
-    }
-  },
-
-  deleteCard: async (cardId: string): Promise<void> => {
-    try {
-      await cardService.deleteCard(cardId);
-    } catch (error) {
-      console.error('Error deleting card:', error);
-      throw error;
-    }
-  },
-
-  getCardDetails: async (cardId: string): Promise<PaymentCard> => {
-    try {
-      return await cardService.getCardDetails(cardId);
-    } catch (error) {
-      console.error('Error fetching card details:', error);
-      throw error;
-    }
-  },
 };

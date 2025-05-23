@@ -131,28 +131,72 @@ export const authService = {
 
 // Wallet
 export const walletService = {
-  getBalance: async () => {
-    const response = await api.get("/wallet/balance");
+  // Get user's current balance
+  getBalance: async (): Promise<number> => {
+    const response = await api.get('/wallet/balance');
     return response.data.balance;
   },
 
-  topUp: async (amount: number) => {
-    const response = await api.post("/wallet/topup", { amount });
-    return response.data;
-  },
-
-  transfer: async (
-    recipient_identifier: string,
-    amount: number,
-    description?: string
-  ) => {
-    const response = await api.post("/wallet/transfer", {
-      recipient_identifier,
-      amount,
-      description,
+  // Top up wallet (existing function)
+  topUp: async (amount: number): Promise<{ new_balance: number }> => {
+    const response = await api.post('/wallet/topup', {
+      amount
     });
     return response.data;
   },
+
+  // Deposit money with card
+  deposit: async (cardId: string, amount: number): Promise<{ new_balance: number; transaction_id: string }> => {
+    const response = await api.post('/wallet/deposit', {
+      card_id: cardId,
+      amount
+    });
+    return response.data;
+  },
+
+  // Transfer money (existing function)
+  transfer: async (recipientIdentifier: string, amount: number, description?: string): Promise<{ new_balance: number }> => {
+    const response = await api.post('/wallet/transfer', {
+      recipient: recipientIdentifier,
+      amount,
+      description
+    });
+    return response.data;
+  },
+
+  // Get wallet transactions
+  getTransactions: async (): Promise<any[]> => {
+    const response = await api.get('/wallet/transactions');
+    return response.data.transactions;
+  },
+
+  // Get user's payment cards (optional - for loading real cards)
+  getPaymentCards: async (): Promise<any[]> => {
+    const response = await api.get('/wallet/cards');
+    return response.data.cards;
+  },
+
+  // Add a new payment card (optional)
+  addPaymentCard: async (cardData: {
+    card_number: string;
+    expiry_month: string;
+    expiry_year: string;
+    cvv: string;
+    holder_name: string;
+  }): Promise<any> => {
+    const response = await api.post('/wallet/cards', cardData);
+    return response.data;
+  },
+
+  // Delete a payment card (optional)
+  deletePaymentCard: async (cardId: string): Promise<void> => {
+    await api.delete(`/wallet/cards/${cardId}`);
+  },
+
+  // Set default payment card (optional)
+  setDefaultCard: async (cardId: string): Promise<void> => {
+    await api.patch(`/wallet/cards/${cardId}/default`);
+  }
 };
 
 // Transactions
@@ -190,10 +234,10 @@ export const cardService = {
   },
 
   // Add new card
-  addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
+  addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<string> => {
     try {
       const response = await api.post('/payment-cards', cardData);
-      return response.data;
+      return response.data.id;
     } catch (error) {
       console.error('Error adding card:', error);
       throw error;
@@ -214,7 +258,7 @@ export const cardService = {
   // Set card as default
   setDefaultCard: async (cardId: string): Promise<void> => {
     try {
-      await api.put(`/payment-cards/${cardId}/default`);
+      await api.patch(`/payment-cards/${cardId}/default`);
     } catch (error) {
       console.error('Error setting default card:', error);
       throw error;

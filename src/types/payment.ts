@@ -3,7 +3,7 @@ export interface PaymentCard {
   name: string;
   cardNumber: string;
   expireDate: string;
-  cvc: string;
+  cvc: string|number;
   isDefault: boolean;
   type: 'visa' | 'mastercard' | 'amex';
   cardColor: string;
