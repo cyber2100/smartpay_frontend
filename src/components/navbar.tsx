@@ -36,6 +36,7 @@ export function Navbar(): ReactElement {
 
   const handleSignout = (): void => {
     signout();
+    navigate('/signin');
   };
 
   return (

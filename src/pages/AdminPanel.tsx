@@ -31,7 +31,7 @@ const AdminPanel: React.FC = () => {
   // Redirect if not authenticated or not admin
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
-      navigate('/');
+      navigate('/signin');
     }
   }, [isAuthenticated, isAdmin, navigate]);
   
