@@ -9,7 +9,9 @@ import {
   Wallet, 
   Clock,
   Send,
-  CreditCard
+  CreditCard,
+  ArrowUpCircle,
+  ArrowDownCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -32,6 +34,8 @@ export const Sidebar: React.FC = () => {
     { id: 'dashboard', name: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/dashboard' },
     { id: 'wallet', name: 'Wallet', icon: <Wallet className="h-5 w-5" />, path: '/wallet' },
     { id: 'card', name: 'Card', icon: <CreditCard className="h-5 w-5" />, path: '/card' },
+    { id: 'deposit', name: 'Deposit', icon: <ArrowDownCircle className="h-5 w-5" />, path: '/deposit' },
+    { id: 'withdraw', name: 'Withdraw', icon: <ArrowUpCircle className="h-5 w-5" />, path: '/withdraw' },
     { id: 'transfer', name: 'Transfer', icon: <Send className="h-5 w-5" />, path: '/transfer' },
     { id: 'history', name: 'History', icon: <Clock className="h-5 w-5" />, path: '/history' }
   ];

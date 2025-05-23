@@ -69,7 +69,6 @@ const Transfer: React.FC = () => {
       foundUser &&
       typeof foundUser === "object" &&
       "id" in foundUser &&
-      "name" in foundUser &&
       "email" in foundUser
     ) {
       return foundUser as UserSuggestion;

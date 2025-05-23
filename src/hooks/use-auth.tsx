@@ -159,6 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signout = () => {
     authService.signout();
     setUser(null);
+    
     toast({
       title: "Signed out",
       description: "You have been logged out successfully.",
