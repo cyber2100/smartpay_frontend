@@ -19,7 +19,7 @@ export type Transaction = {
 export type WalletContextType = {
   balance: number;
   transactions: Transaction[];
-  topUp: (amount: number) => Promise<boolean>;
+  withdraw: (amount: number, cardId: string) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
   deposit: (cardId: string, amount: number) => Promise<boolean>;
   getTransactions: () => Promise<Transaction[]>;
@@ -140,14 +140,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   // Top up wallet
-  const topUp = async (amount: number): Promise<boolean> => {
+  const withdraw = async (amount: number, cardId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
     
     try {
-      const result = await walletService.topUp(amount);
+      const result = await walletService.withdraw(amount, cardId);
       
       // Update local balance
-      setBalance(result.new_balance);
+      setBalance(result.balance);
       
       // Refresh transactions
       await refreshTransactions();
@@ -204,8 +204,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const result = await walletService.deposit(cardId, amount);
       
       // Update local balance with the new balance from the API response
-      if (result.new_balance !== undefined) {
-        setBalance(result.new_balance);
+      if (result.balance !== undefined) {
+        setBalance(result.balance);
       } else {
         // Fallback: add the deposit amount to current balance
         setBalance(prevBalance => prevBalance + amount);
@@ -322,7 +322,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const value: WalletContextType = {
     balance,
     transactions,
-    topUp,
+    withdraw,
     transfer,
     deposit,
     getTransactions,

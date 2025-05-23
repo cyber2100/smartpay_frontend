@@ -7,22 +7,22 @@ import { useNavigate } from "react-router-dom";
 
 import { PaymentCard } from "@/types/payment";
 
-interface DepositFormData {
+interface WithdrawFormData {
   cardId: string;
   amount: string;
 }
 
-const Deposit: React.FC = () => {
+const Withdraw: React.FC = () => {
   // Mock auth and wallet for demo
   const { user, isAuthenticated } = useAuth();
-  const { deposit: walletDeposit } = useWallet();
+  const { withdraw: walletWithdraw } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards, getCards } = useCard();
   const navigate = useNavigate();
 
-  const deposit = async (cardId: string, amount: number) => {
-    // Mock deposit function
-    const response = await walletDeposit(cardId, amount);
+  const withdraw = async (cardId: string, amount: number) => {
+    // Mock withdraw function
+    const response = await walletWithdraw(amount, cardId);
     return response;
   };
   
@@ -34,7 +34,7 @@ const Deposit: React.FC = () => {
   const [amount, setAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
-  const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ const Deposit: React.FC = () => {
 
   // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);
-  const minDeposit = 10;
-  const maxDeposit = 10000;
+  const minWithdraw = 10;
+  const maxWithdraw = 10000;
 
   const validateStep1 = (): boolean => {
     // Validate amount
@@ -72,19 +72,19 @@ const Deposit: React.FC = () => {
       return false;
     }
 
-    if (amountValue < minDeposit) {
+    if (amountValue < minWithdraw) {
       toast({
         title: "Amount too low",
-        description: `Minimum deposit amount is $${minDeposit}.`,
+        description: `Minimum withdraw amount is $${minWithdraw}.`,
         variant: "destructive",
       });
       return false;
     }
 
-    if (amountValue > maxDeposit) {
+    if (amountValue > maxWithdraw) {
       toast({
         title: "Amount too high",
-        description: `Maximum deposit amount is $${maxDeposit}.`,
+        description: `Maximum withdraw amount is $${maxWithdraw}.`,
         variant: "destructive",
       });
       return false;
@@ -118,25 +118,25 @@ const Deposit: React.FC = () => {
       return;
     }
 
-    // Step 2: Process the deposit
+    // Step 2: Process the withdraw
     if (step === 2) {
       setIsSubmitting(true);
       
       try {
-        const success = await deposit(selectedCardId, amountValue);
+        const success = await withdraw(selectedCardId, amountValue);
         if (success) {
-          setDepositSuccess(true);
+          setWithdrawSuccess(true);
           setStep(3);
           toast({
-            title: "Deposit successful",
+            title: "Withdraw successful",
             description: `$${amountValue.toFixed(2)} has been added to your wallet.`,
           });
         }
       } catch (error) {
-        console.error("Deposit error:", error);
+        console.error("Withdraw error:", error);
         toast({
-          title: "Deposit failed",
-          description: "There was an error processing your deposit. Please try again.",
+          title: "Withdraw failed",
+          description: "There was an error processing your withdraw. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -148,7 +148,7 @@ const Deposit: React.FC = () => {
   const handleReset = (): void => {
     setStep(1);
     setAmount("");
-    setDepositSuccess(false);
+    setWithdrawSuccess(false);
     setSelectedCard(null);
     // Reset to default card
     const defaultCard = paymentCards.find(card => card.isDefault);
@@ -213,7 +213,7 @@ const Deposit: React.FC = () => {
                 stepNumber <= step ? 'bg-primary text-primary-foreground' : 
                 'bg-muted text-muted-foreground'
               }`}>
-                {stepNumber < step || (stepNumber === 3 && depositSuccess) ? (
+                {stepNumber < step || (stepNumber === 3 && withdrawSuccess) ? (
                   <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   stepNumber
@@ -230,7 +230,7 @@ const Deposit: React.FC = () => {
             </div>
             {stepNumber < 3 && (
               <div className={`w-8 h-px ml-4 ${
-                stepNumber < step || (stepNumber === 2 && depositSuccess) ? 'bg-primary' : 'bg-muted'
+                stepNumber < step || (stepNumber === 2 && withdrawSuccess) ? 'bg-primary' : 'bg-muted'
               }`} />
             )}
           </div>
@@ -254,12 +254,12 @@ const Deposit: React.FC = () => {
         <div className="max-w-lg mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
           <div className="text-center p-6 border-b border-gray-200/50 dark:border-gray-700/50">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {depositSuccess ? "Deposit Complete" : "Add Money"}
+              {withdrawSuccess ? "Withdraw Complete" : "Remove Money"}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
-              {depositSuccess
+              {withdrawSuccess
                 ? "Your money has been added successfully."
-                : "Deposit funds to your SmartPay wallet."}
+                : "Withdraw funds from your SmartPay wallet."}
             </p>
           </div>
 
@@ -282,14 +282,14 @@ const Deposit: React.FC = () => {
               </div>
             </div>
             
-            {depositSuccess ? (
+            {withdrawSuccess ? (
               <div className="flex flex-col items-center py-6">
                 <div className="h-16 w-16 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900 mb-4">
                   <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
 
                 <h3 className="text-xl font-semibold mb-1">
-                  Deposit successful!
+                  Withdraw successful!
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   Your money has been added to your wallet.
@@ -297,9 +297,9 @@ const Deposit: React.FC = () => {
 
                 <div className="w-full p-4 rounded-lg bg-muted/50 mb-6">
                   <div className="flex justify-between mb-2">
-                    <span className="text-muted-foreground">Amount Deposited</span>
+                    <span className="text-muted-foreground">Amount Withdrawed</span>
                     <span className="font-semibold text-green-600 dark:text-green-400">
-                      +${amountValue.toFixed(2)}
+                      -${amountValue.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between mb-2">
@@ -321,7 +321,7 @@ const Deposit: React.FC = () => {
                     onClick={handleReset}
                     className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                   >
-                    New Deposit
+                    New Withdraw
                   </button>
                   <button 
                     onClick={handleNavigateToWallet}
@@ -338,14 +338,14 @@ const Deposit: React.FC = () => {
                     {/* Amount Input */}
                     <div className="space-y-2">
                       <label htmlFor="amount" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Deposit Amount ($)
+                        Withdraw Amount ($)
                       </label>
                       <input
                         id="amount"
                         type="number"
                         placeholder="0.00"
-                        min={minDeposit}
-                        max={maxDeposit}
+                        min={minWithdraw}
+                        max={maxWithdraw}
                         step="any"
                         value={amount}
                         onChange={handleAmountChange}
@@ -353,7 +353,7 @@ const Deposit: React.FC = () => {
                         required
                       />
                       <p className="text-xs text-muted-foreground">
-                        Min: ${minDeposit} • Max: ${maxDeposit.toLocaleString()}
+                        Min: ${minWithdraw} • Max: ${maxWithdraw.toLocaleString()}
                       </p>
                     </div>
 
@@ -422,7 +422,7 @@ const Deposit: React.FC = () => {
                     <div className="p-4 rounded-lg bg-muted/50">
                       <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <Shield className="h-5 w-5 text-primary" />
-                        Confirm Deposit
+                        Confirm Withdraw
                       </h3>
 
                       {selectedCard && (
@@ -443,7 +443,7 @@ const Deposit: React.FC = () => {
 
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Deposit Amount</span>
+                          <span className="text-muted-foreground">Withdraw Amount</span>
                           <span className="font-semibold text-lg">
                             ${amountValue.toFixed(2)}
                           </span>
@@ -468,7 +468,7 @@ const Deposit: React.FC = () => {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">New Balance</span>
                           <span className="font-bold text-primary">
-                            ${(balance + amountValue).toFixed(2)}
+                            ${(balance - amountValue).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -491,10 +491,10 @@ const Deposit: React.FC = () => {
                         className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 flex-1"
                       >
                         {isSubmitting ? (
-                          "Processing Deposit..."
+                          "Processing Withdraw..."
                         ) : (
                           <span className="flex items-center gap-1">
-                            Confirm Deposit <ArrowRight className="h-4 w-4" />
+                            Confirm Withdraw <ArrowRight className="h-4 w-4" />
                           </span>
                         )}
                       </button>
@@ -510,4 +510,4 @@ const Deposit: React.FC = () => {
   );
 };
 
-export default Deposit;
+export default Withdraw;

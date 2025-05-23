@@ -138,15 +138,16 @@ export const walletService = {
   },
 
   // Top up wallet (existing function)
-  topUp: async (amount: number): Promise<{ new_balance: number }> => {
-    const response = await api.post('/wallet/topup', {
-      amount
+  withdraw: async (amount: number, cardId: string): Promise<{ balance: number }> => {
+    const response = await api.post('/wallet/withdraw', {
+      amount, 
+      card_id: cardId
     });
     return response.data;
   },
 
   // Deposit money with card
-  deposit: async (cardId: string, amount: number): Promise<{ new_balance: number; transaction_id: string }> => {
+  deposit: async (cardId: string, amount: number): Promise<{ balance: number; transaction_id: string }> => {
     const response = await api.post('/wallet/deposit', {
       card_id: cardId,
       amount

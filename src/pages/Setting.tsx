@@ -43,7 +43,7 @@ interface VerificationStatus {
   phone: boolean;
 }
 
-export const ProfilePage: React.FC = () => {
+export const SettingPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("account");
 
@@ -232,7 +232,7 @@ export const ProfilePage: React.FC = () => {
 
   return (
     <div className="container max-w-4xl py-8">
-      <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
       <Tabs 
         defaultValue="account" 
@@ -510,4 +510,4 @@ export const ProfilePage: React.FC = () => {
   );
 };
 
-export default ProfilePage;
+export default SettingPage;

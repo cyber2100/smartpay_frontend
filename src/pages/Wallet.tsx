@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
+import { useWallet } from '@/hooks/use-wallet';
 
 // Type definitions
 interface Transaction {
@@ -29,7 +30,7 @@ const Wallet: React.FC = () => {
   const navigate = useNavigate();
   
   // Mock wallet data
-  const [balance] = useState<number>(2847.65);
+  const { balance } = useWallet();
   const [transactions] = useState<Transaction[]>([
     {
       id: 'tx1',

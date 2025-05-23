@@ -1,6 +1,6 @@
 import React, { ReactElement } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { User, Wallet, History, LogOut, UserCircle, WalletIcon } from "lucide-react";
+import { User, Wallet, History, LogOut, UserCircle, WalletIcon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -85,9 +85,9 @@ export function Navbar(): ReactElement {
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
-                      <Link to="/profile">
-                        <UserCircle className="mr-2 h-4 w-4"/>
-                        Profile
+                      <Link to="/setting">
+                        <Settings className="mr-2 h-4 w-4"/>
+                        Setting
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>

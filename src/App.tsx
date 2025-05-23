@@ -16,11 +16,12 @@ import Verify from "./pages/Verify";
 import Wallet from "./pages/Wallet";
 import Transfer from "./pages/Transfer";
 import Deposit from "./pages/Deposit";
+import Withdraw from "./pages/Withdraw";
 import History from "./pages/History";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import React from "react";
-import ProfilePage from "./pages/Profile";
+import Setting from "./pages/Setting";
 import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
 import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
@@ -75,9 +76,10 @@ const AppRoutes = () => {
         <Route path="/wallet" element={<AuthLayout><Wallet /></AuthLayout>} />
         <Route path="/transfer" element={<AuthLayout><Transfer /></AuthLayout>} />
         <Route path="/deposit" element={<AuthLayout><Deposit /></AuthLayout>} />
+        <Route path="/withdraw" element={<AuthLayout><Withdraw /></AuthLayout>} />
         <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
         <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
-        <Route path="/profile" element={<AuthLayout><ProfilePage /></AuthLayout>} />
+        <Route path="/setting" element={<AuthLayout><Setting /></AuthLayout>} />
         <Route path="/card" element={<AuthLayout><Card /></AuthLayout>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
