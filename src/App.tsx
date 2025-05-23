@@ -24,6 +24,7 @@ import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
 import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
 import { useAuth } from "@/hooks/use-auth";
+import { CardProvider } from "./hooks/use-card";
 
 const queryClient = new QueryClient();
 
@@ -87,16 +88,18 @@ const App = () => (
     <ThemeProvider defaultTheme="dark">
       <AuthProvider>
         <WalletProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <AppRoutes />
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
+          <CardProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <div className="min-h-screen flex flex-col">
+                  <Navbar />
+                  <AppRoutes />
+                </div>
+              </BrowserRouter>
+            </TooltipProvider>
+          </CardProvider>
         </WalletProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { PaymentCard } from '@/types/payment';
 
 // Base API configuration
 const API_URL = "http://146.19.215.133:8000/api/v1";
@@ -172,5 +173,72 @@ export const adminService = {
   getAllUsers: async () => {
     const response = await api.get("/admin/users");
     return response.data;
+  },
+};
+
+//Card
+export const cardService = {
+  // Get all cards
+  getCards: async (): Promise<PaymentCard[]> => {
+    try {
+      const response = await api.get('/payment-cards');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+      throw error;
+    }
+  },
+
+  // Add new card
+  addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
+    try {
+      const response = await api.post('/payment-cards', cardData);
+      return response.data;
+    } catch (error) {
+      console.error('Error adding card:', error);
+      throw error;
+    }
+  },
+
+  // Update card (set as default)
+  updateCard: async (cardId: string, updateData: Partial<PaymentCard>): Promise<PaymentCard> => {
+    try {
+      const response = await api.put(`/payment-cards/${cardId}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating card:', error);
+      throw error;
+    }
+  },
+
+  // Set card as default
+  setDefaultCard: async (cardId: string): Promise<void> => {
+    try {
+      await api.put(`/payment-cards/${cardId}/default`);
+    } catch (error) {
+      console.error('Error setting default card:', error);
+      throw error;
+    }
+  },
+
+  // Delete card
+  deleteCard: async (cardId: string): Promise<void> => {
+    try {
+      await api.delete(`/payment-cards/${cardId}`);
+    } catch (error) {
+      console.error('Error deleting card:', error);
+      throw error;
+    }
+  },
+
+  // Get card details (including sensitive info)
+  getCardDetails: async (cardId: string): Promise<PaymentCard> => {
+    try {
+      const response = await api.get(`/payment-cards/${cardId}/details`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching card details:', error);
+      throw error;
+    }
   },
 };

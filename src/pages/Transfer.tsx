@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useWallet } from "@/hooks/use-wallet";
 import { ArrowRight, CheckCircle2, User } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,12 +23,14 @@ interface TransferFormData {
 const Transfer: React.FC = () => {
   // Mock auth and wallet for demo
   const {user , isAuthenticated} = useAuth();
+  const {transfer: moneyTransfer} = useWallet();
   const balance = 5000;
   const navigate = useNavigate();
 
   const transfer = async (recipient: string, amount: number, description: string) => {
     // Mock transfer function
-    return true;
+    const response = await moneyTransfer(recipient, amount, description);
+    return response;
   };
   
   const toast = ({ title, description, variant }: any) => {
