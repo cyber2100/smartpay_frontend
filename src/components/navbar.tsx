@@ -1,5 +1,5 @@
 import React, { ReactElement } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, replace, useLocation, useNavigate } from "react-router-dom";
 import { User, Wallet, History, LogOut, UserCircle, WalletIcon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,10 @@ export function Navbar(): ReactElement {
   const { isAuthenticated, user, signout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  if(!isAuthenticated){
+    navigate('/signin', { replace: true });
+  }
 
   const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: "smooth" });

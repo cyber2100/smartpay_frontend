@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Transform API format to our app format
       const appUser: User = {
         id: userData.id,
-        name: userData.name,
+        name: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin || false,
@@ -257,8 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     isAuthenticated: 
-      // true, 
-      !!user,
+      true, 
+      // !!user,
     isLoading,
     signin,
     signup,

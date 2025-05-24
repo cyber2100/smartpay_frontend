@@ -51,7 +51,7 @@ const Transfer: React.FC = () => {
   // Remove navigation logic for demo
   useEffect(() => {
     // Mock authentication check
-    if(!user.isVerified){
+    if(!user?.isVerified){
       navigate('/verify');
     }
   }, []);

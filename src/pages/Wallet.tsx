@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Minus } from "lucide-react";
+import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Minus, PlusIcon, MinusIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,33 @@ import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
 
 // Type definitions updated to match backend data structure
-import { Transaction } from '@/types/payment';
+export interface Transaction {
+  id: string;
+  senderId?: string;
+  sender?: {
+    id: string,
+    fullname: string,
+    email: string,
+    phone: string|null
+  }|null;
+  recipientId?: string;
+  recipient?: {
+    id: string,
+    fullname: string,
+    email: string,
+    phone: string|null
+  }|null;
+  cardId?: string;
+  card?: {
+    id: string;
+    name: string;
+  }|null;
+  amount: number;
+  status: 'completed' | 'pending' | 'failed';
+  description?: string;
+  type: string;
+  timestamp: Date;
+}
 
 const Wallet: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -19,19 +45,25 @@ const Wallet: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
-    } else if (!user.isVerified) {
+    } else if (!user?.isVerified) {
       return navigate('/verify');
     }
     getTransactions();
-  }, []);
+  }, [isAuthenticated, user?.isVerified, navigate, getTransactions]);
 
   const handleDirectToPath = (path: string) => {
     navigate(path);
   };
 
-  // Format created_at for display - handling ISO string from backend
-  const formatDate = (dateString: Date): string => {
-    const date = new Date(dateString);
+  // Format timestamp for display - handling both Date objects and ISO strings from backend
+  const formatDate = (timestamp: Date | string): string => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -42,56 +74,73 @@ const Wallet: React.FC = () => {
 
   // Get transaction title based on type and parties involved
   const getTransactionTitle = (transaction: Transaction): string => {
+    if (!user?.id) return 'Transaction';
+    
     switch (transaction.type) {
       case 'deposit':
         return 'Deposit to Account';
       case 'withdraw':
         return 'Withdrawal from Account';
       case 'transfer':
+        // Check if current user is the sender
         if (transaction.senderId === user.id) {
-          return `Transfer to ${transaction.recipient?.fullname || transaction.recipient?.email}`;
-        } else {
-          return `Transfer from ${transaction.sender?.fullname || transaction.sender?.email || 'Unknown'}`;
+          const recipientName = transaction.recipient?.fullname || 
+                               transaction.recipient?.email || 
+                               'Unknown User';
+          return `Transfer to ${recipientName}`;
+        } 
+        // Check if current user is the recipient
+        else if (transaction.recipientId === user.id) {
+          const senderName = transaction.sender?.fullname || 
+                            transaction.sender?.email || 
+                            'Unknown User';
+          return `Transfer from ${senderName}`;
         }
+        return 'Transfer';
       default:
-        return 'Transaction';
+        return `${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)} Transaction`;
     }
   };
 
   // Get transaction icon and color
   const getTransactionDisplay = (transaction: Transaction) => {
+    if (!user?.id) {
+      return {
+        icon: <DollarSign className="h-4 w-4" />,
+        bgColor: 'bg-gray-500/10',
+        textColor: 'text-gray-600',
+        amountColor: 'text-gray-600'
+      };
+    }
+
     // Determine if this is an incoming or outgoing transaction for the current user
-    const isIncoming = transaction.recipient.id === user.id && 
-                      (transaction.type === 'deposit' || 
-                      (transaction.type === 'transfer' && transaction.senderId !== user.id));
-    
-    const isOutgoing = transaction.type === 'withdraw' || 
-                      (transaction.type === 'transfer' && transaction.senderId === user.id);
+    const isIncoming = transaction.recipientId === user.id;
+    const isOutgoing = transaction.senderId === user.id;
     
     switch (transaction.type) {
       case 'deposit':
         return {
-          icon: <ArrowDown className="h-4 w-4" />,
+          icon: <PlusIcon className="h-4 w-4" />,
           bgColor: 'bg-green-500/10',
           textColor: 'text-green-600',
           amountColor: 'text-green-600'
         };
       case 'withdraw':
         return {
-          icon: <ArrowUp className="h-4 w-4" />,
+          icon: <MinusIcon className="h-4 w-4" />,
           bgColor: 'bg-red-500/10',
           textColor: 'text-red-600',
           amountColor: 'text-red-600'
         };
       case 'transfer':
-        if (isIncoming) {
+        if (isIncoming && !isOutgoing) {
           return {
             icon: <ArrowDown className="h-4 w-4" />,
             bgColor: 'bg-blue-500/10',
             textColor: 'text-blue-600',
             amountColor: 'text-green-600'
           };
-        } else {
+        } else if (isOutgoing) {
           return {
             icon: <ArrowUp className="h-4 w-4" />,
             bgColor: 'bg-orange-500/10',
@@ -99,6 +148,13 @@ const Wallet: React.FC = () => {
             amountColor: 'text-red-600'
           };
         }
+        // Fallback for transfer type
+        return {
+          icon: <ArrowRight className="h-4 w-4" />,
+          bgColor: 'bg-purple-500/10',
+          textColor: 'text-purple-600',
+          amountColor: 'text-purple-600'
+        };
       default:
         return {
           icon: <DollarSign className="h-4 w-4" />,
@@ -111,22 +167,51 @@ const Wallet: React.FC = () => {
 
   // Determine if a transaction amount should display as positive or negative
   const getTransactionAmount = (transaction: Transaction): number => {
-    if (transaction.type === 'deposit') {
-      return transaction.amount;
-    } else if (transaction.type === 'withdraw') {
-      return -transaction.amount;
-    } else if (transaction.type === 'transfer') {
-      // If user is the recipient, it's a positive amount
-      if (transaction.recipient.id === user.id) {
+    if (!user?.id) return transaction.amount;
+    
+    switch (transaction.type) {
+      case 'deposit':
         return transaction.amount;
-      } 
-      // If user is the sender, it's a negative amount
-      else if (transaction.senderId === user.id) {
+      case 'withdraw':
         return -transaction.amount;
-      }
+      case 'transfer':
+        // If current user is the recipient, it's a positive amount
+        if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
+          return transaction.amount;
+        } 
+        // If current user is the sender, it's a negative amount
+        else if (transaction.senderId === user.id) {
+          return -transaction.amount;
+        }
+        // Fallback: return the amount as-is
+        return transaction.amount;
+      default:
+        // For other transaction types, assume positive
+        return transaction.amount;
     }
-    return transaction.amount;
   };
+
+  // Get status color
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'completed':
+        return 'text-green-600';
+      case 'pending':
+        return 'text-yellow-600';
+      case 'failed':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  // Sort transactions by timestamp (newest first)
+  const sortedTransactions = transactions ? 
+    [...transactions].sort((a, b) => {
+      const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+      const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    }) : [];
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -158,13 +243,13 @@ const Wallet: React.FC = () => {
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
                   <h2 className="text-5xl font-bold mb-2">
-                    ${balance.toLocaleString('en-US', {
+                    ${typeof balance === 'number' ? balance.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
-                    })}
+                    }) : '0.00'}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Account: {user.email}
+                    Account: {user?.email || 'Unknown'}
                   </p>
                 </div>
                 
@@ -238,8 +323,8 @@ const Wallet: React.FC = () => {
             
             <CardContent>
               <div className="space-y-4">
-                {transactions && transactions.length > 0 ? (
-                  transactions.map((transaction: Transaction) => {
+                {sortedTransactions && sortedTransactions.length > 0 ? (
+                  sortedTransactions.slice(0, 5).map((transaction: Transaction) => {
                     const display = getTransactionDisplay(transaction);
                     const amount = getTransactionAmount(transaction);
                     const title = getTransactionTitle(transaction);
@@ -265,9 +350,14 @@ const Wallet: React.FC = () => {
                                 {transaction.description}
                               </p>
                             )}
+                            {transaction.card && (
+                              <p className="text-xs text-muted-foreground">
+                                Card: {transaction.card.name}
+                              </p>
+                            )}
                             {transaction.status && transaction.status !== 'completed' && (
-                              <p className="text-xs text-yellow-600 mt-1">
-                                Status: {transaction.status}
+                              <p className={`text-xs mt-1 ${getStatusColor(transaction.status)}`}>
+                                Status: {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                               </p>
                             )}
                           </div>

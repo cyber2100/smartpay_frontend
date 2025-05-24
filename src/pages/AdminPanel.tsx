@@ -4,7 +4,7 @@ import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/use-auth';
-import { useWallet, Transaction } from '@/hooks/use-wallet';
+import { useWallet } from '@/hooks/use-wallet';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { 
@@ -19,6 +19,7 @@ import {
 
 // Use the User type from use-auth instead of redefining it
 import type { User } from '@/hooks/use-auth';
+import { Transaction } from '@/types/payment';
 
 const AdminPanel: React.FC = () => {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -43,8 +44,8 @@ const AdminPanel: React.FC = () => {
   
   // Filter transactions
   const filteredTransactions: Transaction[] = allTransactions.filter((tx: Transaction) => 
-    tx.senderName.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
-    tx.recipientName.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
+    tx.sender?.fullname.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
+    tx.recipient?.fullname.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
     (tx.description && tx.description.toLowerCase().includes(txSearchTerm.toLowerCase()))
   );
 
@@ -189,8 +190,8 @@ const AdminPanel: React.FC = () => {
                       {filteredTransactions.map((tx: Transaction) => (
                         <TableRow key={tx.id}>
                           <TableCell className="font-mono text-xs">{tx.id}</TableCell>
-                          <TableCell>{tx.senderName}</TableCell>
-                          <TableCell>{tx.recipientName}</TableCell>
+                          <TableCell>{tx.sender?.fullname}</TableCell>
+                          <TableCell>{tx.recipient?.fullname}</TableCell>
                           <TableCell>
                             ${tx.amount.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
