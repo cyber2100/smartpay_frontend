@@ -1,6 +1,6 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { User, Wallet, History, LogOut, UserCircle, WalletIcon, Settings } from "lucide-react";
+import { User, Wallet, History, LogOut, UserCircle, WalletIcon, Settings, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,13 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import NotificationDropdown from "./NotificationDropdown";
+import { NotificationDropdown } from "./NotificationDropdown";
 import { ModeToggle } from "./mode-toggle";
 
 export function Navbar(): ReactElement {
-  const { isAuthenticated, user, signout } = useAuth();
+  const { isAuthenticated, user, signout, isAdmin } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // State to track if admin is viewing admin panel
+  const { isAdminPanelView, setIsAdminPanelView } = useAuth();
+
+  // Check if current page is admin panel on mount and location change
+  useEffect(() => {
+    setIsAdminPanelView(location.pathname.startsWith('/admin'));
+  }, [location.pathname]);
 
   const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -26,19 +34,28 @@ export function Navbar(): ReactElement {
 
   const refreshAndGoHome = (): void => {
     if (location.pathname === "/") {
-      // If already on home page, just scroll to top
       scrollToTop();
     } else {
-      // Navigate to home page using React Router instead of refreshing
       navigate("/", { replace: true });
     }
   };
 
   const handleSignout = (): void => {
     signout();
-    // The RouteGuard will automatically redirect to signin after signout
     navigate('/signin');
   };
+
+  const handleAdminPanel = (): void => {
+    // Open admin panel in new tab
+    window.open('/admin', '_blank');
+  };
+
+  const handleBackToUserView = (): void => {
+    // Navigate back to main user area
+    navigate('/', { replace: true });
+  };
+
+  // const isAdmin = user?.isAdmin === true;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,66 +68,114 @@ export function Navbar(): ReactElement {
             <div className="relative h-8 w-8 overflow-hidden rounded-full bg-primary">
               <Wallet className="h-5 w-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg tracking-tight">SmartPay</span>
+            <span className="font-bold text-lg tracking-tight">
+              SmartPay {isAdminPanelView && <span className="text-sm font-normal text-muted-foreground">- Admin Panel</span>}
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              {/* Notification Bell with Dropdown */}
-              <NotificationDropdown />
+              {/* Show notifications and profile only in user view */}
+              {!isAdminPanelView && (
+                <>
+                  {/* Notification Bell with Dropdown */}
+                  <NotificationDropdown />
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-9 w-9 rounded-full"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full">
-                      <User />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user?.name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to="/setting">
-                        <Settings className="mr-2 h-4 w-4"/>
-                        Setting
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/wallet">
-                        <WalletIcon className="mr-2 h-4 w-4"/>
-                        Wallet
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/history">
-                        <History className="mr-2 h-4 w-4" />
-                        <span>Transaction History</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignout}>
-                    <LogOut className="mr-2 h-4 w-4"/>
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="relative h-9 w-9 rounded-full"
+                      >
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full">
+                          <User />
+                        </div>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {user?.name}
+                            {isAdmin && <span className="ml-2 text-xs bg-primary text-primary-foreground px-1 rounded">Admin</span>}
+                          </p>
+                          <p className="text-xs leading-none text-muted-foreground">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem asChild>
+                          <Link to="/setting">
+                            <Settings className="mr-2 h-4 w-4"/>
+                            Setting
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/wallet">
+                            <WalletIcon className="mr-2 h-4 w-4"/>
+                            Wallet
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/history">
+                            <History className="mr-2 h-4 w-4" />
+                            <span>Transaction History</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignout}>
+                        <LogOut className="mr-2 h-4 w-4"/>
+                        Sign out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+
+              {/* Admin Panel Controls - moved after profile dropdown for alignment */}
+              {isAdmin && (
+                <>
+                  {!isAdminPanelView ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAdminPanel}
+                      className="flex items-center gap-2"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin Panel
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBackToUserView}
+                      className="flex items-center gap-2"
+                    >
+                      <Users className="h-4 w-4" />
+                      User View
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Sign out button for admin panel view */}
+              {isAdminPanelView && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </Button>
+              )}
             </>
           ) : (
             <div className="flex items-center gap-2">

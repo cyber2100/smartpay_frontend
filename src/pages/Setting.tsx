@@ -13,6 +13,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { useNavigate } from "react-router-dom";
 
 // Define interfaces for form data and status
 interface PasswordFormData {
@@ -48,10 +49,10 @@ export const SettingPage: React.FC = () => {
     verificationStatus, 
     updatePhoneNumber, 
     updatePassword, 
-    verifyPhone,
     isLoading 
   } = useSettings();
   
+  const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<'main' | 'profile' | 'notification'>('main');
   const [activeTab, setActiveTab] = useState<string>("account");
 
@@ -201,7 +202,7 @@ export const SettingPage: React.FC = () => {
       if (success) {
         setPhoneChangeStatus({
           success: true,
-          message: "Phone number updated successfully. A verification code has been sent to your phone.",
+          message: "Phone number updated successfully. Please verify your new phone number.",
         });
       } else {
         setPhoneChangeStatus({
@@ -229,9 +230,9 @@ export const SettingPage: React.FC = () => {
     }
   };
 
-  // Handle phone verification
-  const handleVerifyPhone = async (): Promise<void> => {
-    await verifyPhone();
+  // Handle phone verification redirect
+  const handleVerifyPhone = (): void => {
+    navigate("/verify");
   };
 
   // Handle tab change
@@ -391,16 +392,9 @@ export const SettingPage: React.FC = () => {
                     </Alert>
                   )}
                   
-                  <div className="flex space-x-2">
-                    <Button type="submit" disabled={isLoading}>
-                      Update Phone Number
-                    </Button>
-                    {!verificationStatus.phoneVerified && phoneChangeStatus?.success && (
-                      <Button type="button" variant="outline" onClick={handleVerifyPhone}>
-                        Verify Phone Number
-                      </Button>
-                    )}
-                  </div>
+                  <Button type="submit" disabled={isLoading}>
+                    Update Phone Number
+                  </Button>
                 </form>
               </CardContent>
             </Card>

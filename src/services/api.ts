@@ -45,7 +45,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and we haven’t already tried to refresh
+    // If 401 and we haven't already tried to refresh
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -122,7 +122,7 @@ export const authService = {
     const response = await api.get("/auth/me");
     return response.data;
   },
-
+  
   signout: () => {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("refresh_token");
@@ -288,8 +288,6 @@ export const cardService = {
   },
 };
 
-// Add this to your existing api.js file
-
 // Notification Settings Service
 export const notificationService = {
   // Get user's notification preferences
@@ -313,34 +311,28 @@ export const notificationService = {
   }
 };
 
-// Profile Service (add to existing or create new section)
+// Profile Service
 export const profileService = {
-  // Update phone number
+  // Update phone number - returns updated verification status
   updatePhoneNumber: async (phoneNumber: string) => {
-    const response = await api.patch('/user/profile', {
+    const response = await api.put('/profile/phone', {
       phone: phoneNumber
     });
-    return response.data;
+    return response.data; // Should return { phone: string, is_verified: false }
   },
 
   // Update password
   updatePassword: async (currentPassword: string, newPassword: string) => {
-    const response = await api.patch('/user/password', {
-      current_password: currentPassword,
-      new_password: newPassword
+    const response = await api.put('/profile/password', {
+      currentPassword,
+      newPassword
     });
     return response.data;
   },
 
   // Get user profile
   getProfile: async () => {
-    const response = await api.get('/user/profile');
-    return response.data;
-  },
-
-  // Verify phone number
-  verifyPhone: async () => {
-    const response = await api.post('/user/verify-phone');
+    const response = await api.get('/auth/me');
     return response.data;
   }
 };

@@ -12,8 +12,6 @@ export type NotificationSettings = {
 
 export type VerificationStatus = {
   isVerified: boolean;
-  emailVerified: boolean;
-  phoneVerified: boolean;
 };
 
 export type SettingsContextType = {
@@ -25,7 +23,6 @@ export type SettingsContextType = {
   verificationStatus: VerificationStatus;
   updatePhoneNumber: (phoneNumber: string) => Promise<boolean>;
   updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
-  verifyPhone: () => Promise<boolean>;
   
   // Loading states
   isLoading: boolean;
@@ -35,7 +32,7 @@ export type SettingsContextType = {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, refreshUser } = useAuth();
   const { toast } = useToast();
   
   // States
@@ -44,9 +41,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
   
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>({
-    isVerified: false,
-    emailVerified: false,
-    phoneVerified: false
+    isVerified: false
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -62,13 +57,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setNotificationSettings({
             deliveryChannel: notifSettings.delivery_channel || 'both'
           });
-          
-          // Load verification status
-          const verifyStatus = await notificationService.getVerificationStatus();
+
           setVerificationStatus({
-            isVerified: verifyStatus.is_verified || false,
-            emailVerified: verifyStatus.email_verified || false,
-            phoneVerified: verifyStatus.phone_verified || false
+            isVerified: user.isVerified || false
           });
           
         } catch (error) {
@@ -84,7 +75,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else {
         // Reset settings when not authenticated
         setNotificationSettings({ deliveryChannel: 'both' });
-        setVerificationStatus({ isVerified: false, emailVerified: false, phoneVerified: false });
+        setVerificationStatus({ isVerified: false });
       }
     };
     
@@ -125,10 +116,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     try {
       await profileService.updatePhoneNumber(phoneNumber);
-      
+
+      // When phone number is updated, verification status changes to false
+      setVerificationStatus({
+        isVerified: false
+      });
+
+      // Refresh user data to get updated phone number
+      if (refreshUser) {
+        await refreshUser();
+      }
+
       toast({
         title: "Phone updated",
-        description: "Phone number updated successfully. A verification code has been sent."
+        description: "Phone number updated successfully. Please verify your new phone number."
       });
       
       return true;
@@ -165,35 +166,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Verify phone
-  const verifyPhone = async (): Promise<boolean> => {
-    if (!isAuthenticated || !user) return false;
-    
-    try {
-      await profileService.verifyPhone();
-      
-      setVerificationStatus(prev => ({
-        ...prev,
-        phoneVerified: true,
-        isVerified: true
-      }));
-      
-      toast({
-        title: "Phone verified",
-        description: "Phone number verified successfully."
-      });
-      
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Verification failed",
-        description: error.response?.data?.detail || "Failed to verify phone number.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  };
-
   // Context value
   const value: SettingsContextType = {
     notificationSettings,
@@ -201,7 +173,6 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     verificationStatus,
     updatePhoneNumber,
     updatePassword,
-    verifyPhone,
     isLoading
   };
   

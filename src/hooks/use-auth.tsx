@@ -9,7 +9,6 @@ export type User = {
   email: string;
   phone?: string;
   isAdmin?: boolean;
-  balance: number;
   isVerified: boolean;
 };
 
@@ -28,7 +27,10 @@ type AuthContextType = {
   findUser: (emailOrPhone: string) => Promise<object | null>;
   verifyAccount: (code: string, verification_type: string) => Promise<boolean>;
   resendVerification: (verification_type: 'email' | 'phone') => Promise<boolean>;
+  refreshUser: () => Promise<void>
   isAdmin: boolean;
+  isAdminPanelView: boolean;
+  setIsAdminPanelView: React.Dispatch<React.SetStateAction<boolean>>
 };
 
 // Context
@@ -40,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [isAdminPanelView, setIsAdminPanelView] = useState(false);
 
   // Load user on mount if token exists
   useEffect(() => {
@@ -55,7 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             email: userData.email,
             phone: userData.phone,
             isAdmin: userData.is_admin,
-            balance: userData.balance,
             isVerified: userData.is_verified,
           });
         } catch (error) {
@@ -84,7 +86,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
-        balance: userData.balance,
         isVerified: userData.is_verified,
       };
 
@@ -128,7 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin || false,
-        balance: userData.balance,
         isVerified: userData.is_verified,
       };
 
@@ -251,14 +251,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Refresh user function - fetch updated user data from backend
+  const refreshUser = async (): Promise<void> => {
+    if (!user) return; // Early return if no user is logged in
+
+    try {
+      const userData = await authService.getCurrentUser();
+      
+      // Transform API format to our app format
+      const updatedUser: User = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        isAdmin: userData.is_admin,
+        isVerified: userData.is_verified,
+      };
+
+      setUser(updatedUser);
+    } catch (error: any) {
+      console.error("Failed to refresh user:", error);
+      
+      // If the token is invalid, sign out the user
+      if (error.response?.status === 401) {
+        signout();
+      } else {
+        toast({
+          title: "Failed to refresh user data",
+          description: "Could not update your profile information.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   // Determine admin status
-  const isAdmin = !!user?.isAdmin;
+  const isAdmin =
+    true; 
+    // !!user?.isAdmin;
 
   const value = {
     user,
     isAuthenticated: 
-      // true, 
-      !!user,
+      true, 
+      // !!user,
     isLoading,
     signin,
     signup,
@@ -266,7 +302,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     verifyAccount,
     resendVerification,
     findUser,
+    refreshUser,
     isAdmin,
+    isAdminPanelView,
+    setIsAdminPanelView,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

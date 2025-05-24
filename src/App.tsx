@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,7 +28,6 @@ import NotFound from "./pages/NotFound";
 import Setting from "./pages/Setting";
 import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
-import React from "react";
 
 const queryClient = new QueryClient();
 
@@ -197,8 +197,8 @@ const App = () => (
       <AuthProvider>
         <WalletProvider>
           <CardProvider>
-            <TooltipProvider>
-              <SettingsProvider>
+            <SettingsProvider>
+              <TooltipProvider>
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
@@ -207,8 +207,8 @@ const App = () => (
                     <AppRoutes />
                   </div>
                 </BrowserRouter>
-              </SettingsProvider>
-            </TooltipProvider>
+              </TooltipProvider>
+            </SettingsProvider>
           </CardProvider>
         </WalletProvider>
       </AuthProvider>
