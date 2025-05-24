@@ -52,7 +52,7 @@ const Transfer: React.FC = () => {
   useEffect(() => {
     // Mock authentication check
     if(!user?.isVerified){
-      navigate('/verify');
+      // navigate('/verify');
     }
   }, []);
 

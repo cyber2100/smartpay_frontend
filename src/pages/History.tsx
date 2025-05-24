@@ -11,8 +11,9 @@ import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
 import { Transaction } from '@/types/payment';
+import { MoneyLoadingOverlay } from '@/components/MoneySpinner'; // Import the spinner
 
-const Hitory: React.FC = () => {
+const History: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { transactions, getTransactions, balance } = useWallet();
   
@@ -24,13 +25,31 @@ const Hitory: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
     } else if (!user?.isVerified) {
-      return navigate('/verify');
+      // return navigate('/verify');
     }
-    getTransactions();
+    
+    // Set loading state and fetch transactions
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        await getTransactions();
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      } finally {
+        setIsLoading(false);
+        setIsInitialLoad(false);
+      }
+    };
+    
+    fetchData();
   }, [isAuthenticated, user?.isVerified, navigate, getTransactions]);
 
   const handleDirectToPath = (path: string) => {
@@ -281,107 +300,42 @@ const Hitory: React.FC = () => {
     setSelectedCategory('all');
   };
 
+  // Show loading spinner during initial load
+  if (isLoading && isInitialLoad) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto pb-16">
+          <AnimatedBackground />
+          <div className="container px-4 pt-8 max-w-4ml mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">Transaction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MoneyLoadingOverlay 
+                  size="lg" 
+                  message="Loading your transactions..." 
+                  className="py-8"
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto pb-16">
         <AnimatedBackground />
         
-        <div className="container px-4 pt-8 max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold">My Wallet</h1>
-            <p className="text-muted-foreground">Manage your account balance and transactions</p>
-          </div>
-
-          {/* Balance Card */}
-          <Card className="mb-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/10 z-0"></div>
-            
-            <CardHeader className="relative z-10">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <DollarSign className="h-6 w-6 text-blue-600" />
-                  Account Balance
-                </CardTitle>
-              </div>
-              <CardDescription>Your current available balance</CardDescription>
-            </CardHeader>
-            
-            <CardContent className="relative z-10">
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                <div>
-                  <h2 className="text-5xl font-bold mb-2">
-                    ${typeof balance === 'number' ? balance.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    }) : '0.00'}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Account: {user?.email || 'Unknown'}
-                  </p>
-                </div>
-                
-                <div className="flex flex-wrap gap-3">
-                  <Button 
-                    onClick={() => handleDirectToPath('/deposit')}
-                    className="gap-2 bg-green-600 hover:bg-green-700"
-                  >
-                    <Plus className="h-4 w-4" /> 
-                    Deposit
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => handleDirectToPath('/withdraw')}
-                    variant="outline"
-                    className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-                  >
-                    <Minus className="h-4 w-4" /> 
-                    Withdraw
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => handleDirectToPath('/transfer')}
-                    className="gap-2 bg-blue-600 hover:bg-blue-700"
-                  >
-                    <ArrowRight className="h-4 w-4" /> 
-                    Transfer
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Supported Cards Info */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Supported Payment Methods
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <CreditCard className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium">Visa</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-950 rounded-lg">
-                  <CreditCard className="h-4 w-4 text-red-600" />
-                  <span className="text-sm font-medium">Mastercard</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-950 rounded-lg">
-                  <CreditCard className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium">American Express</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="container px-4 pt-8 max-w-4ml mx-auto">
           {/* Transaction History */}
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <CardTitle className="text-xl">Transaction History</CardTitle>
+                <CardTitle className="text-2xl font-bold ">Transaction History</CardTitle>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                   {/* Search Input */}
                   <div className="relative">
@@ -444,93 +398,100 @@ const Hitory: React.FC = () => {
             </CardHeader>
             
             <CardContent>
-              <div className="space-y-2">
-                {filteredTransactions && filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction: Transaction) => {
-                    const display = getTransactionDisplay(transaction);
-                    const amount = getTransactionAmount(transaction);
-                    const title = getTransactionTitle(transaction);
-                    
-                    return (
-                      <div 
-                        key={transaction.id} 
-                        className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => handleTransactionClick(transaction)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className={`p-2 rounded-full ${display.bgColor}`}>
-                            <div className={display.textColor}>
-                              {display.icon}
+              {/* Show mini loading spinner when filtering/searching */}
+              {isLoading && !isInitialLoad ? (
+                <div className="flex justify-center py-8">
+                  <MoneyLoadingOverlay size="md" message="Updating..." />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredTransactions && filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction: Transaction) => {
+                      const display = getTransactionDisplay(transaction);
+                      const amount = getTransactionAmount(transaction);
+                      const title = getTransactionTitle(transaction);
+                      
+                      return (
+                        <div 
+                          key={transaction.id} 
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleTransactionClick(transaction)}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full ${display.bgColor}`}>
+                              <div className={display.textColor}>
+                                {display.icon}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <p className="font-medium">
+                                {title}
+                              </p>
+                              {transaction.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {transaction.description}
+                                </p>
+                              )}
+                              {transaction.card && (
+                                <p className="text-xs text-muted-foreground">
+                                  Card: {transaction.card.name}
+                                </p>
+                              )}
+                              {transaction.status && transaction.status !== 'completed' && (
+                                <Badge 
+                                  variant={getStatusBadgeVariant(transaction.status)}
+                                  className="text-xs mt-1"
+                                >
+                                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           
-                          <div>
-                            <p className="font-medium">
-                              {title}
+                          <div className="text-right">
+                            <p className={`font-semibold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {amount < 0 ? '-' : '+'}
+                              ${Math.abs(amount).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
                             </p>
-                            {transaction.description && (
-                              <p className="text-sm text-muted-foreground">
-                                {transaction.description}
-                              </p>
-                            )}
-                            {transaction.card && (
-                              <p className="text-xs text-muted-foreground">
-                                Card: {transaction.card.name}
-                              </p>
-                            )}
-                            {transaction.status && transaction.status !== 'completed' && (
-                              <Badge 
-                                variant={getStatusBadgeVariant(transaction.status)}
-                                className="text-xs mt-1"
-                              >
-                                {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                              </Badge>
-                            )}
+                            <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground mt-1">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(transaction.timestamp)}
+                            </p>
                           </div>
                         </div>
-                        
-                        <div className="text-right">
-                          <p className={`font-semibold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                            {amount < 0 ? '-' : '+'}
-                            ${Math.abs(amount).toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </p>
-                          <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground mt-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDate(transaction.timestamp)}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : searchTerm || selectedCategory !== 'all' ? (
-                  <div className="text-center p-8 border rounded-lg">
-                    <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">No transactions match your search</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Try adjusting your search terms or filters
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={clearFilters}
-                      className="mt-3"
-                    >
-                      Clear filters
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-muted-foreground">No transactions yet</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Start by making a deposit or transfer
-                    </p>
-                  </div>
-                )}
-              </div>
+                      );
+                    })
+                  ) : searchTerm || selectedCategory !== 'all' ? (
+                    <div className="text-center p-8 border rounded-lg">
+                      <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No transactions match your search</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try adjusting your search terms or filters
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={clearFilters}
+                        className="mt-3"
+                      >
+                        Clear filters
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center p-8 border rounded-lg">
+                      <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No transactions yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Start by making a deposit or transfer
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -654,4 +615,4 @@ const Hitory: React.FC = () => {
   );
 };
 
-export default Hitory;
+export default History;
