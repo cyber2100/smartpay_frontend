@@ -6,9 +6,13 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { WalletProvider } from "@/hooks/use-wallet";
+import { SettingsProvider } from "./hooks/use-settings";
+import { CardProvider } from "./hooks/use-card";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "./components/sidebar";
-import { AnimatePresence, motion, useScroll } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
+import { PublicOnlyRoute, ProtectedRoute } from "./components/RouteGuard";
 import Index from "./pages/Index";
 import Signin from "./pages/Signin";
 import Signup from "./pages/Signup";
@@ -20,13 +24,10 @@ import Withdraw from "./pages/Withdraw";
 import History from "./pages/History";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import React from "react";
 import Setting from "./pages/Setting";
 import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
-import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
-import { useAuth } from "@/hooks/use-auth";
-import { CardProvider } from "./hooks/use-card";
+import React from "react";
 
 const queryClient = new QueryClient();
 
@@ -64,23 +65,126 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
   return (
     <PageTransition>
       <Routes>
+        {/* Public routes - accessible to everyone */}
         <Route path="/" element={<Index />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
+        
+        {/* Public routes - only for non-authenticated users */}
+        <Route 
+          path="/signin" 
+          element={
+            <PublicOnlyRoute>
+              <Signin />
+            </PublicOnlyRoute>
+          } 
+        />
+        <Route 
+          path="/signup" 
+          element={
+            <PublicOnlyRoute>
+              <Signup />
+            </PublicOnlyRoute>
+          } 
+        />
+        
+        {/* Verify route - accessible to everyone (needed for email verification) */}
         <Route path="/verify" element={<Verify />} />
-        <Route path="/dashboard" element={<AuthLayout><Dashboard /></AuthLayout>} />
-        <Route path="/wallet" element={<AuthLayout><Wallet /></AuthLayout>} />
-        <Route path="/transfer" element={<AuthLayout><Transfer /></AuthLayout>} />
-        <Route path="/deposit" element={<AuthLayout><Deposit /></AuthLayout>} />
-        <Route path="/withdraw" element={<AuthLayout><Withdraw /></AuthLayout>} />
-        <Route path="/history" element={<AuthLayout><History /></AuthLayout>} />
-        <Route path="/admin" element={<AuthLayout><AdminPanel /></AuthLayout>} />
-        <Route path="/setting" element={<AuthLayout><Setting /></AuthLayout>} />
-        <Route path="/card" element={<AuthLayout><Card /></AuthLayout>} />
+        
+        {/* Protected routes - only for authenticated users */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Dashboard />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/wallet" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Wallet />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/transfer" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Transfer />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/deposit" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Deposit />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/withdraw" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Withdraw />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/history" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <History />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <AdminPanel />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/setting" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Setting />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/card" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Card />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageTransition>
@@ -94,14 +198,16 @@ const App = () => (
         <WalletProvider>
           <CardProvider>
             <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <div className="min-h-screen flex flex-col">
-                  <Navbar />
-                  <AppRoutes />
-                </div>
-              </BrowserRouter>
+              <SettingsProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <div className="min-h-screen flex flex-col">
+                    <Navbar />
+                    <AppRoutes />
+                  </div>
+                </BrowserRouter>
+              </SettingsProvider>
             </TooltipProvider>
           </CardProvider>
         </WalletProvider>

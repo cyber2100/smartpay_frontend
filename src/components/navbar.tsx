@@ -1,5 +1,5 @@
 import React, { ReactElement } from "react";
-import { Link, replace, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { User, Wallet, History, LogOut, UserCircle, WalletIcon, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,17 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { NotificationDropdown } from "./NotificationDropdown";
+import NotificationDropdown from "./NotificationDropdown";
 import { ModeToggle } from "./mode-toggle";
 
 export function Navbar(): ReactElement {
   const { isAuthenticated, user, signout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-  if(!isAuthenticated){
-    navigate('/signin', { replace: true });
-  }
 
   const scrollToTop = (): void => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -40,6 +36,7 @@ export function Navbar(): ReactElement {
 
   const handleSignout = (): void => {
     signout();
+    // The RouteGuard will automatically redirect to signin after signout
     navigate('/signin');
   };
 

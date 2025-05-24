@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
@@ -11,7 +11,8 @@ import {
   Send,
   CreditCard,
   ArrowUpCircle,
-  ArrowDownCircle
+  ArrowDownCircle,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,15 +31,26 @@ export const Sidebar: React.FC = () => {
   const pathSegments: string[] = location.pathname.split('/');
   const activePage: string = pathSegments[1] || 'dashboard';
   
-  const menuItems: MenuItem[] = [
+  const [menuItems, setMenuItems] = useState([
     { id: 'dashboard', name: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/dashboard' },
     { id: 'wallet', name: 'Wallet', icon: <Wallet className="h-5 w-5" />, path: '/wallet' },
     { id: 'card', name: 'Card', icon: <CreditCard className="h-5 w-5" />, path: '/card' },
     { id: 'deposit', name: 'Deposit', icon: <ArrowDownCircle className="h-5 w-5" />, path: '/deposit' },
     { id: 'withdraw', name: 'Withdraw', icon: <ArrowUpCircle className="h-5 w-5" />, path: '/withdraw' },
     { id: 'transfer', name: 'Transfer', icon: <Send className="h-5 w-5" />, path: '/transfer' },
-    { id: 'history', name: 'History', icon: <Clock className="h-5 w-5" />, path: '/history' }
-  ];
+    { id: 'history', name: 'History', icon: <Clock className="h-5 w-5" />, path: '/history' },
+  ]);
+  
+  useEffect(() => {
+    // if(user?.isAdmin){
+      const adminMenu = { id: 'admin', name: 'AdminPanel', icon: <UserCheck className="h-5 w-5" />, path: '/admin' };
+      setMenuItems([
+        ...menuItems,
+        adminMenu
+      ]);
+    // }
+  }, [])
+
 
   const handleNavigation = (path: string): void => {
     navigate(path);

@@ -287,3 +287,60 @@ export const cardService = {
     }
   },
 };
+
+// Add this to your existing api.js file
+
+// Notification Settings Service
+export const notificationService = {
+  // Get user's notification preferences
+  getNotificationSettings: async () => {
+    const response = await api.get('/user/notification-settings');
+    return response.data;
+  },
+
+  // Update notification delivery channel
+  updateDeliveryChannel: async (channel: 'email' | 'phone' | 'both') => {
+    const response = await api.patch('/user/notification-settings', {
+      delivery_channel: channel
+    });
+    return response.data;
+  },
+
+  // Get user verification status (simplified)
+  getVerificationStatus: async () => {
+    const response = await api.get('/user/verification-status');
+    return response.data;
+  }
+};
+
+// Profile Service (add to existing or create new section)
+export const profileService = {
+  // Update phone number
+  updatePhoneNumber: async (phoneNumber: string) => {
+    const response = await api.patch('/user/profile', {
+      phone: phoneNumber
+    });
+    return response.data;
+  },
+
+  // Update password
+  updatePassword: async (currentPassword: string, newPassword: string) => {
+    const response = await api.patch('/user/password', {
+      current_password: currentPassword,
+      new_password: newPassword
+    });
+    return response.data;
+  },
+
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get('/user/profile');
+    return response.data;
+  },
+
+  // Verify phone number
+  verifyPhone: async () => {
+    const response = await api.post('/user/verify-phone');
+    return response.data;
+  }
+};

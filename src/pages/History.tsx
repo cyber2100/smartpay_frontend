@@ -50,7 +50,7 @@ const History: React.FC = () => {
     };
     
     fetchData();
-  }, [isAuthenticated, user?.isVerified, navigate, getTransactions]);
+  }, []);
 
   const handleDirectToPath = (path: string) => {
     navigate(path);

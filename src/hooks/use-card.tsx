@@ -7,7 +7,7 @@ import { PaymentCard } from '@/types/payment';
 type CardContextType = {
   cards: PaymentCard[];
   isLoading: boolean;
-  addCard: (cardData: Omit<PaymentCard, 'id'>) => Promise<PaymentCard>;
+  addCard: (cardData: Omit<PaymentCard, 'id'>) => Promise<boolean>;
   updateCard: (cardId: string, updateData: Partial<PaymentCard>) => Promise<PaymentCard>;
   setDefaultCard: (cardId: string) => Promise<void>;
   deleteCard: (cardId: string) => Promise<void>;
@@ -70,32 +70,18 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Add new card
-  const addCard = async (cardData: Omit<PaymentCard, 'id'>): Promise<PaymentCard> => {
+  const addCard = async (cardData: Omit<PaymentCard, 'id'>): Promise<boolean> => {
     try {
       const newCardId: string = await cardService.addCard(cardData);
 
-      const newCard = {
-        ...cardData,
-        id: newCardId
-      };
-      
-      // Update local state
-      if (cards.length === 0) {
-        // If this is set as default or is the first card, update other cards
-        setCards(prevCards => [
-          ...prevCards,
-          {...newCard, isDefault: true}
-        ]);
-      } else {
-        setCards(prevCards => [...prevCards, newCard]);
-      }
+      await getCards();
 
       toast({
         title: "Success",
         description: "Card added successfully.",
       });
 
-      return newCard;
+      return true;
     } catch (error: any) {
       console.error('Error adding card:', error);
       toast({

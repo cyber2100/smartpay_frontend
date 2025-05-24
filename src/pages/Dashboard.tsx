@@ -8,11 +8,16 @@ import {
   Check,
   User,
   Wallet,
+  PlusIcon,
+  MinusIcon,
+  ArrowRight,
+  Clock
 } from "lucide-react";
 import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth';
+import { useWallet } from '@/hooks/use-wallet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LineChart, 
@@ -28,27 +33,6 @@ import {
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { PaymentCard, Transaction, MonthlyData, FinancialData } from '@/types/payment';
-
-// Updated transaction type to properly distinguish between account transfers and card operations
-interface AccountTransaction {
-  id: string;
-  title: string;
-  amount: number;
-  type: 'sent' | 'received' | 'deposit' | 'withdrawal';
-  date: Date;
-  // For sent/received: other user account details
-  otherUser?: {
-    id: string;
-    name: string;
-    email?: string;
-  };
-  // For deposit/withdrawal: card used
-  cardUsed?: PaymentCard;
-  // Transaction fee (if any)
-  fee?: number;
-  // Reference/memo
-  reference?: string;
-}
 
 const currencyData: MonthlyData[] = [
   { name: 'Jan', received: 2000, sent: 1200, balance: 800 },
@@ -68,6 +52,7 @@ const currencyData: MonthlyData[] = [
 const Dashboard: React.FC = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { transactions, getTransactions, balance } = useWallet();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'balance' | 'received' | 'sent'>('all');
   const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([
@@ -119,76 +104,39 @@ const Dashboard: React.FC = () => {
     balance: month.received - month.sent // FIXED: balance = received - sent for each month
   }));
   
-  // FIXED: Recent transactions now properly separate account transfers from card operations
-  const recentTransactions: AccountTransaction[] = [
-    { 
-      id: 'tx1', 
-      title: 'Payment from Alex', 
-      amount: 750.00, 
-      type: 'received', 
-      date: new Date(2025, 4, 20, 14, 30),
-      otherUser: {
-        id: 'user_alex_123',
-        name: 'Alex Johnson',
-        email: 'alex.johnson@email.com'
-      },
-      reference: 'Freelance work - May project'
-    },
-    { 
-      id: 'tx2', 
-      title: 'Sent to landlord', 
-      amount: 1200.00, 
-      type: 'sent', 
-      date: new Date(2025, 4, 18, 9, 15),
-      otherUser: {
-        id: 'user_landlord_456',
-        name: 'Property Management LLC',
-        email: 'payments@propertymanagement.com'
-      },
-      reference: 'Monthly rent - May 2025'
-    },
-    { 
-      id: 'tx3', 
-      title: 'Payment from TechSolutions', 
-      amount: 1200.00, 
-      type: 'received', 
-      date: new Date(2025, 4, 15, 16, 45),
-      otherUser: {
-        id: 'user_techsol_789',
-        name: 'TechSolutions Inc.',
-        email: 'billing@techsolutions.com'
-      },
-      reference: 'Invoice #1082 - Development services'
-    },
-    { 
-      id: 'tx4', 
-      title: 'Account funding', 
-      amount: 500.00, 
-      type: 'deposit', 
-      date: new Date(2025, 4, 12, 17, 30),
-      cardUsed: paymentCards.find(card => card.id === 'card1'),
-      reference: 'Top up account balance'
-    },
-    { 
-      id: 'tx5', 
-      title: 'Cash withdrawal', 
-      amount: 200.00, 
-      type: 'withdrawal', 
-      date: new Date(2025, 4, 10, 11, 20),
-      cardUsed: paymentCards.find(card => card.id === 'card2'),
-      reference: 'Transfer to bank account'
-    },
-  ];
-  
-  // Redirect if not authenticated
+  // Fetch transactions from backend
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/signin');
+    } else {
+      // Fetch transactions when component mounts
+      getTransactions();
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, getTransactions]);
   
-  // Format date for display
-  const formatDate = (date: Date): string => {
+  // Get recent transactions (latest 5) from backend data
+  const recentTransactions = React.useMemo(() => {
+    if (!transactions || transactions.length === 0) return [];
+    
+    // Sort by timestamp (newest first) and take the first 5
+    return [...transactions]
+      .sort((a, b) => {
+        const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+        const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+        return dateB.getTime() - dateA.getTime();
+      })
+      .slice(0, 5);
+  }, [transactions]);
+  
+  // Format date for display - handling both Date objects and ISO strings from backend
+  const formatDate = (timestamp: Date | string): string => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
@@ -213,64 +161,200 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Get appropriate icon for transaction type
-  const getTransactionIcon = (transaction: AccountTransaction) => {
+  // Get transaction title based on type and parties involved
+  const getTransactionTitle = (transaction: Transaction): string => {
+    if (!user?.id) return 'Transaction';
+    
     switch (transaction.type) {
-      case 'sent':
-        return <ArrowUp className="h-4 w-4 text-red-500" />;
-      case 'received':
-        return <ArrowDown className="h-4 w-4 text-green-500" />;
       case 'deposit':
-        return <Wallet className="h-4 w-4 text-blue-500" />;
-      case 'withdrawal':
-        return <CreditCard className="h-4 w-4 text-orange-500" />;
+        return 'Deposit to Account';
+      case 'withdraw':
+        return 'Withdrawal from Account';
+      case 'transfer':
+        // Check if current user is the sender
+        if (transaction.senderId === user.id) {
+          const recipientName = transaction.recipient?.fullname || 
+                               transaction.recipient?.email || 
+                               'Unknown User';
+          return `Transfer to ${recipientName}`;
+        } 
+        // Check if current user is the recipient
+        else if (transaction.recipientId === user.id) {
+          const senderName = transaction.sender?.fullname || 
+                            transaction.sender?.email || 
+                            'Unknown User';
+          return `Transfer from ${senderName}`;
+        }
+        return 'Transfer';
       default:
-        return <DollarSign className="h-4 w-4" />;
+        return `${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)} Transaction`;
     }
   };
 
-  // Get transaction amount display
-  const getTransactionAmount = (transaction: AccountTransaction) => {
-    const isNegative = transaction.type === 'sent' || transaction.type === 'withdrawal';
-    const prefix = isNegative ? '-' : '+';
-    const colorClass = isNegative ? 'text-destructive' : 'text-primary';
+  // Get transaction icon and color
+  const getTransactionDisplay = (transaction: Transaction) => {
+    if (!user?.id) {
+      return {
+        icon: <DollarSign className="h-4 w-4" />,
+        bgColor: 'bg-gray-500/10',
+        textColor: 'text-gray-600',
+        amountColor: 'text-gray-600'
+      };
+    }
+
+    // Determine if this is an incoming or outgoing transaction for the current user
+    const isIncoming = transaction.recipientId === user.id;
+    const isOutgoing = transaction.senderId === user.id;
     
-    return (
-      <p className={`font-medium ${colorClass}`}>
-        {prefix}${transaction.amount.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })}
-      </p>
-    );
+    switch (transaction.type) {
+      case 'deposit':
+        return {
+          icon: <PlusIcon className="h-4 w-4" />,
+          bgColor: 'bg-green-500/10',
+          textColor: 'text-green-600',
+          amountColor: 'text-green-600'
+        };
+      case 'withdraw':
+        return {
+          icon: <MinusIcon className="h-4 w-4" />,
+          bgColor: 'bg-red-500/10',
+          textColor: 'text-red-600',
+          amountColor: 'text-red-600'
+        };
+      case 'transfer':
+        if (isIncoming && !isOutgoing) {
+          return {
+            icon: <ArrowDown className="h-4 w-4" />,
+            bgColor: 'bg-blue-500/10',
+            textColor: 'text-blue-600',
+            amountColor: 'text-green-600'
+          };
+        } else if (isOutgoing) {
+          return {
+            icon: <ArrowUp className="h-4 w-4" />,
+            bgColor: 'bg-orange-500/10',
+            textColor: 'text-orange-600',
+            amountColor: 'text-red-600'
+          };
+        }
+        // Fallback for transfer type
+        return {
+          icon: <ArrowRight className="h-4 w-4" />,
+          bgColor: 'bg-purple-500/10',
+          textColor: 'text-purple-600',
+          amountColor: 'text-purple-600'
+        };
+      default:
+        return {
+          icon: <DollarSign className="h-4 w-4" />,
+          bgColor: 'bg-gray-500/10',
+          textColor: 'text-gray-600',
+          amountColor: 'text-gray-600'
+        };
+    }
+  };
+
+  // Determine if a transaction amount should display as positive or negative
+  const getTransactionAmount = (transaction: Transaction): number => {
+    if (!user?.id) return transaction.amount;
+    
+    switch (transaction.type) {
+      case 'deposit':
+        return transaction.amount;
+      case 'withdraw':
+        return -transaction.amount;
+      case 'transfer':
+        // If current user is the recipient, it's a positive amount
+        if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
+          return transaction.amount;
+        } 
+        // If current user is the sender, it's a negative amount
+        else if (transaction.senderId === user.id) {
+          return -transaction.amount;
+        }
+        // Fallback: return the amount as-is
+        return transaction.amount;
+      default:
+        // For other transaction types, assume positive
+        return transaction.amount;
+    }
+  };
+
+  // Get status badge color
+  const getStatusBadgeVariant = (status: Transaction['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
   };
 
   // Get transaction details for display
-  const getTransactionDetails = (transaction: AccountTransaction) => {
+  const getTransactionDetails = (transaction: Transaction) => {
+    const currentUserId = user?.id || 'current_user';
+    
+    // Determine transaction direction
+    const isIncoming = transaction.recipientId === currentUserId;
+    const isOutgoing = transaction.senderId === currentUserId;
+    
     switch (transaction.type) {
-      case 'sent':
-      case 'received':
-        return (
-          <Badge variant="outline" className="text-xs">
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {transaction.type === 'sent' ? 'To: ' : 'From: '}
-              {transaction.otherUser?.name}
-            </span>
-          </Badge>
-        );
+      case 'transfer':
+        if (isOutgoing) {
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                <span className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  To: {transaction.recipient?.fullname || 'Unknown User'}
+                </span>
+              </Badge>
+              <Badge variant={getStatusBadgeVariant(transaction.status)} className="text-xs">
+                {transaction.status}
+              </Badge>
+            </div>
+          );
+        } else if (isIncoming) {
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                <span className="flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  From: {transaction.sender?.fullname || 'Unknown User'}
+                </span>
+              </Badge>
+              <Badge variant={getStatusBadgeVariant(transaction.status)} className="text-xs">
+                {transaction.status}
+              </Badge>
+            </div>
+          );
+        }
+        break;
       case 'deposit':
-      case 'withdrawal':
+      case 'withdraw':
         return (
-          <Badge variant="outline" className="text-xs">
-            <span className="flex items-center gap-1">
-              <CreditCard className="h-3 w-3" />
-              {transaction.cardUsed?.name || 'Card'}
-            </span>
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              <span className="flex items-center gap-1">
+                <CreditCard className="h-3 w-3" />
+                {transaction.card?.name || 'Card'}
+              </span>
+            </Badge>
+            <Badge variant={getStatusBadgeVariant(transaction.status)} className="text-xs">
+              {transaction.status}
+            </Badge>
+          </div>
         );
       default:
-        return null;
+        return (
+          <Badge variant={getStatusBadgeVariant(transaction.status)} className="text-xs">
+            {transaction.status}
+          </Badge>
+        );
     }
   };
 
@@ -328,7 +412,7 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent className="relative z-10 pt-0">
                 <h3 className="text-2xl sm:text-3xl font-bold">
-                  ${financialData.balance.toLocaleString('en-US', {
+                  ${(balance || financialData.balance).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -503,42 +587,62 @@ const Dashboard: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 sm:space-y-4">
-                    {recentTransactions.map((tx) => (
-                      <div 
-                        key={tx.id} 
-                        className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="p-2 rounded-full bg-muted flex-shrink-0">
-                            {getTransactionIcon(tx)}
-                          </div>
-                          
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm sm:text-base truncate">{tx.title}</p>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                              <p className="text-xs text-muted-foreground">
-                                {formatDate(tx.date)}
-                              </p>
-                              {getTransactionDetails(tx)}
-                            </div>
-                            {tx.reference && (
-                              <p className="text-xs text-muted-foreground mt-1 truncate">
-                                {tx.reference}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                    {recentTransactions.length > 0 ? (
+                      recentTransactions.map((tx) => {
+                        const display = getTransactionDisplay(tx);
+                        const amount = getTransactionAmount(tx);
+                        const title = getTransactionTitle(tx);
                         
-                        <div className="text-right flex-shrink-0 ml-3">
-                          {getTransactionAmount(tx)}
-                          {tx.fee && (
-                            <p className="text-xs text-muted-foreground">
-                              Fee: ${tx.fee.toFixed(2)}
-                            </p>
-                          )}
-                        </div>
+                        return (
+                          <div 
+                            key={tx.id} 
+                            className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`p-2 rounded-full ${display.bgColor} flex-shrink-0`}>
+                                <div className={display.textColor}>
+                                  {display.icon}
+                                </div>
+                              </div>
+                              
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm sm:text-base truncate">{title}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {formatDate(tx.timestamp)}
+                                  </p>
+                                  {getTransactionDetails(tx)}
+                                </div>
+                                {tx.description && (
+                                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                                    {tx.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="text-right flex-shrink-0 ml-3">
+                              <p className={`font-medium ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                {amount < 0 ? '-' : '+'}
+                                ${Math.abs(amount).toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center p-8 border rounded-lg">
+                        <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No recent transactions</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Start by making a deposit or transfer
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -553,7 +657,7 @@ const Dashboard: React.FC = () => {
                       <CardTitle className="text-lg sm:text-xl">Linked Cards</CardTitle>
                       <CardDescription className="text-sm">Cards for deposits and withdrawals</CardDescription>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => handleNavigation('/setting')}>
+                    <Button variant="outline" size="sm" onClick={() => handleNavigation('/card')}>
                       Manage
                     </Button>
                   </div>
