@@ -1,4 +1,4 @@
-import React, { useState, ReactElement } from "react";
+import React, { ReactElement } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,62 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-
-interface Transaction {
-  id: string;
-  type: 'received' | 'system';
-  amount: number;
-  from: string;
-  timestamp: Date;
-  read: boolean;
-}
+import { useNotifications } from "@/hooks/use-notifications";
 
 export function NotificationDropdown(): ReactElement {
   const { user } = useAuth();
-  
-  // This would typically come from an API call or context
-  const [notifications, setNotifications] = useState<Transaction[]>([
-    {
-      id: "1",
-      type: "received",
-      amount: 50.0,
-      from: "Sarah Johnson",
-      timestamp: new Date(Date.now() - 30 * 60000), // 30 mins ago
-      read: false,
-    },
-    {
-      id: "2",
-      type: "system",
-      amount: 0,
-      from: "System",
-      timestamp: new Date(Date.now() - 2 * 3600000), // 2 hours ago
-      read: false,
-    },
-    {
-      id: "3",
-      type: "received",
-      amount: 25.75,
-      from: "Michael Chen",
-      timestamp: new Date(Date.now() - 24 * 3600000), // 1 day ago
-      read: true,
-    }
-  ]);
-
-  const unreadCount: number = notifications.filter((notif: Transaction) => !notif.read).length;
-
-  const markAsRead = (id: string): void => {
-    setNotifications(
-      notifications.map((notif: Transaction) =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const markAllAsRead = (): void => {
-    setNotifications(
-      notifications.map((notif: Transaction) => ({ ...notif, read: true }))
-    );
-  };
+  const { 
+    notifications, 
+    unreadCount, 
+    loading, 
+    markAsRead, 
+    markAllAsRead 
+  } = useNotifications();
 
   const formatTime = (date: Date): string => {
     const now: Date = new Date();
@@ -84,19 +39,14 @@ export function NotificationDropdown(): ReactElement {
     }
   };
 
-  const handleNotificationClick = (id: string): void => {
-    markAsRead(id);
+  const handleNotificationClick = async (notificationId: string): Promise<void> => {
+    await markAsRead(notificationId);
   };
 
-  const getNotificationTitle = (notification: Transaction): string => {
-    return notification.type === 'received' ? 'Payment Received' : 'System Notification';
-  };
-
-  const getNotificationMessage = (notification: Transaction): string => {
-    return notification.type === 'received' 
-      ? `${notification.from} sent you $${notification.amount.toFixed(2)}` 
-      : 'Your account has been verified successfully.';
-  };
+  // Sort notifications by timestamp (newest first)
+  const sortedNotifications = [...notifications].sort((a, b) => 
+    b.timestamp.getTime() - a.timestamp.getTime()
+  );
 
   return (
     <DropdownMenu>
@@ -122,6 +72,7 @@ export function NotificationDropdown(): ReactElement {
               size="sm" 
               className="text-xs h-7" 
               onClick={markAllAsRead}
+              disabled={loading}
             >
               Mark all as read
             </Button>
@@ -129,9 +80,13 @@ export function NotificationDropdown(): ReactElement {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="max-h-80 overflow-y-auto">
-          {notifications.length > 0 ? (
+          {loading ? (
+            <div className="p-4 text-center text-muted-foreground">
+              Loading notifications...
+            </div>
+          ) : sortedNotifications.length > 0 ? (
             <DropdownMenuGroup>
-              {notifications.map((notification: Transaction) => (
+              {sortedNotifications.slice(0, 10).map((notification) => (
                 <DropdownMenuItem 
                   key={notification.id}
                   className={`p-3 cursor-pointer ${!notification.read ? 'bg-muted/50' : ''}`}
@@ -140,28 +95,38 @@ export function NotificationDropdown(): ReactElement {
                   <div className="flex flex-col space-y-1 w-full">
                     <div className="flex justify-between items-start">
                       <span className="font-medium">
-                        {getNotificationTitle(notification)}
+                        {notification.title}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(notification.timestamp)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatTime(notification.timestamp)}
+                        </span>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {getNotificationMessage(notification)}
+                      {notification.message}
                     </p>
+                    {notification.amount && (
+                      <p className="text-xs font-medium text-green-600">
+                        ${notification.amount.toFixed(2)}
+                      </p>
+                    )}
                   </div>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
           ) : (
             <div className="p-4 text-center text-muted-foreground">
-              You have no new notifications
+              You have no notifications
             </div>
           )}
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="justify-center" asChild>
-          <a href="/history" className="w-full text-center">View all transactions</a>
+          <a href="/notifications" className="w-full text-center">View all notifications</a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

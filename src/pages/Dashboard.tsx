@@ -11,13 +11,15 @@ import {
   PlusIcon,
   MinusIcon,
   ArrowRight,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
 import { AnimatedBackground } from '@/components/animated-background';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
+import { useCard } from '@/hooks/use-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LineChart, 
@@ -35,84 +37,63 @@ import { Badge } from "@/components/ui/badge";
 import { PaymentCard, Transaction, MonthlyData, FinancialData } from '@/types/payment';
 
 const currencyData: MonthlyData[] = [
-  { name: 'Jan', received: 2000, sent: 1200, balance: 800 },
-  { name: 'Feb', received: 3200, sent: 1300, balance: 1900 },
-  { name: 'Mar', received: 2800, sent: 1400, balance: 1400 },
-  { name: 'Apr', received: 4500, sent: 2300, balance: 2200 },
-  { name: 'May', received: 3800, sent: 1700, balance: 2100 },
-  { name: 'Jun', received: 6200, sent: 2800, balance: 3400 },
-  { name: 'Jul', received: 5800, sent: 2500, balance: 3300 },
-  { name: 'Aug', received: 5200, sent: 2400, balance: 2800 },
-  { name: 'Sep', received: 6100, sent: 2800, balance: 3300 },
-  { name: 'Oct', received: 7200, sent: 3000, balance: 4200 },
-  { name: 'Nov', received: 6800, sent: 3000, balance: 3800 },
-  { name: 'Dec', received: 8500, sent: 3900, balance: 4600 }
+  { name: 'Jan', received: 2000, sent: 1200, revenue: 800 },
+  { name: 'Feb', received: 3200, sent: 1300, revenue: 1900 },
+  { name: 'Mar', received: 2800, sent: 1400, revenue: 1400 },
+  { name: 'Apr', received: 4500, sent: 2300, revenue: 2200 },
+  { name: 'May', received: 3800, sent: 1700, revenue: 2100 },
+  { name: 'Jun', received: 6200, sent: 2800, revenue: 3400 },
+  { name: 'Jul', received: 5800, sent: 2500, revenue: 3300 },
+  { name: 'Aug', received: 5200, sent: 2400, revenue: 2800 },
+  { name: 'Sep', received: 6100, sent: 2800, revenue: 3300 },
+  { name: 'Oct', received: 7200, sent: 3000, revenue: 4200 },
+  { name: 'Nov', received: 6800, sent: 3000, revenue: 3800 },
+  { name: 'Dec', received: 8500, sent: 3900, revenue: 4600 }
 ];
+
+const getFilteredCurrencyData = (): MonthlyData[] => {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth(); // 0-based (0 = January, 4 = May)
+  
+  // Filter currencyData to only include months up to current month
+  return currencyData.slice(0, currentMonth + 1).map(month => ({
+    ...month,
+    revenue: month.received - month.sent // Ensure correct balance calculation
+  }));
+};
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { transactions, getTransactions, balance } = useWallet();
+  const { cards, isLoading: cardsLoading, getCards } = useCard();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'balance' | 'received' | 'sent'>('all');
-  const [paymentCards, setPaymentCards] = useState<PaymentCard[]>([
-    { 
-      id: 'card1', 
-      name: 'Chase Sapphire', 
-      cardNumber: '**** **** **** 4567', 
-      expireDate: '05/27', 
-      cvc: '***', 
-      isDefault: true,
-      type: 'visa',
-      cardColor: 'bg-blue-500'
-    },
-    { 
-      id: 'card2', 
-      name: 'Citibank Premier', 
-      cardNumber: '**** **** **** 8923', 
-      expireDate: '11/26', 
-      cvc: '***', 
-      isDefault: false,
-      type: 'mastercard',
-      cardColor: 'bg-purple-500'
-    },
-    { 
-      id: 'card3', 
-      name: 'American Express', 
-      cardNumber: '**** ****** 61005', 
-      expireDate: '03/28', 
-      cvc: '****', 
-      isDefault: false,
-      type: 'amex',
-      cardColor: 'bg-green-500'
-    }
-  ]);
   
-  // FIXED: Calculate correct financial data - balance = received - sent
-  const totalReceived = currencyData.reduce((sum, month) => sum + month.received, 0);
-  const totalSent = currencyData.reduce((sum, month) => sum + month.sent, 0);
+  // Update currencyData with correct revenue calculation
+  const correctedCurrencyData: MonthlyData[] = getFilteredCurrencyData();
+  
+  // FIXED: Calculate correct financial data - revenue = received - sent
+  const totalReceived = correctedCurrencyData.reduce((sum, month) => sum + month.received, 0);
+  const totalSent = correctedCurrencyData.reduce((sum, month) => sum + month.sent, 0);
   
   const financialData: FinancialData = {
-    balance: totalReceived - totalSent, // FIXED: balance = received - sent
+    revenue: totalReceived - totalSent, // FIXED: revenue = received - sent
     sent: totalSent,
     received: totalReceived,
   };
   
-  // Update currencyData with correct balance calculation
-  const correctedCurrencyData: MonthlyData[] = currencyData.map(month => ({
-    ...month,
-    balance: month.received - month.sent // FIXED: balance = received - sent for each month
-  }));
   
-  // Fetch transactions from backend
+  // Fetch transactions and cards from backend
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/signin');
     } else {
-      // Fetch transactions when component mounts
+      // Fetch transactions and cards when component mounts
       getTransactions();
+      getCards();
     }
-  }, [isAuthenticated, navigate, getTransactions]);
+  }, []);
   
   // Get recent transactions (latest 5) from backend data
   const recentTransactions = React.useMemo(() => {
@@ -412,7 +393,7 @@ const Dashboard: React.FC = () => {
               </CardHeader>
               <CardContent className="relative z-10 pt-0">
                 <h3 className="text-2xl sm:text-3xl font-bold">
-                  ${(balance || financialData.balance).toLocaleString('en-US', {
+                  ${(balance || financialData.revenue).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -478,7 +459,7 @@ const Dashboard: React.FC = () => {
                 >
                   <TabsList className="grid grid-cols-4 w-full sm:w-auto">
                     <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-                    <TabsTrigger value="balance" className="text-xs sm:text-sm">Balance</TabsTrigger>
+                    <TabsTrigger value="balance" className="text-xs sm:text-sm">Revenue</TabsTrigger>
                     <TabsTrigger value="received" className="text-xs sm:text-sm">Received</TabsTrigger>
                     <TabsTrigger value="sent" className="text-xs sm:text-sm">Sent</TabsTrigger>
                   </TabsList>
@@ -498,7 +479,7 @@ const Dashboard: React.FC = () => {
                     }}
                   >
                     <defs>
-                      <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                       </linearGradient>
@@ -532,12 +513,12 @@ const Dashboard: React.FC = () => {
                     {(activeTab === 'all' || activeTab === 'balance') && (
                       <Line 
                         type="monotone" 
-                        dataKey="balance" 
+                        dataKey="revenue" 
                         stroke="#3b82f6" 
                         strokeWidth={3}
                         dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
                         activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2, fill: '#ffffff' }}
-                        name="Balance"
+                        name="Revenue"
                       />
                     )}
                     {(activeTab === 'all' || activeTab === 'received') && (
@@ -648,7 +629,7 @@ const Dashboard: React.FC = () => {
               </Card>
             </div>
             
-            {/* User's Payment Cards - Responsive sidebar */}
+            {/* User's Payment Cards - Now fetched from backend */}
             <div>
               <Card>
                 <CardHeader>
@@ -663,34 +644,57 @@ const Dashboard: React.FC = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3 sm:space-y-4">
-                  {paymentCards.map((card) => (
-                    <div key={card.id} className={`relative overflow-hidden rounded-lg p-4 border hover:bg-muted/50 transition-colors ${card.isDefault ? 'ring-2 ring-primary' : ''}`}>
-                      <div className={`absolute top-0 left-0 h-full w-2 ${card.cardColor}`}></div>
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-background flex-shrink-0">
-                          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                            <p className="font-medium text-sm sm:text-base">{card.name}</p>
-                            {card.isDefault && (
-                              <Badge variant="secondary" className="text-xs">
-                                <span className="flex items-center gap-1">
-                                  <Check className="h-3 w-3" />
-                                  Default
-                                </span>
-                              </Badge>
-                            )}
+                  {cardsLoading ? (
+                    <div className="text-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-muted-foreground" />
+                      <p className="text-muted-foreground">Loading your cards...</p>
+                    </div>
+                  ) : cards.length > 0 ? (
+                    cards.slice(0, 5).map((card) => (
+                      <div key={card.id} className={`relative overflow-hidden rounded-lg p-4 border hover:bg-muted/50 transition-colors ${card.isDefault ? 'ring-2 ring-primary' : ''}`}>
+                        <div className={`absolute top-0 left-0 h-full w-2 ${card.cardColor}`}></div>
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-full bg-background flex-shrink-0">
+                            <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
                           </div>
-                          <p className="text-xs sm:text-sm text-muted-foreground">{card.cardNumber}</p>
-                          <div className="flex gap-4 mt-1">
-                            <p className="text-xs">Exp: {card.expireDate}</p>
-                            <p className="text-xs">CVC: {card.cvc}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                              <p className="font-medium text-sm sm:text-base">{card.name}</p>
+                              {card.isDefault && (
+                                <Badge variant="secondary" className="text-xs">
+                                  <span className="flex items-center gap-1">
+                                    <Check className="h-3 w-3" />
+                                    Default
+                                  </span>
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-muted-foreground">{card.cardNumber}</p>
+                            <div className="flex gap-4 mt-1">
+                              <p className="text-xs">Exp: {card.expireDate}</p>
+                              <p className="text-xs">CVC: {card.cvc}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center p-8 border rounded-lg">
+                      <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No cards linked</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Add a payment card to get started
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-3"
+                        onClick={() => handleNavigation('/card')}
+                      >
+                        Add Card
+                      </Button>
                     </div>
-                  ))}
+                  )}
                 </CardContent>
               </Card>
             </div>

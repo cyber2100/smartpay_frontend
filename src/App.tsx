@@ -28,6 +28,9 @@ import NotFound from "./pages/NotFound";
 import Setting from "./pages/Setting";
 import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import TransactionStatistics from "./pages/admin/TransactionStatistics";
+import { NotificationProvider } from "./hooks/use-notifications";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +167,38 @@ const AppRoutes = () => {
           } 
         />
         <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <UserManagement />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/transactions" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <TransactionStatistics />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/balances" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <TransactionStatistics />
+
+                {/* <BalanceStatistics /> */}
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/setting" 
           element={
             <ProtectedRoute>
@@ -198,16 +233,18 @@ const App = () => (
         <WalletProvider>
           <CardProvider>
             <SettingsProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <div className="min-h-screen flex flex-col">
-                    <Navbar />
-                    <AppRoutes />
-                  </div>
-                </BrowserRouter>
-              </TooltipProvider>
+              <NotificationProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <div className="min-h-screen flex flex-col">
+                      <Navbar />
+                      <AppRoutes />
+                    </div>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </NotificationProvider>
             </SettingsProvider>
           </CardProvider>
         </WalletProvider>

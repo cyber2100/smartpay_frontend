@@ -1,276 +1,127 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Users, BarChart3, Wallet } from 'lucide-react';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'; 
 import { useNavigate } from 'react-router-dom';
-import { AnimatedBackground } from '@/components/animated-background';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from '@/hooks/use-auth';
-import { useWallet } from '@/hooks/use-wallet';
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-
-// Use the User type from use-auth instead of redefining it
-import type { User } from '@/hooks/use-auth';
-import { Transaction } from '@/types/payment';
 
 const AdminPanel: React.FC = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
-  const { allUsers, allTransactions } = useWallet();
+  const [currentPath, setCurrentPath] = useState('/admin');
   const navigate = useNavigate();
   
-  const [userSearchTerm, setUserSearchTerm] = useState<string>('');
-  const [txSearchTerm, setTxSearchTerm] = useState<string>('');
-  
-  // Redirect if not authenticated or not admin
-  useEffect(() => {
-    if (!isAuthenticated || !isAdmin) {
-      // navigate('/signin');
+  const tabs = [
+    {
+      id: 'users',
+      label: 'User Management',
+      path: '/admin/users',
+      icon: Users,
+      description: 'Manage users, view profiles, and handle user verification'
+    },
+    {
+      id: 'transactions',
+      label: 'Transaction Statistics',
+      path: '/admin/transactions',
+      icon: BarChart3,
+      description: 'View transaction analytics, reports, and payment insights'
+    },
+    {
+      id: 'balances',
+      label: 'Balance Statistics',
+      path: '/admin/balances',
+      icon: Wallet,
+      description: 'Monitor account balances, financial summaries, and wallet data'
     }
-  }, [isAuthenticated, isAdmin, navigate]);
-  
-  // Filter users
-  const filteredUsers: User[] = allUsers.filter((user: User) => 
-    user.name.toLowerCase().includes(userSearchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
-  );
-  
-  // Filter transactions
-  const filteredTransactions: Transaction[] = allTransactions.filter((tx: Transaction) => 
-    tx.sender?.fullname.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
-    tx.recipient?.fullname.toLowerCase().includes(txSearchTerm.toLowerCase()) ||
-    (tx.description && tx.description.toLowerCase().includes(txSearchTerm.toLowerCase()))
-  );
+  ];
 
-  // Format date for display
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+  const handleTabClick = (path: string) => {
+    // In a real app, you'd use navigate(path) here
+    setCurrentPath(path);
+    navigate(path);
+    console.log(`Navigating to: ${path}`);
   };
 
-  // Handle user search input change
-  const handleUserSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setUserSearchTerm(e.target.value);
+  const isCurrentPath = (path: string) => {
+    return currentPath === path;
   };
-
-  // Handle transaction search input change
-  const handleTxSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setTxSearchTerm(e.target.value);
-  };
-
-  // Calculate total transaction volume
-  const totalVolume: number = allTransactions.reduce((sum: number, tx: Transaction) => sum + tx.amount, 0);
 
   return (
-    <div className="min-h-screen pb-16">
-      <AnimatedBackground />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Animated Background Effect */}
+      <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-700/25 bg-[size:20px_20px] opacity-60" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-50/50 to-transparent dark:via-slate-900/50" />
       
-      <div className="container px-4 pt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Admin Panel</CardTitle>
-            <CardDescription>Manage users and transactions</CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <Tabs defaultValue="users">
-              <TabsList className="mb-4">
-                <TabsTrigger value="users">Users</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              </TabsList>
+      <div className="relative container px-4 pt-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              Admin Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Manage your platform with comprehensive administrative tools
+            </p>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              const isActive = isCurrentPath(tab.path);
               
-              {/* Users Tab */}
-              <TabsContent value="users">
-                <div className="relative mb-4">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search users by name or email..."
-                    value={userSearchTerm}
-                    onChange={handleUserSearchChange}
-                    className="pl-8"
-                    type="text"
-                  />
-                </div>
-                
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Balance</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.map((user: User) => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.id}</TableCell>
-                          <TableCell>
-                            <div className="font-medium">{user.name}</div>
-                            {user.isAdmin && (
-                              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                                Admin
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.phone || '-'}</TableCell>
-                          <TableCell>
-                            ${user.balance.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs
-                              ${user.isVerified 
-                                ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                                : 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              }`}
-                            >
-                              <span className={`mr-1 rounded-full h-1.5 w-1.5
-                                ${user.isVerified ? 'bg-green-500' : 'bg-yellow-500'}`}
-                              />
-                              {user.isVerified ? 'Verified' : 'Unverified'}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    {filteredUsers.length === 0 && (
-                      <TableCaption>No users found matching your search criteria.</TableCaption>
-                    )}
-                  </Table>
-                </div>
-              </TabsContent>
-              
-              {/* Transactions Tab */}
-              <TabsContent value="transactions">
-                <div className="relative mb-4">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search transactions..."
-                    value={txSearchTerm}
-                    onChange={handleTxSearchChange}
-                    className="pl-8"
-                    type="text"
-                  />
-                </div>
-                
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>From</TableHead>
-                        <TableHead>To</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTransactions.map((tx: Transaction) => (
-                        <TableRow key={tx.id}>
-                          <TableCell className="font-mono text-xs">{tx.id}</TableCell>
-                          <TableCell>{tx.sender?.fullname}</TableCell>
-                          <TableCell>{tx.recipient?.fullname}</TableCell>
-                          <TableCell>
-                            ${tx.amount.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </TableCell>
-                          <TableCell>{tx.description || '-'}</TableCell>
-                          <TableCell>{formatDate(tx.timestamp)}</TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              <span className="mr-1 rounded-full h-1.5 w-1.5 bg-green-500" />
-                              Completed
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                    {filteredTransactions.length === 0 && (
-                      <TableCaption>No transactions found matching your search criteria.</TableCaption>
-                    )}
-                  </Table>
-                </div>
-              </TabsContent>
-              
-              {/* Dashboard Tab */}
-              <TabsContent value="dashboard">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{allUsers.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {allUsers.filter((u: User) => u.isVerified).length} verified users
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{allTransactions.length}</div>
-                      <p className="text-xs text-muted-foreground">
-                        All time transactions
-                      </p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        ${totalVolume.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
-                        })}
+              return (
+                <Card 
+                  key={tab.id}
+                  className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+                    isActive 
+                      ? 'ring-2 ring-primary shadow-lg bg-primary/5' 
+                      : 'hover:ring-1 hover:ring-primary/50'
+                  }`}
+                  onClick={() => handleTabClick(tab.path)}
+                >
+                  <CardHeader className="text-center pb-4">
+                    <div className="flex justify-center mb-4">
+                      <div className={`p-4 rounded-full ${
+                        isActive 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        <IconComponent size={32} />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        All time transaction volume
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                {/* Admin dashboard features would go here */}
-                <div className="p-8 text-center">
-                  <p className="text-muted-foreground">
-                    More detailed analytics and management features would be available in the full version.
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                    </div>
+                    <CardTitle className={`text-xl ${
+                      isActive ? 'text-primary' : 'text-foreground'
+                    }`}>
+                      {tab.label}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {tab.description}
+                    </p>
+                    {isActive && (
+                      <div className="mt-4 pt-4 border-t">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
+                          Current Section
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-16 text-center">
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="py-8">
+                <h3 className="text-lg font-semibold mb-2">Welcome to Admin Panel</h3>
+                <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                  Select a section above to access detailed management tools. Each section provides 
+                  comprehensive controls and analytics for different aspects of your platform.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

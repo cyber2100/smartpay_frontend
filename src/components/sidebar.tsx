@@ -12,7 +12,10 @@ import {
   CreditCard,
   ArrowUpCircle,
   ArrowDownCircle,
-  UserCheck
+  UserCheck,
+  Users,
+  Receipt,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,12 +29,12 @@ interface MenuItem {
 export const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAdminPanelView } = useAuth();
   
   const pathSegments: string[] = location.pathname.split('/');
-  const activePage: string = pathSegments[1] || 'dashboard';
+  const activePage: string = pathSegments[pathSegments.length - 1] || 'dashboard';
   
-  const [menuItems, setMenuItems] = useState([
+  const regularMenuItems: MenuItem[] = [
     { id: 'dashboard', name: 'Dashboard', icon: <Home className="h-5 w-5" />, path: '/dashboard' },
     { id: 'wallet', name: 'Wallet', icon: <Wallet className="h-5 w-5" />, path: '/wallet' },
     { id: 'card', name: 'Card', icon: <CreditCard className="h-5 w-5" />, path: '/card' },
@@ -39,19 +42,35 @@ export const Sidebar: React.FC = () => {
     { id: 'withdraw', name: 'Withdraw', icon: <ArrowUpCircle className="h-5 w-5" />, path: '/withdraw' },
     { id: 'transfer', name: 'Transfer', icon: <Send className="h-5 w-5" />, path: '/transfer' },
     { id: 'history', name: 'History', icon: <Clock className="h-5 w-5" />, path: '/history' },
-  ]);
+  ];
+
+  const adminMenuItems: MenuItem[] = [
+    { id: 'users', name: 'Users', icon: <Users className="h-5 w-5" />, path: '/admin/users' },
+    { id: 'transactions', name: 'Transactions', icon: <Receipt className="h-5 w-5" />, path: '/admin/transactions' },
+    { id: 'balances', name: 'Balances', icon: <DollarSign className="h-5 w-5" />, path: '/admin/balances' },
+  ];
+  
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(regularMenuItems);
   
   useEffect(() => {
-    // if(user?.isAdmin){
-      const adminMenu = { id: 'admin', name: 'AdminPanel', icon: <UserCheck className="h-5 w-5" />, path: '/admin' };
-      setMenuItems([
-        ...menuItems,
-        adminMenu
-      ]);
-    // }
-  }, [])
-
-
+    if (isAdminPanelView) {
+      setMenuItems(adminMenuItems);
+    } else {
+      const baseItems = [...regularMenuItems];
+      // Add AdminPanel option for non-admin view if user is admin
+      if (user?.isAdmin) {
+        const adminPanelMenu: MenuItem = { 
+          id: 'admin', 
+          name: 'AdminPanel', 
+          icon: <UserCheck className="h-5 w-5" />, 
+          path: '/admin' 
+        };
+        baseItems.push(adminPanelMenu);
+      }
+      setMenuItems(baseItems);
+    }
+  }, [isAdminPanelView, user?.isAdmin]);
+  
   const handleNavigation = (path: string): void => {
     navigate(path);
   };
@@ -60,8 +79,12 @@ export const Sidebar: React.FC = () => {
     <div className="fixed top-16 left-0 w-64 bottom-0 bg-background border-r flex flex-col justify-between py-6 overflow-y-auto">
       <div className="space-y-6 flex-1">
         <div className="px-4">
-          <h2 className="text-2xl font-bold">Finance App</h2>
-          <p className="text-sm text-muted-foreground">Manage your money</p>
+          <h2 className="text-2xl font-bold">
+            {isAdminPanelView ? 'Admin Panel' : 'Finance App'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {isAdminPanelView ? 'Manage system' : 'Manage your money'}
+          </p>
         </div>
         
         <div className="space-y-1 px-2 flex-1">

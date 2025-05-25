@@ -308,7 +308,50 @@ export const notificationService = {
   getVerificationStatus: async () => {
     const response = await api.get('/user/verification-status');
     return response.data;
-  }
+  },
+
+  // NEW: Get all notifications for the current user
+  getNotifications: async () => {
+    const response = await api.get('/notifications');
+    return response.data;
+  },
+
+  // NEW: Mark a specific notification as read
+  markAsRead: async (notificationId: string) => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  // NEW: Mark all notifications as read
+  markAllAsRead: async () => {
+    const response = await api.patch('/notifications/mark-all-read');
+    return response.data;
+  },
+
+  // NEW: Delete a specific notification
+  deleteNotification: async (notificationId: string) => {
+    const response = await api.delete(`/notifications/${notificationId}`);
+    return response.data;
+  },
+
+  // NEW: Get unread notification count
+  getUnreadCount: async () => {
+    const response = await api.get('/notifications/unread-count');
+    return response.data.count;
+  },
+
+  // NEW: Create a notification (usually called by system)
+  createNotification: async (notificationData: {
+    user_id: string;
+    type: string;
+    title: string;
+    message: string;
+    amount?: number;
+    transaction_id?: string;
+  }) => {
+    const response = await api.post('/notifications', notificationData);
+    return response.data;
+  },
 };
 
 // Profile Service

@@ -41,11 +41,11 @@ export interface MonthlyData {
   name: string;
   received: number;
   sent: number;
-  balance: number;
+  revenue: number;
 }
 
 export interface FinancialData {
-  balance: number;
+  revenue: number;
   sent: number;
   received: number;
 }
