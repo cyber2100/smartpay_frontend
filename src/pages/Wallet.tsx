@@ -45,8 +45,6 @@ const Wallet: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
-    } else if (!user?.isVerified) {
-      return navigate('/verify');
     }
     getTransactions();
   }, [isAuthenticated, user?.isVerified, navigate, getTransactions]);

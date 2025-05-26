@@ -1,14 +1,39 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ComposedChart } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, DollarSign, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, DollarSign, Info, RefreshCw } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useAuth } from '@/hooks/use-auth';
+import { useWallet } from '@/hooks/use-wallet';
+import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
   id: string;
   amount: number;
   timestamp: string;
   description: string;
+  type: string;
+  status: 'completed' | 'pending' | 'failed';
+  senderId?: string;
+  recipientId?: string;
+  cardId?: string;
+  sender?: {
+    id: string;
+    fullname: string;
+    email: string;
+    phone: string | null;
+  } | null;
+  recipient?: {
+    id: string;
+    fullname: string;
+    email: string;
+    phone: string | null;
+  } | null;
+  card?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 interface MonthlyStats {
@@ -21,7 +46,7 @@ interface MonthlyStats {
   changePercentage: number;
 }
 
-// Mock data generator
+// Mock data generator (preserved for fallback)
 const generateMockTransactions = (): Transaction[] => {
   const transactions: Transaction[] = [];
   const currentYear = new Date().getFullYear();
@@ -40,7 +65,9 @@ const generateMockTransactions = (): Transaction[] => {
         id: `mock-${month}-${i}`,
         amount: Math.max(amount, 5), // Ensure positive amounts
         timestamp: new Date(currentYear, month, day).toISOString(),
-        description: descriptions[Math.floor(Math.random() * descriptions.length)]
+        description: descriptions[Math.floor(Math.random() * descriptions.length)],
+        type: ['deposit', 'withdraw', 'transfer'][Math.floor(Math.random() * 3)],
+        status: 'completed'
       });
     }
   }
@@ -49,19 +76,78 @@ const generateMockTransactions = (): Transaction[] => {
 };
 
 const TransactionStatistics: React.FC = () => {
-  // Simulate the useWallet hook - replace this with your actual hook
-  const allTransactions = useMemo(() => {
-    // Simulate empty backend data - replace this condition with your actual empty check
-    const backendData: Transaction[] = []; // This would be your actual backend data
+  const { user, isAuthenticated } = useAuth();
+  const { transactions, getTransactions } = useWallet();
+  const { toast } = useToast();
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch transactions from backend
+  const fetchBackendTransactions = async () => {
+    if (!isAuthenticated || !user) {
+      return [];
+    }
+
+    setIsLoading(true);
+    setError(null);
     
-    // If backend data is empty, use mock data
-    return backendData.length === 0 ? generateMockTransactions() : backendData;
-  }, []);
+    try {
+      const backendTransactions = await getTransactions();
+      setLastFetchTime(new Date());
+      return backendTransactions;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to fetch transactions';
+      setError(errorMessage);
+      console.error('Error fetching backend transactions:', err);
+      
+      toast({
+        title: "Failed to load transactions",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial data load
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchBackendTransactions();
+    }
+  }, [isAuthenticated, user]);
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    fetchBackendTransactions();
+  };
+
+  // Determine which data to use
+  const allTransactions = useMemo(() => {
+    // If we have backend transactions, use them
+    if (transactions && transactions.length > 0) {
+      return transactions.map(tx => ({
+        ...tx,
+        // Ensure timestamp is a string for consistency
+        timestamp: typeof tx.timestamp === 'string' ? tx.timestamp : tx.timestamp.toISOString(),
+        // Ensure description exists
+        description: tx.description || `${tx.type} transaction`,
+        // Ensure amount is absolute for statistics
+        amount: Math.abs(tx.amount)
+      }));
+    }
+    
+    // Fallback to mock data if no backend data or not authenticated
+    return generateMockTransactions();
+  }, [transactions]);
 
   const isUsingMockData = useMemo(() => {
-    // This should check if your actual backend data is empty
-    return true; // Set this based on your actual backend data state
-  }, []);
+    return !isAuthenticated || !transactions || transactions.length === 0;
+  }, [isAuthenticated, transactions]);
 
   const monthlyStats: MonthlyStats[] = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -73,23 +159,27 @@ const TransactionStatistics: React.FC = () => {
 
     const stats: MonthlyStats[] = [];
 
-    // Process each month from January to current month (or available data)
-    const maxMonth = Math.min(currentMonth, 5); // Limit to available mock data
-    for (let monthIndex = 0; monthIndex <= maxMonth; monthIndex++) {
+    // Process each month from January to current month
+    for (let monthIndex = 0; monthIndex <= currentMonth; monthIndex++) {
       const monthTransactions = allTransactions.filter((tx: Transaction) => {
         const txDate = new Date(tx.timestamp);
         return txDate.getFullYear() === currentYear && txDate.getMonth() === monthIndex;
       });
 
-      const totalVolume = monthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+      // Skip months with no transactions unless using mock data
+      if (monthTransactions.length === 0 && !isUsingMockData) {
+        continue;
+      }
+
+      const totalVolume = monthTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
       const averageAmount = monthTransactions.length > 0 ? totalVolume / monthTransactions.length : 0;
 
       // Calculate trend compared to previous month
       let trend: 'up' | 'down' | 'stable' = 'stable';
       let changePercentage = 0;
 
-      if (monthIndex > 0 && stats[monthIndex - 1]) {
-        const prevAverage = stats[monthIndex - 1].averageAmount;
+      if (stats.length > 0) {
+        const prevAverage = stats[stats.length - 1].averageAmount;
         if (prevAverage > 0) {
           changePercentage = ((averageAmount - prevAverage) / prevAverage) * 100;
           if (changePercentage > 2) trend = 'up';
@@ -110,11 +200,11 @@ const TransactionStatistics: React.FC = () => {
     }
 
     return stats;
-  }, [allTransactions]);
+  }, [allTransactions, isUsingMockData]);
 
   const overallStats = useMemo(() => {
     const totalTransactions = allTransactions.length;
-    const totalVolume = allTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const totalVolume = allTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     const overallAverage = totalTransactions > 0 ? totalVolume / totalTransactions : 0;
 
     // Calculate month-over-month growth
@@ -171,20 +261,53 @@ const TransactionStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6 m-6">
-      {/* Mock Data Notice */}
-      {isUsingMockData && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
+      {/* Data Source Notice */}
+      <Card className={`border-2 ${isUsingMockData ? 'border-blue-200 bg-blue-50' : 'border-green-200 bg-green-50'}`}>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Info className="h-5 w-5 text-blue-600" />
+              <Info className={`h-5 w-5 ${isUsingMockData ? 'text-blue-600' : 'text-green-600'}`} />
               <div>
-                <p className="text-sm font-medium text-blue-900">
-                  Demo Mode - Showing Sample Data
+                <p className={`text-sm font-medium ${isUsingMockData ? 'text-blue-900' : 'text-green-900'}`}>
+                  {isUsingMockData ? 'Demo Mode - Showing Sample Data' : 'Live Data - Real Transaction Analytics'}
                 </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  This page shows transaction analytics and trends. Connect your backend to see real data.
+                <p className={`text-xs mt-1 ${isUsingMockData ? 'text-blue-700' : 'text-green-700'}`}>
+                  {isUsingMockData 
+                    ? 'This page shows transaction analytics and trends. Connect your backend to see real data.'
+                    : `Last updated: ${lastFetchTime?.toLocaleTimeString() || 'Just now'}`
+                  }
                 </p>
+                {error && (
+                  <p className="text-xs text-red-600 mt-1">
+                    Error: {error}
+                  </p>
+                )}
               </div>
+            </div>
+            
+            {!isUsingMockData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loading State */}
+      {isLoading && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center gap-3 py-8">
+              <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+              <p className="text-muted-foreground">Loading transaction data...</p>
             </div>
           </CardContent>
         </Card>
@@ -201,7 +324,9 @@ const TransactionStatistics: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{overallStats.totalTransactions.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">This year</p>
+            <p className="text-xs text-muted-foreground">
+              {isUsingMockData ? 'Sample data' : 'This year'}
+            </p>
           </CardContent>
         </Card>
 
@@ -214,7 +339,9 @@ const TransactionStatistics: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(overallStats.totalVolume)}</div>
-            <p className="text-xs text-muted-foreground">This year</p>
+            <p className="text-xs text-muted-foreground">
+              {isUsingMockData ? 'Sample data' : 'This year'}
+            </p>
           </CardContent>
         </Card>
 
@@ -247,167 +374,191 @@ const TransactionStatistics: React.FC = () => {
         </Card>
       </div>
 
-      {/* Average Transaction Amount Chart with Transaction Count */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Average Transaction Amount & Count by Month</CardTitle>
-          <CardDescription>
-            Monthly average transaction amounts and total transaction count
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis 
-                  yAxisId="left"
-                  tickFormatter={(value) => `$${value.toLocaleString()}`}
-                />
-                <YAxis 
-                  yAxisId="right" 
-                  orientation="right"
-                  tickFormatter={(value) => `${value}`}
-                />
-                <Tooltip 
-                  formatter={(value: number, name: string) => {
-                    if (name === 'averageAmount') {
-                      return [formatCurrency(value), 'Average Amount'];
-                    }
-                    return [value.toLocaleString(), 'Transaction Count'];
-                  }}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Bar 
-                  yAxisId="right"
-                  dataKey="totalTransactions" 
-                  fill="#e5e7eb"
-                  radius={[2, 2, 0, 0]}
-                  name="totalTransactions"
-                />
-                <Line 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="averageAmount" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="averageAmount"
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Show empty state if no data */}
+      {!isLoading && monthlyStats.length === 0 && !isUsingMockData && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">No Transaction Data</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                No transactions found for analysis. Start using your wallet to see statistics.
+              </p>
+              <Button onClick={handleRefresh} variant="outline" className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Refresh Data
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Transaction Count Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Transaction Count</CardTitle>
-          <CardDescription>
-            Number of transactions processed each month
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value: number) => [value.toLocaleString(), 'Transactions']}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Bar 
-                  dataKey="totalTransactions" 
-                  fill="#10b981"
-                  radius={[2, 2, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Transaction Volume Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Transaction Volume</CardTitle>
-          <CardDescription>
-            Total transaction volume by month
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis 
-                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), 'Total Volume']}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Bar 
-                  dataKey="totalVolume" 
-                  fill="#3b82f6"
-                  radius={[2, 2, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Monthly Breakdown Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Analysis</CardTitle>
-          <CardDescription>
-            Detailed breakdown of transaction patterns and trends
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {monthlyStats.map((stat, index) => (
-              <div key={stat.month} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-4">
-                  <div className="text-lg font-medium">{stat.month}</div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {stat.totalTransactions} transactions
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="font-medium">{formatCurrency(stat.averageAmount)}</div>
-                    <div className="text-sm text-muted-foreground">avg amount</div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="font-medium">{formatCurrency(stat.totalVolume)}</div>
-                    <div className="text-sm text-muted-foreground">total volume</div>
-                  </div>
-                  
-                  {index > 0 && (
-                    <div className="flex items-center gap-2">
-                      {getTrendIcon(stat.trend)}
-                      <span className={`text-sm font-medium ${getTrendColor(stat.trend)}`}>
-                        {formatPercentage(stat.changePercentage)}
-                      </span>
-                    </div>
-                  )}
-                </div>
+      {/* Charts - only show if we have data */}
+      {monthlyStats.length > 0 && (
+        <>
+          {/* Average Transaction Amount Chart with Transaction Count */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Average Transaction Amount & Count by Month</CardTitle>
+              <CardDescription>
+                Monthly average transaction amounts and total transaction count
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={monthlyStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis 
+                      yAxisId="left"
+                      tickFormatter={(value) => `$${value.toLocaleString()}`}
+                    />
+                    <YAxis 
+                      yAxisId="right" 
+                      orientation="right"
+                      tickFormatter={(value) => `${value}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: number, name: string) => {
+                        if (name === 'averageAmount') {
+                          return [formatCurrency(value), 'Average Amount'];
+                        }
+                        return [value.toLocaleString(), 'Transaction Count'];
+                      }}
+                      labelFormatter={(label) => `Month: ${label}`}
+                    />
+                    <Bar 
+                      yAxisId="right"
+                      dataKey="totalTransactions" 
+                      fill="#e5e7eb"
+                      radius={[2, 2, 0, 0]}
+                      name="totalTransactions"
+                    />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="averageAmount" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6 }}
+                      name="averageAmount"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Transaction Count Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Transaction Count</CardTitle>
+              <CardDescription>
+                Number of transactions processed each month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value: number) => [value.toLocaleString(), 'Transactions']}
+                      labelFormatter={(label) => `Month: ${label}`}
+                    />
+                    <Bar 
+                      dataKey="totalTransactions" 
+                      fill="#10b981"
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Transaction Volume Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Transaction Volume</CardTitle>
+              <CardDescription>
+                Total transaction volume by month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis 
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrency(value), 'Total Volume']}
+                      labelFormatter={(label) => `Month: ${label}`}
+                    />
+                    <Bar 
+                      dataKey="totalVolume" 
+                      fill="#3b82f6"
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Breakdown Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Analysis</CardTitle>
+              <CardDescription>
+                Detailed breakdown of transaction patterns and trends
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {monthlyStats.map((stat, index) => (
+                  <div key={stat.month} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <div className="text-lg font-medium">{stat.month}</div>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {stat.totalTransactions} transactions
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(stat.averageAmount)}</div>
+                        <div className="text-sm text-muted-foreground">avg amount</div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(stat.totalVolume)}</div>
+                        <div className="text-sm text-muted-foreground">total volume</div>
+                      </div>
+                      
+                      {index > 0 && (
+                        <div className="flex items-center gap-2">
+                          {getTrendIcon(stat.trend)}
+                          <span className={`text-sm font-medium ${getTrendColor(stat.trend)}`}>
+                            {formatPercentage(stat.changePercentage)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };

@@ -47,7 +47,7 @@ export function Navbar(): ReactElement {
 
   const handleAdminPanel = (): void => {
     // Open admin panel in new tab
-    window.open('/admin', '_blank');
+    navigate('/admin');
   };
 
   const handleBackToUserView = (): void => {

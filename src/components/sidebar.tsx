@@ -15,7 +15,8 @@ import {
   UserCheck,
   Users,
   Receipt,
-  DollarSign
+  DollarSign,
+  BookDashed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -45,6 +46,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   const adminMenuItems: MenuItem[] = [
+    { id: 'dashboard', name: 'AdminDashboard', icon: <BookDashed className="h-5 w-5" />, path: '/admin' },
     { id: 'users', name: 'Users', icon: <Users className="h-5 w-5" />, path: '/admin/users' },
     { id: 'transactions', name: 'Transactions', icon: <Receipt className="h-5 w-5" />, path: '/admin/transactions' },
     { id: 'balances', name: 'Balances', icon: <DollarSign className="h-5 w-5" />, path: '/admin/balances' },
@@ -57,16 +59,6 @@ export const Sidebar: React.FC = () => {
       setMenuItems(adminMenuItems);
     } else {
       const baseItems = [...regularMenuItems];
-      // Add AdminPanel option for non-admin view if user is admin
-      if (user?.isAdmin) {
-        const adminPanelMenu: MenuItem = { 
-          id: 'admin', 
-          name: 'AdminPanel', 
-          icon: <UserCheck className="h-5 w-5" />, 
-          path: '/admin' 
-        };
-        baseItems.push(adminPanelMenu);
-      }
       setMenuItems(baseItems);
     }
   }, [isAdminPanelView, user?.isAdmin]);

@@ -43,11 +43,6 @@ const Deposit: React.FC = () => {
 
   // Remove navigation logic for demo
   useEffect(() => {
-    // Mock authentication check
-    if (!user?.isVerified) {
-      navigate('/verify');
-    }
-    
     // Set default card
     const defaultCard = paymentCards.find(card => card.isDefault);
     if (defaultCard) {
