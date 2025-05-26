@@ -292,12 +292,12 @@ export const cardService = {
 export const notificationService = {
   // Get user's notification preferences
   getNotificationSettings: async () => {
-    const response = await api.get('/user/notification-settings');
+    const response = await api.get('/auth/notif-setting');
     return response.data;
   },
 
   // Update notification delivery channel
-  updateDeliveryChannel: async (channel: 'email' | 'phone' | 'both') => {
+  updateDeliveryChannel: async (channel: 'system' | 'email' | 'phone' | 'both') => {
     const response = await api.patch('/user/notification-settings', {
       delivery_channel: channel
     });

@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { notificationService, profileService } from '@/services/api';
 
 // Types
-export type DeliveryChannel = 'email' | 'phone' | 'both';
+export type DeliveryChannel = 'system' | 'email' | 'phone' | 'both';
 
 export type NotificationSettings = {
   deliveryChannel: DeliveryChannel;

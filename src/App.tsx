@@ -161,9 +161,7 @@ const AppRoutes = () => {
           path="/admin" 
           element={
             <ProtectedRoute>
-              <AuthLayout>
-                <AdminDashboard />
-              </AuthLayout>
+              <AdminDashboard />
             </ProtectedRoute>
           } 
         />

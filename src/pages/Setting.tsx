@@ -214,7 +214,7 @@ export const SettingPage: React.FC = () => {
   };
 
   // Handle notification delivery channel change
-  const handleDeliveryChannelChange = async (value: 'email' | 'phone' | 'both'): Promise<void> => {
+  const handleDeliveryChannelChange = async (value: 'system' | 'email' | 'phone' | 'both'): Promise<void> => {
     const success = await updateDeliveryChannel(value);
     
     if (success) {
@@ -566,8 +566,20 @@ export const SettingPage: React.FC = () => {
           <CardContent>
             <RadioGroup 
               value={notificationSettings.deliveryChannel} 
-              onValueChange={(value: 'email' | 'phone' | 'both') => handleDeliveryChannelChange(value)}
+              onValueChange={(value: 'system' | 'email' | 'phone' | 'both') => handleDeliveryChannelChange(value)}
             >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="system" id="system" />
+                <Label htmlFor="email" className="cursor-pointer">
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 mr-2 text-blue-600" />
+                    <div>
+                      <p className="font-medium">System</p>
+                      <p className="text-sm text-muted-foreground">Receive notifications via this system</p>
+                    </div>
+                  </div>
+                </Label>
+              </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="email" id="email" />
                 <Label htmlFor="email" className="cursor-pointer">
