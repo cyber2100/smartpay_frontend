@@ -23,7 +23,7 @@ import Transfer from "./pages/Transfer";
 import Deposit from "./pages/Deposit";
 import Withdraw from "./pages/Withdraw";
 import History from "./pages/History";
-import AdminPanel from "./pages/AdminPanel";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import Setting from "./pages/Setting";
 import Card from "./pages/Card";
@@ -31,6 +31,7 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import TransactionStatistics from "./pages/admin/TransactionStatistics";
 import { NotificationProvider } from "./hooks/use-notifications";
+import BalanceStatistics from "./pages/admin/BalanceStatistics";
 
 const queryClient = new QueryClient();
 
@@ -161,7 +162,7 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <AuthLayout>
-                <AdminPanel />
+                <AdminDashboard />
               </AuthLayout>
             </ProtectedRoute>
           } 
@@ -191,9 +192,7 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <AuthLayout>
-                <TransactionStatistics />
-
-                {/* <BalanceStatistics /> */}
+                <BalanceStatistics />
               </AuthLayout>
             </ProtectedRoute>
           } 

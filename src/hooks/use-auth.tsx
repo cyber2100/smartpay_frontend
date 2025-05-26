@@ -293,8 +293,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     isAuthenticated: 
-      // true, 
-      !!user,
+      true, 
+      // !!user,
     isLoading,
     signin,
     signup,

@@ -80,7 +80,7 @@ export const Sidebar: React.FC = () => {
       <div className="space-y-6 flex-1">
         <div className="px-4">
           <h2 className="text-2xl font-bold">
-            {isAdminPanelView ? 'Admin Panel' : 'Finance App'}
+            {isAdminPanelView ? 'Admin Dashboard' : 'Finance App'}
           </h2>
           <p className="text-sm text-muted-foreground">
             {isAdminPanelView ? 'Manage system' : 'Manage your money'}

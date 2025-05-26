@@ -3,7 +3,7 @@ import { Users, BarChart3, Wallet } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'; 
 import { useNavigate } from 'react-router-dom';
 
-const AdminPanel: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const [currentPath, setCurrentPath] = useState('/admin');
   const navigate = useNavigate();
   
@@ -113,7 +113,7 @@ const AdminPanel: React.FC = () => {
           <div className="mt-16 text-center">
             <Card className="bg-muted/30 border-dashed">
               <CardContent className="py-8">
-                <h3 className="text-lg font-semibold mb-2">Welcome to Admin Panel</h3>
+                <h3 className="text-lg font-semibold mb-2">Welcome to Admin Dashboard</h3>
                 <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
                   Select a section above to access detailed management tools. Each section provides 
                   comprehensive controls and analytics for different aspects of your platform.
@@ -127,4 +127,4 @@ const AdminPanel: React.FC = () => {
   );
 };
 
-export default AdminPanel;
+export default AdminDashboard;

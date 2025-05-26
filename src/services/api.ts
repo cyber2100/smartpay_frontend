@@ -312,7 +312,7 @@ export const notificationService = {
 
   // NEW: Get all notifications for the current user
   getNotifications: async () => {
-    const response = await api.get('/notifications');
+    const response = await api.get('/notification');
     return response.data;
   },
 
