@@ -213,12 +213,132 @@ export const transactionService = {
   },
 };
 
-// Admin
+// Admin - Updated with user management functions
 export const adminService = {
+  // Get all users
   getAllUsers: async () => {
     const response = await api.get("/admin/users");
     return response.data;
   },
+
+  // Get specific user details
+  getUser: async (userId: string) => {
+    const response = await api.get(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  // Update user verification status
+  updateUserVerification: async (userId: string, isVerified: boolean) => {
+    const response = await api.patch(`/admin/users/${userId}/verification`, {
+      is_verified: isVerified
+    });
+    return response.data;
+  },
+
+  // Reset user password
+  resetUserPassword: async (userId: string, newPassword: string) => {
+    const response = await api.patch(`/admin/users/${userId}/password`, {
+      new_password: newPassword
+    });
+    return response.data;
+  },
+
+  // Delete user
+  deleteUser: async (userId: string) => {
+    const response = await api.delete(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  // Update user details (general purpose)
+  updateUser: async (userId: string, updateData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    is_admin?: boolean;
+    is_verified?: boolean;
+  }) => {
+    const response = await api.patch(`/admin/users/${userId}`, updateData);
+    return response.data;
+  },
+
+  // Get user's wallet balance (admin only)
+  getUserBalance: async (userId: string) => {
+    const response = await api.get(`/admin/users/${userId}/balance`);
+    return response.data;
+  },
+
+  // Update user's wallet balance (admin only)
+  updateUserBalance: async (userId: string, amount: number, operation: 'add' | 'subtract' | 'set') => {
+    const response = await api.patch(`/admin/users/${userId}/balance`, {
+      amount,
+      operation
+    });
+    return response.data;
+  },
+
+  // Get all transactions for admin dashboard
+  getAllTransactions: async () => {
+    const response = await api.get("/admin/transactions");
+    return response.data;
+  },
+
+  // Get user's transactions (admin only)
+  getUserTransactions: async (userId: string) => {
+    const response = await api.get(`/admin/users/${userId}/transactions`);
+    return response.data;
+  },
+
+  // Get platform statistics
+  getStatistics: async () => {
+    const response = await api.get("/admin/statistics");
+    return response.data;
+  },
+
+  // Create notification for specific user (admin only)
+  createUserNotification: async (userId: string, notificationData: {
+    type: string;
+    title: string;
+    message: string;
+    amount?: number;
+    transaction_id?: string;
+  }) => {
+    const response = await api.post(`/admin/users/${userId}/notifications`, notificationData);
+    return response.data;
+  },
+
+  // Suspend/Unsuspend user account
+  updateUserStatus: async (userId: string, isSuspended: boolean) => {
+    const response = await api.patch(`/admin/users/${userId}/status`, {
+      is_suspended: isSuspended
+    });
+    return response.data;
+  },
+
+  // Bulk operations
+  bulkUpdateUsers: async (userIds: string[], updateData: {
+    is_verified?: boolean;
+    is_suspended?: boolean;
+  }) => {
+    const response = await api.patch("/admin/users/bulk", {
+      user_ids: userIds,
+      ...updateData
+    });
+    return response.data;
+  },
+
+  // Export users data
+  exportUsers: async (format: 'csv' | 'excel' = 'csv') => {
+    const response = await api.get(`/admin/users/export?format=${format}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  // System health check
+  getSystemHealth: async () => {
+    const response = await api.get("/admin/system/health");
+    return response.data;
+  }
 };
 
 //Card

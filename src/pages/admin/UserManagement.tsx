@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Key, UserX, Trash2, Shield, UserCheck } from 'lucide-react';
-// Using regular HTML table since Table component isn't available
 import {
   Dialog,
   DialogContent,
@@ -30,50 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-
-// Mock data for when backend communication is not working
-const mockUsers = [
-  {
-    id: '1',
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1-234-567-8901',
-    isVerified: true,
-    isAdmin: false
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1-234-567-8902',
-    isVerified: false,
-    isAdmin: false
-  },
-  {
-    id: '3',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    phone: '+1-234-567-8903',
-    isVerified: true,
-    isAdmin: true
-  },
-  {
-    id: '4',
-    name: 'Bob Johnson',
-    email: 'bob.johnson@example.com',
-    phone: '+1-234-567-8904',
-    isVerified: false,
-    isAdmin: false
-  },
-  {
-    id: '5',
-    name: 'Alice Brown',
-    email: 'alice.brown@example.com',
-    phone: null,
-    isVerified: true,
-    isAdmin: false
-  }
-];
+import { useToast } from "@/hooks/use-toast";
+import { useUserManagement } from '@/hooks/use-user-management';
+import { useAuth } from '@/hooks/use-auth';
 
 interface User {
   id: string;
@@ -84,29 +42,24 @@ interface User {
   isAdmin: boolean;
 }
 
-interface UserManagementProps {
-  onUserUpdate?: (userId: string, updates: Partial<User>) => void;
-  onUserDelete?: (userId: string) => void;
-  onPasswordReset?: (userId: string, newPassword: string) => void;
-  allUsers?: User[];
-  isBackendConnected?: boolean;
-}
-
-const UserManagement: React.FC<UserManagementProps> = ({
-  onUserUpdate,
-  onUserDelete,
-  onPasswordReset,
-  allUsers,
-  isBackendConnected = false
-}) => {
-  // Use mock data if backend is not connected or no users provided
-  const users = isBackendConnected && allUsers ? allUsers : mockUsers;
+const UserManagement: React.FC = () => {
+  const { user: currentUser, isAdmin } = useAuth();
+  const { toast } = useToast();
+  const {
+    users,
+    loading,
+    resetUserPassword,
+    updateUserVerification,
+    deleteUser,
+    refreshUsers
+  } = useUserManagement();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState<string>('');
   const [actionType, setActionType] = useState<'reset' | 'verify' | 'delete' | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // Filter users based on search term and status
   const filteredUsers: User[] = users.filter((user: User) => {
@@ -134,41 +87,88 @@ const UserManagement: React.FC<UserManagementProps> = ({
     setSelectedUser(null);
     setActionType(null);
     setNewPassword('');
+    setActionLoading(false);
   };
 
-  const handlePasswordReset = () => {
-    if (selectedUser && newPassword) {
-      if (onPasswordReset) {
-        onPasswordReset(selectedUser.id, newPassword);
-      } else {
-        // Mock action for demo
-        alert(`Password reset for ${selectedUser.name}: ${newPassword}`);
-      }
+  const handlePasswordReset = async () => {
+    if (!selectedUser || !newPassword) return;
+    
+    try {
+      setActionLoading(true);
+      await resetUserPassword(selectedUser.id, newPassword);
+      
+      toast({
+        title: "Success",
+        description: `Password reset for ${selectedUser.name}. The new password is: ${newPassword}`,
+        variant: "default"
+      });
+      
       closeDialog();
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to reset password.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleVerifyUser = () => {
-    if (selectedUser) {
-      if (onUserUpdate) {
-        onUserUpdate(selectedUser.id, { isVerified: !selectedUser.isVerified });
-      } else {
-        // Mock action for demo
-        alert(`User ${selectedUser.name} verification status would be toggled`);
-      }
+  const handleVerifyUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      await updateUserVerification(selectedUser.id, !selectedUser.isVerified);
+      
+      toast({
+        title: "Success",
+        description: `User ${selectedUser.name} ${selectedUser.isVerified ? 'unverified' : 'verified'} successfully.`,
+        variant: "default"
+      });
+      
       closeDialog();
+      // Refresh users to get updated data
+      await refreshUsers();
+    } catch (error: any) {
+      console.error('Verification update error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to update verification status.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  const handleDeleteUser = () => {
-    if (selectedUser) {
-      if (onUserDelete) {
-        onUserDelete(selectedUser.id);
-      } else {
-        // Mock action for demo
-        alert(`User ${selectedUser.name} would be deleted`);
-      }
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setActionLoading(true);
+      await deleteUser(selectedUser.id);
+      
+      toast({
+        title: "Success",
+        description: `User ${selectedUser.name} deleted successfully.`,
+        variant: "default"
+      });
+      
       closeDialog();
+      // Refresh users to get updated data
+      await refreshUsers();
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.detail || "Failed to delete user.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -188,16 +188,57 @@ const UserManagement: React.FC<UserManagementProps> = ({
     return <Badge variant="secondary">Unverified</Badge>;
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6 m-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              User Management
+            </CardTitle>
+            <CardDescription>
+              Loading users...
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check admin access
+  if (!isAdmin) {
+    return (
+      <div className="space-y-6 m-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              User Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">Access Denied</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                You don't have permission to access this page.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 m-6">
-      {!isBackendConnected && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-          <p className="text-yellow-800 text-sm">
-            <strong>Demo Mode:</strong> Backend communication is not working. Showing mock data for demonstration purposes.
-          </p>
-        </div>
-      )}
-      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -292,8 +333,8 @@ const UserManagement: React.FC<UserManagementProps> = ({
                           <UserCheck className="h-3 w-3" />
                         </Button>
                         
-                        {/* Delete User Button (not available for admins) */}
-                        {!user.isAdmin && (
+                        {/* Delete User Button (not available for admins or current user) */}
+                        {!user.isAdmin && user.id !== currentUser?.id && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -346,6 +387,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
                       variant="outline" 
                       onClick={generateRandomPassword}
                       type="button"
+                      disabled={actionLoading}
                     >
                       Generate
                     </Button>
@@ -359,7 +401,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
               )}
 
               <DialogFooter>
-                <Button variant="outline" onClick={closeDialog}>
+                <Button variant="outline" onClick={closeDialog} disabled={actionLoading}>
                   Cancel
                 </Button>
                 <Button
@@ -369,11 +411,20 @@ const UserManagement: React.FC<UserManagementProps> = ({
                     if (actionType === 'delete') handleDeleteUser();
                   }}
                   variant={actionType === 'delete' ? 'destructive' : 'default'}
-                  disabled={actionType === 'reset' && !newPassword}
+                  disabled={actionLoading || (actionType === 'reset' && !newPassword)}
                 >
-                  {actionType === 'reset' && 'Reset Password'}
-                  {actionType === 'verify' && (selectedUser?.isVerified ? 'Unverify' : 'Verify')}
-                  {actionType === 'delete' && 'Delete User'}
+                  {actionLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    <>
+                      {actionType === 'reset' && 'Reset Password'}
+                      {actionType === 'verify' && (selectedUser?.isVerified ? 'Unverify' : 'Verify')}
+                      {actionType === 'delete' && 'Delete User'}
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
