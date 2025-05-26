@@ -8,6 +8,7 @@ interface User {
   email: string;
   phone?: string | null;
   isVerified: boolean;
+  isActive: boolean;
   isAdmin: boolean;
 }
 
@@ -16,7 +17,7 @@ interface UseUserManagementReturn {
   loading: boolean;
   error: string | null;
   resetUserPassword: (userId: string, newPassword: string) => Promise<void>;
-  updateUserVerification: (userId: string, isVerified: boolean) => Promise<void>;
+  updateUserActivation: (userId: string, isActive: boolean) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
 }
@@ -34,6 +35,7 @@ export const useUserManagement = (): UseUserManagementReturn => {
     email: userData.email,
     phone: userData.phone,
     isVerified: userData.is_verified,
+    isActive: userData.is_active,
     isAdmin: userData.is_admin,
   });
 
@@ -69,21 +71,21 @@ export const useUserManagement = (): UseUserManagementReturn => {
     }
   };
 
-  // Update user verification status
-  const updateUserVerification = async (userId: string, isVerified: boolean): Promise<void> => {
+  // Update user activation status (NOT verification)
+  const updateUserActivation = async (userId: string, isActive: boolean): Promise<void> => {
     try {
-      await adminService.updateUserVerification(userId, isVerified);
+      await adminService.updateUserActivation(userId, isActive);
       
-      // Update local state
+      // Update local state - only update isActive, keep isVerified unchanged
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.id === userId 
-            ? { ...user, isVerified }
+            ? { ...user, isActive }
             : user
         )
       );
     } catch (error: any) {
-      console.error('Error updating verification:', error);
+      console.error('Error updating activation status:', error);
       throw error;
     }
   };
@@ -116,7 +118,7 @@ export const useUserManagement = (): UseUserManagementReturn => {
     loading,
     error,
     resetUserPassword,
-    updateUserVerification,
+    updateUserActivation,
     deleteUser,
     refreshUsers,
   };

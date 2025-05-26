@@ -39,6 +39,7 @@ interface User {
   email: string;
   phone?: string | null;
   isVerified: boolean;
+  isActive: boolean;
   isAdmin: boolean;
 }
 
@@ -49,7 +50,7 @@ const UserManagement: React.FC = () => {
     users,
     loading,
     resetUserPassword,
-    updateUserVerification,
+    updateUserActivation,
     deleteUser,
     refreshUsers
   } = useUserManagement();
@@ -57,8 +58,8 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState<string>('');
-  const [actionType, setActionType] = useState<'reset' | 'verify' | 'delete' | null>(null);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [actionType, setActionType] = useState<'reset' | 'activate' | 'delete' | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'unverified' | 'active' | 'inactive'>('all');
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // Filter users based on search term and status
@@ -69,7 +70,9 @@ const UserManagement: React.FC = () => {
     
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'verified' && user.isVerified) ||
-                         (statusFilter === 'unverified' && !user.isVerified);
+                         (statusFilter === 'unverified' && !user.isVerified) ||
+                         (statusFilter === 'active' && user.isActive) ||
+                         (statusFilter === 'inactive' && !user.isActive);
     
     return matchesSearch && matchesStatus;
   });
@@ -78,7 +81,7 @@ const UserManagement: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
-  const openDialog = (user: User, action: 'reset' | 'verify' | 'delete') => {
+  const openDialog = (user: User, action: 'reset' | 'activate' | 'delete') => {
     setSelectedUser(user);
     setActionType(action);
   };
@@ -116,16 +119,16 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleVerifyUser = async () => {
+  const handleActivateUser = async () => {
     if (!selectedUser) return;
     
     try {
       setActionLoading(true);
-      await updateUserVerification(selectedUser.id, !selectedUser.isVerified);
-      
+      await updateUserActivation(selectedUser.id, !selectedUser.isActive);
+
       toast({
         title: "Success",
-        description: `User ${selectedUser.name} ${selectedUser.isVerified ? 'unverified' : 'verified'} successfully.`,
+        description: `User ${selectedUser.name} ${selectedUser.isActive ? 'deactivated' : 'activated'} successfully.`,
         variant: "default"
       });
       
@@ -133,10 +136,10 @@ const UserManagement: React.FC = () => {
       // Refresh users to get updated data
       await refreshUsers();
     } catch (error: any) {
-      console.error('Verification update error:', error);
+      console.error('Activation update error:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to update verification status.",
+        description: error.response?.data?.detail || "Failed to update activation status.",
         variant: "destructive"
       });
     } finally {
@@ -181,11 +184,18 @@ const UserManagement: React.FC = () => {
     setNewPassword(password);
   };
 
-  const getStatusBadge = (user: User) => {
+  const getVerificationBadge = (user: User) => {
     if (user.isVerified) {
-      return <Badge variant="default">Verified</Badge>;
+      return <Badge variant="default" className="bg-green-500">Verified</Badge>;
     }
-    return <Badge variant="secondary">Unverified</Badge>;
+    return <Badge variant="destructive">Unverified</Badge>;
+  };
+
+  const getActivationBadge = (user: User) => {
+    if (user.isActive) {
+      return <Badge variant="default">Active</Badge>;
+    }
+    return <Badge variant="secondary">Inactive</Badge>;
   };
 
   // Show loading state
@@ -246,7 +256,7 @@ const UserManagement: React.FC = () => {
             User Management
           </CardTitle>
           <CardDescription>
-            Manage user accounts, reset passwords, verify users, and control access
+            Manage user accounts, reset passwords, control activation status, and manage access
           </CardDescription>
         </CardHeader>
         
@@ -271,6 +281,8 @@ const UserManagement: React.FC = () => {
                 <SelectItem value="all">All Users</SelectItem>
                 <SelectItem value="verified">Verified</SelectItem>
                 <SelectItem value="unverified">Unverified</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -282,6 +294,7 @@ const UserManagement: React.FC = () => {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Verification</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -307,7 +320,16 @@ const UserManagement: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(user)}
+                      {getVerificationBadge(user)}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {user.isVerified ? 'Account verified' : 'Needs verification'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getActivationBadge(user)}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {user.isActive ? 'Can access platform' : 'Access restricted'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -322,13 +344,13 @@ const UserManagement: React.FC = () => {
                           <Key className="h-3 w-3" />
                         </Button>
                         
-                        {/* Verify User Button */}
+                        {/* Activate/Deactivate User Button */}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openDialog(user, 'verify')}
+                          onClick={() => openDialog(user, 'activate')}
                           className="h-8 w-8 p-0"
-                          title={user.isVerified ? "Unverify User" : "Verify User"}
+                          title={user.isActive ? "Deactivate User" : "Activate User"}
                         >
                           <UserCheck className="h-3 w-3" />
                         </Button>
@@ -362,13 +384,13 @@ const UserManagement: React.FC = () => {
               <DialogHeader>
                 <DialogTitle>
                   {actionType === 'reset' && 'Reset Password'}
-                  {actionType === 'verify' && (selectedUser?.isVerified ? 'Unverify User' : 'Verify User')}
+                  {actionType === 'activate' && (selectedUser?.isActive ? 'Deactivate User' : 'Activate User')}
                   {actionType === 'delete' && 'Delete User'}
                 </DialogTitle>
                 <DialogDescription>
                   {actionType === 'reset' && `Reset password for ${selectedUser?.name}. The user will need to use this new password to log in.`}
-                  {actionType === 'verify' && selectedUser?.isVerified && `Remove verification status from ${selectedUser?.name}?`}
-                  {actionType === 'verify' && !selectedUser?.isVerified && `Verify ${selectedUser?.name}? This will give them full access to the platform.`}
+                  {actionType === 'activate' && selectedUser?.isActive && `Deactivate ${selectedUser?.name}? They will lose access to the platform but their account data will remain intact.`}
+                  {actionType === 'activate' && !selectedUser?.isActive && `Activate ${selectedUser?.name}? This will restore their access to the platform.`}
                   {actionType === 'delete' && `Permanently delete ${selectedUser?.name}? This action cannot be undone and will remove all their data.`}
                 </DialogDescription>
               </DialogHeader>
@@ -400,6 +422,15 @@ const UserManagement: React.FC = () => {
                 </div>
               )}
 
+              {actionType === 'activate' && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> This action only changes the user's activation status. 
+                    Verification status (email/phone verification) is managed separately and cannot be changed here.
+                  </p>
+                </div>
+              )}
+
               <DialogFooter>
                 <Button variant="outline" onClick={closeDialog} disabled={actionLoading}>
                   Cancel
@@ -407,7 +438,7 @@ const UserManagement: React.FC = () => {
                 <Button
                   onClick={() => {
                     if (actionType === 'reset') handlePasswordReset();
-                    if (actionType === 'verify') handleVerifyUser();
+                    if (actionType === 'activate') handleActivateUser();
                     if (actionType === 'delete') handleDeleteUser();
                   }}
                   variant={actionType === 'delete' ? 'destructive' : 'default'}
@@ -421,7 +452,7 @@ const UserManagement: React.FC = () => {
                   ) : (
                     <>
                       {actionType === 'reset' && 'Reset Password'}
-                      {actionType === 'verify' && (selectedUser?.isVerified ? 'Unverify' : 'Verify')}
+                      {actionType === 'activate' && (selectedUser?.isActive ? 'Deactivate' : 'Activate')}
                       {actionType === 'delete' && 'Delete User'}
                     </>
                   )}

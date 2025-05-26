@@ -227,10 +227,10 @@ export const adminService = {
     return response.data;
   },
 
-  // Update user verification status
-  updateUserVerification: async (userId: string, isVerified: boolean) => {
-    const response = await api.patch(`/admin/users/${userId}/verification`, {
-      is_verified: isVerified
+  // Update user activation status
+  updateUserActivation: async (userId: string, isActive: boolean) => {
+    const response = await api.patch(`/admin/users/${userId}/activate`, {
+      is_active: isActive
     });
     return response.data;
   },

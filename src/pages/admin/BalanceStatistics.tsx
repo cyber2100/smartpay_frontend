@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, ComposedChart } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, DollarSign, Users, Wallet, UserPlus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
+import { TrendingUp, TrendingDown, Activity, DollarSign, Users, Wallet, UserPlus, Info, RefreshCw } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 // Mock data structure - replace with your actual data hooks
 interface UserBalance {
@@ -30,6 +31,13 @@ interface MonthlyBalanceStats {
 }
 
 const BalanceStatistics: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 1000);
+  };
+
   // Mock data - replace with your actual data hook
   const userBalances: UserBalance[] = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -218,6 +226,48 @@ const BalanceStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6 m-6">
+      {/* Data Source Notice */}
+      <Card className="border-2 border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Info className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">
+                  Demo Mode - Showing Sample Data
+                </p>
+                <p className="text-xs mt-1 text-blue-700">
+                  This page shows balance analytics and trends. Connect your backend to see real data.
+                </p>
+              </div>
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Loading State */}
+      {isLoading && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center gap-3 py-8">
+              <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
+              <p className="text-muted-foreground">Loading balance data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -299,7 +349,7 @@ const BalanceStatistics: React.FC = () => {
         </Card>
       </div>
 
-      {/* User Growth and Balance Combined Chart */}
+      {/* Enhanced Combined Chart with Better Colors */}
       <Card>
         <CardHeader>
           <CardTitle>User Growth & Average Balance Trends</CardTitle>
@@ -311,84 +361,219 @@ const BalanceStatistics: React.FC = () => {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="month" 
+                  stroke="#6b7280"
+                  fontSize={12}
+                />
                 <YAxis 
                   yAxisId="balance"
                   orientation="left"
+                  stroke="#3b82f6"
+                  fontSize={12}
                   tickFormatter={(value) => `$${(value / 1000).toFixed(1)}k`}
                 />
                 <YAxis 
                   yAxisId="users"
                   orientation="right"
+                  stroke="#10b981"
+                  fontSize={12}
                   tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip 
                   formatter={(value: number, name: string) => {
-                    if (name === 'User Count') {
-                      return [value.toLocaleString(), name];
+                    if (name === 'averageBalance') {
+                      return [formatCurrency(value), 'Average Balance'];
                     }
-                    return [formatCurrency(value), name];
+                    return [value.toLocaleString(), 'User Count'];
                   }}
                   labelFormatter={(label) => `Month: ${label}`}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--background))',
+                    borderColor: 'hsl(var(--border))',
+                    borderWidth: '1px',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    color: 'hsl(var(--foreground))'
+                  }}
                 />
-                <Bar 
+                <Line 
                   yAxisId="balance"
+                  type="monotone" 
                   dataKey="averageBalance" 
-                  fill="#3b82f6"
-                  radius={[2, 2, 0, 0]}
-                  name="Average Balance"
+                  stroke="#3b82f6" 
+                  strokeWidth={4}
+                  dot={{ 
+                    fill: '#ffffff', 
+                    stroke: '#3b82f6',
+                    strokeWidth: 3, 
+                    r: 6 
+                  }}
+                  activeDot={{ 
+                    r: 8, 
+                    fill: '#3b82f6',
+                    stroke: '#ffffff',
+                    strokeWidth: 2
+                  }}
+                  name="averageBalance"
                 />
                 <Line 
                   yAxisId="users"
                   type="monotone" 
                   dataKey="userCount" 
                   stroke="#10b981" 
-                  strokeWidth={3}
-                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="User Count"
+                  strokeWidth={4}
+                  strokeDasharray="8 4"
+                  dot={{ 
+                    fill: '#ffffff', 
+                    stroke: '#10b981',
+                    strokeWidth: 3, 
+                    r: 6 
+                  }}
+                  activeDot={{ 
+                    r: 8, 
+                    fill: '#10b981',
+                    stroke: '#ffffff',
+                    strokeWidth: 2
+                  }}
+                  name="userCount"
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Total Balance Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Platform Balance by Month</CardTitle>
-          <CardDescription>
-            Combined balance of all users showing platform growth
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis 
-                  tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), 'Total Balance']}
-                  labelFormatter={(label) => `Month: ${label}`}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="totalBalance" 
-                  stroke="#3b82f6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-1 bg-blue-500 rounded"></div>
+              <span className="text-blue-600 font-medium">Average Balance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-1 bg-green-500 rounded border-2 border-dashed border-green-500"></div>
+              <span className="text-green-600 font-medium">User Count</span>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Two Line Charts in a Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Count Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly User Count</CardTitle>
+            <CardDescription>
+              Number of active users each month
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#6b7280"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    fontSize={12}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [value.toLocaleString(), 'Users']}
+                    labelFormatter={(label) => `Month: ${label}`}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      borderColor: 'hsl(var(--border))',
+                      borderWidth: '1px',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      color: 'hsl(var(--foreground))'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="userCount" 
+                    stroke="#10b981"
+                    strokeWidth={4}
+                    dot={{ 
+                      fill: '#ffffff', 
+                      stroke: '#10b981',
+                      strokeWidth: 3, 
+                      r: 6 
+                    }}
+                    activeDot={{ 
+                      r: 8, 
+                      fill: '#10b981',
+                      stroke: '#ffffff',
+                      strokeWidth: 2
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Balance Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Platform Balance by Month</CardTitle>
+            <CardDescription>
+              Combined balance of all users showing platform growth
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#6b7280"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), 'Total Balance']}
+                    labelFormatter={(label) => `Month: ${label}`}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      borderColor: 'hsl(var(--border))',
+                      borderWidth: '1px',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      color: 'hsl(var(--foreground))'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="totalBalance" 
+                    stroke="#3b82f6"
+                    strokeWidth={4}
+                    dot={{ 
+                      fill: '#ffffff', 
+                      stroke: '#3b82f6',
+                      strokeWidth: 3, 
+                      r: 6 
+                    }}
+                    activeDot={{ 
+                      r: 8, 
+                      fill: '#3b82f6',
+                      stroke: '#ffffff',
+                      strokeWidth: 2
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Monthly Breakdown Table */}
       <Card>
@@ -409,7 +594,7 @@ const BalanceStatistics: React.FC = () => {
                       {stat.userCount.toLocaleString()} users
                     </div>
                     {stat.newUsers > 0 && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
                         +{stat.newUsers} new
                       </Badge>
                     )}
