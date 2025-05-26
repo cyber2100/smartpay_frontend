@@ -298,8 +298,8 @@ export const notificationService = {
 
   // Update notification delivery channel
   updateDeliveryChannel: async (channel: 'system' | 'email' | 'phone' | 'both') => {
-    const response = await api.patch('/user/notification-settings', {
-      delivery_channel: channel
+    const response = await api.put('/auth/notif-setting', {
+      notif_setting: channel
     });
     return response.data;
   },
@@ -312,7 +312,7 @@ export const notificationService = {
 
   // NEW: Get all notifications for the current user
   getNotifications: async () => {
-    const response = await api.get('/notification');
+    const response = await api.get('/notifications');
     return response.data;
   },
 

@@ -34,7 +34,7 @@ const Verify: React.FC = () => {
       navigate("/dashboard");
     }
     resendCode();
-  }, [isAuthenticated, user, navigate]);
+  }, []);
 
   // Countdown timer
   useEffect(() => {

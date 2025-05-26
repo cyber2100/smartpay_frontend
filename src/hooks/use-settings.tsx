@@ -55,7 +55,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Load notification settings
           const notifSettings = await notificationService.getNotificationSettings();
           setNotificationSettings({
-            deliveryChannel: notifSettings.delivery_channel || 'both'
+            deliveryChannel: notifSettings.notif_setting || 'both'
           });
 
           setVerificationStatus({
