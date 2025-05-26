@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { WalletProvider } from "@/hooks/use-wallet";
 import { SettingsProvider } from "./hooks/use-settings";
 import { CardProvider } from "./hooks/use-card";
+import { NotificationProvider } from "./hooks/use-notifications";
 import { Navbar } from "@/components/navbar";
 import { Sidebar } from "./components/sidebar";
 import { AnimatePresence, motion } from "framer-motion";
@@ -30,8 +31,8 @@ import Card from "./pages/Card";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
 import TransactionStatistics from "./pages/admin/TransactionStatistics";
-import { NotificationProvider } from "./hooks/use-notifications";
 import BalanceStatistics from "./pages/admin/BalanceStatistics";
+import Notification from "./pages/Notification";
 
 const queryClient = new QueryClient();
 
@@ -211,6 +212,16 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <AuthLayout>
                 <Card />
+              </AuthLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/notifications" 
+          element={
+            <ProtectedRoute>
+              <AuthLayout>
+                <Notification />
               </AuthLayout>
             </ProtectedRoute>
           } 

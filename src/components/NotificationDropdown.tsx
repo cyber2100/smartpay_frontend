@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useNavigate } from "react-router-dom";
 
 export function NotificationDropdown(): ReactElement {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export function NotificationDropdown(): ReactElement {
     markAsRead, 
     markAllAsRead 
   } = useNotifications();
+  const navigate = useNavigate()
 
   const formatTime = (date: Date): string => {
     const now: Date = new Date();
@@ -47,6 +49,11 @@ export function NotificationDropdown(): ReactElement {
   const sortedNotifications = [...notifications].sort((a, b) => 
     b.timestamp.getTime() - a.timestamp.getTime()
   );
+
+  const handleToNotification = (): void => {
+    // Navigate to the notification page
+    navigate('/notifications');
+  };
 
   return (
     <DropdownMenu>
@@ -126,7 +133,7 @@ export function NotificationDropdown(): ReactElement {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="justify-center" asChild>
-          <a href="/notifications" className="w-full text-center">View all notifications</a>
+          <a href="#" onClick={handleToNotification} className="w-full text-center">View all notifications</a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
