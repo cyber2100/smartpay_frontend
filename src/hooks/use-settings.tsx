@@ -48,39 +48,38 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Initialize settings when user changes
   useEffect(() => {
-    const loadSettings = async () => {
-      if (isAuthenticated && user) {
-        setIsLoading(true);
-        try {
-          // Load notification settings
-          const notifSettings = await notificationService.getNotificationSettings();
-          setNotificationSettings({
-            deliveryChannel: notifSettings.notif_setting || 'both'
-          });
-
-          setVerificationStatus({
-            isVerified: user.isVerified || false
-          });
-          
-        } catch (error) {
-          console.error('Error loading settings:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load settings",
-            variant: "destructive"
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      } else {
-        // Reset settings when not authenticated
-        setNotificationSettings({ deliveryChannel: 'both' });
-        setVerificationStatus({ isVerified: false });
-      }
-    };
-    
-    loadSettings();
+    if(isAuthenticated){
+      loadSettings();
+    } else {
+      setNotificationSettings({ deliveryChannel: 'both' });
+      setVerificationStatus({ isVerified: false });
+    }
   }, [isAuthenticated]);
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    try {
+      // Load notification settings
+      const notifSettings = await notificationService.getNotificationSettings();
+      setNotificationSettings({
+        deliveryChannel: notifSettings.notif_setting || 'both'
+      });
+
+      setVerificationStatus({
+        isVerified: user.isVerified || false
+      });
+      
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load settings",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Update delivery channel
   const updateDeliveryChannel = async (channel: DeliveryChannel): Promise<boolean> => {

@@ -29,29 +29,30 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load cards on mount
   useEffect(() => {
-    refreshCards();
+    if(isAuthenticated && user){
+      refreshCards();
+    } else {
+      setCards([]);
+    }
   }, [isAuthenticated]);
 
   // Refresh cards from API
   const refreshCards = async (): Promise<void> => {
-    if(isAuthenticated && user){
-      setIsLoading(true);
-      try {
-        const fetchedCards = await cardService.getCards();
-        setCards(fetchedCards);
-      } catch (error: any) {
-        console.error('Error fetching cards:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load your cards. Please refresh the page.",
-          variant: "destructive",
-        });
-        throw error;
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setCards([]);
+    if(!isAuthenticated) return;
+    setIsLoading(true);
+    try {
+      const fetchedCards = await cardService.getCards();
+      setCards(fetchedCards);
+    } catch (error: any) {
+      console.error('Error fetching cards:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your cards. Please refresh the page.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 

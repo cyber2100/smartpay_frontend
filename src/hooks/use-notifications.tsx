@@ -40,6 +40,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Load notifications when user changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      getNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [isAuthenticated]);
   
   // Transform API notifications to our app format
   const transformNotification = (apiNotification: any): Notification => ({
@@ -164,15 +173,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const refreshNotifications = async (): Promise<void> => {
     await getNotifications();
   };
-
-  // Load notifications when user changes
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      getNotifications();
-    } else {
-      setNotifications([]);
-    }
-  }, [isAuthenticated]);
 
   // Calculate unread count
   const unreadCount = notifications.filter(notif => !notif.read).length;

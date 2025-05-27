@@ -217,7 +217,7 @@ export const transactionService = {
 export const adminService = {
   // Get all users
   getAllUsers: async () => {
-    const response = await api.get("/admin/users");
+    const response = await api.get("/admin/users");    
     return response.data;
   },
 

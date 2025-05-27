@@ -110,8 +110,10 @@ export const useUserManagement = (): UseUserManagementReturn => {
 
   // Initial fetch on mount
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if(isAdmin){
+      refreshUsers();
+    }
+  }, [isAdmin]);
 
   return {
     users,

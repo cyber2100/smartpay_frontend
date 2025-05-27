@@ -46,30 +46,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load user on mount if token exists
   useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
-        try {
-          const userData = await authService.getCurrentUser();
-          // Transform API format to our app format
-          setUser({
-            id: userData.id,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone,
-            isAdmin: userData.is_admin,
-            isVerified: userData.is_verified,
-          });
-        } catch (error) {
-          localStorage.removeItem("auth_token");
-          console.error("Failed to load user:", error);
-        }
-      }
-      setIsLoading(false);
-    };
-
     loadUser();
   }, []);
+  
+  const loadUser = async () => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      try {
+        const userData = await authService.getCurrentUser();
+        // Transform API format to our app format
+        setUser({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          isAdmin: userData.is_admin,
+          isVerified: userData.is_verified,
+        });
+      } catch (error) {
+        localStorage.removeItem("auth_token");
+        console.error("Failed to load user:", error);
+      }
+    }
+    setIsLoading(false);
+  };
 
   // Signin function
   const signin = async (email: string, password: string): Promise<boolean> => {
