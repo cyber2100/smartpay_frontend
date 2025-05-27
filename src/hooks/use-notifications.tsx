@@ -172,7 +172,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } else {
       setNotifications([]);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated]);
 
   // Calculate unread count
   const unreadCount = notifications.filter(notif => !notif.read).length;

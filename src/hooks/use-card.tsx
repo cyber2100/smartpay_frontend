@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cardService } from "@/services/api";
 import { PaymentCard } from '@/types/payment';
+import { useAuth } from "./use-auth";
 
 // Types
 type CardContextType = {
@@ -21,6 +22,7 @@ const CardContext = createContext<CardContextType | undefined>(undefined);
 export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { user, isAuthenticated } = useAuth();
   const [cards, setCards] = useState<PaymentCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -28,24 +30,28 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   // Load cards on mount
   useEffect(() => {
     refreshCards();
-  }, []);
+  }, [isAuthenticated]);
 
   // Refresh cards from API
   const refreshCards = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const fetchedCards = await cardService.getCards();
-      setCards(fetchedCards);
-    } catch (error: any) {
-      console.error('Error fetching cards:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your cards. Please refresh the page.",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
+    if(isAuthenticated && user){
+      setIsLoading(true);
+      try {
+        const fetchedCards = await cardService.getCards();
+        setCards(fetchedCards);
+      } catch (error: any) {
+        console.error('Error fetching cards:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load your cards. Please refresh the page.",
+          variant: "destructive",
+        });
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setCards([]);
     }
   };
 

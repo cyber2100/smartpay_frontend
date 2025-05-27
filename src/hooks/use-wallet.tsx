@@ -30,76 +30,76 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   
   // Initialize balance and fetch transactions when user changes
   useEffect(() => {
-    const loadWalletData = async () => {
-      if (isAuthenticated && user) {
-        try {
-          // Get user balance
-          const userBalance = await walletService.getBalance();
-          setBalance(userBalance);
-          
-          // Get user transactions
-          const userTransactionData = await walletService.getTransactions();
-          
-          // Transform API transactions to our app format
-          const formattedTransactions = userTransactionData.map((tx: any) => ({
-            ...tx,
-            senderId: tx.sender_id,
-            recipientId: tx.recipient_id,
-            cardId: tx.card_id,
-            status: tx.status as 'completed' | 'pending' | 'failed',
-            timestamp: tx.created_at
-          }));
-          
-          setTransactions(formattedTransactions);
-          
-          // If admin, fetch all transactions and users
-          if (isAdmin) {
-            try {
-              const allTxData = await transactionService.getAllTransactions();
-              const formattedAllTx = allTxData.map((tx: any) => ({
-                ...tx,
-                senderId: tx.sender_id,
-                recipientId: tx.recipient_id,
-                cardId: tx.card_id,
-                status: tx.status as 'completed' | 'pending' | 'failed',
-                timestamp: tx.created_at
-              }));
-              setAllTransactions(formattedAllTx);
-              
-              const allUsersData = await adminService.getAllUsers();
-              const formattedUsers = allUsersData.map((u: any) => ({
-                id: u.id,
-                name: u.fullname,
-                email: u.email,
-                phone: u.phone,
-                isAdmin: u.is_admin,
-                balance: u.balance,
-                isVerified: u.is_verified
-              }));
-              setAllUsers(formattedUsers);
-            } catch (error) {
-              console.error('Error fetching admin data:', error);
-            }
-          }
-        } catch (error) {
-          console.error('Error loading wallet data:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load wallet data",
-            variant: "destructive"
-          });
-        }
-      } else {
-        setBalance(0);
-        setTransactions([]);
-        setAllTransactions([]);
-        setAllUsers([]);
-      }
-    };
-    
     loadWalletData();
-  }, [isAuthenticated, user, isAdmin, toast]);
+  }, [isAuthenticated]);
   
+  const loadWalletData = async () => {
+    if (isAuthenticated && user) {
+      try {
+        // Get user balance
+        const userBalance = await walletService.getBalance();
+        setBalance(userBalance);
+        
+        // Get user transactions
+        const userTransactionData = await walletService.getTransactions();
+        
+        // Transform API transactions to our app format
+        const formattedTransactions = userTransactionData.map((tx: any) => ({
+          ...tx,
+          senderId: tx.sender_id,
+          recipientId: tx.recipient_id,
+          cardId: tx.card_id,
+          status: tx.status as 'completed' | 'pending' | 'failed',
+          timestamp: tx.created_at
+        }));
+        
+        setTransactions(formattedTransactions);
+        
+        // If admin, fetch all transactions and users
+        if (isAdmin) {
+          try {
+            const allTxData = await transactionService.getAllTransactions();
+            const formattedAllTx = allTxData.map((tx: any) => ({
+              ...tx,
+              senderId: tx.sender_id,
+              recipientId: tx.recipient_id,
+              cardId: tx.card_id,
+              status: tx.status as 'completed' | 'pending' | 'failed',
+              timestamp: tx.created_at
+            }));
+            setAllTransactions(formattedAllTx);
+            
+            const allUsersData = await adminService.getAllUsers();
+            const formattedUsers = allUsersData.map((u: any) => ({
+              id: u.id,
+              name: u.fullname,
+              email: u.email,
+              phone: u.phone,
+              isAdmin: u.is_admin,
+              balance: u.balance,
+              isVerified: u.is_verified
+            }));
+            setAllUsers(formattedUsers);
+          } catch (error) {
+            console.error('Error fetching admin data:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading wallet data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load wallet data",
+          variant: "destructive"
+        });
+      }
+    } else {
+      setBalance(0);
+      setTransactions([]);
+      setAllTransactions([]);
+      setAllUsers([]);
+    }
+  };
+
   // Helper function to refresh transactions
   const refreshTransactions = async () => {
     if (!isAuthenticated || !user) return;
