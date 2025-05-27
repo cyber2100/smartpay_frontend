@@ -373,7 +373,7 @@ const UserManagement: React.FC = () => {
                 ))}
               </TableBody>
               {filteredUsers.length === 0 && (
-                <TableCaption>No users found matching your search criteria.</TableCaption>
+                <TableCaption className='m-5'>No users found matching your search criteria.</TableCaption>
               )}
             </Table>
           </div>

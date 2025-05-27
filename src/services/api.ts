@@ -14,7 +14,7 @@ const api = axios.create({
 const refreshToken = async () => {
   try {
     const refresh_token = localStorage.getItem("refresh_token");
-    const response = await axios.post(`${API_URL}/auth/token/refresh`, {
+    const response = await api.post(`${API_URL}/auth/token/refresh`, {
       refresh_token,
     });
 
@@ -78,7 +78,7 @@ export const authService = {
     formData.append("username", email); // FastAPI OAuth expects 'username'
     formData.append("password", password);
 
-    const response = await axios.post(`${API_URL}/auth/login`, formData);
+    const response = await api.post(`${API_URL}/auth/login`, formData);
     localStorage.setItem("auth_token", response.data.access_token);
     localStorage.setItem("refresh_token", response.data.refresh_token);
     return response.data;
