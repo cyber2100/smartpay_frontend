@@ -7,7 +7,6 @@ import {
   DollarSign, 
   Check,
   User,
-  Wallet,
   PlusIcon,
   MinusIcon,
   ArrowRight,
@@ -20,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
 import { useCard } from '@/hooks/use-card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   LineChart, 
   Line, 
@@ -30,61 +29,20 @@ import {
   Tooltip, 
   Legend, 
   ResponsiveContainer,
-  Area,
-  AreaChart
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
-import { PaymentCard, Transaction, MonthlyData, FinancialData } from '@/types/payment';
+import { Transaction } from '@/types/payment';
 import { useNotifications } from '@/hooks/use-notifications';
-
-const currencyData: MonthlyData[] = [
-  { name: 'Jan', received: 2000, sent: 1200, revenue: 800 },
-  { name: 'Feb', received: 3200, sent: 1300, revenue: 1900 },
-  { name: 'Mar', received: 2800, sent: 1400, revenue: 1400 },
-  { name: 'Apr', received: 4500, sent: 2300, revenue: 2200 },
-  { name: 'May', received: 3800, sent: 1700, revenue: 2100 },
-  { name: 'Jun', received: 6200, sent: 2800, revenue: 3400 },
-  { name: 'Jul', received: 5800, sent: 2500, revenue: 3300 },
-  { name: 'Aug', received: 5200, sent: 2400, revenue: 2800 },
-  { name: 'Sep', received: 6100, sent: 2800, revenue: 3300 },
-  { name: 'Oct', received: 7200, sent: 3000, revenue: 4200 },
-  { name: 'Nov', received: 6800, sent: 3000, revenue: 3800 },
-  { name: 'Dec', received: 8500, sent: 3900, revenue: 4600 }
-];
-
-const getFilteredCurrencyData = (): MonthlyData[] => {
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth(); // 0-based (0 = January, 4 = May)
-  
-  // Filter currencyData to only include months up to current month
-  return currencyData.slice(0, currentMonth + 1).map(month => ({
-    ...month,
-    revenue: month.received - month.sent // Ensure correct balance calculation
-  }));
-};
+import { useStatistics } from '@/hooks/use-statistics';
 
 const Dashboard: React.FC = () => {
-  const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { transactions, getTransactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading, getCards } = useCard();
   const { getNotifications } = useNotifications();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'all' | 'balance' | 'received' | 'sent'>('all');
-  
-  // Update currencyData with correct revenue calculation
-  const correctedCurrencyData: MonthlyData[] = getFilteredCurrencyData();
-  
-  // FIXED: Calculate correct financial data - revenue = received - sent
-  const totalReceived = correctedCurrencyData.reduce((sum, month) => sum + month.received, 0);
-  const totalSent = correctedCurrencyData.reduce((sum, month) => sum + month.sent, 0);
-  
-  const financialData: FinancialData = {
-    revenue: totalReceived - totalSent, // FIXED: revenue = received - sent
-    sent: totalSent,
-    received: totalReceived,
-  };
-  
+  const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
+  const { getChartData, financialData } = useStatistics();
   
   // Fetch transactions and cards from backend
   useEffect(() => {
@@ -127,12 +85,7 @@ const Dashboard: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
-  };
-  
-  // Get data for selected tab
-  const getChartData = (): MonthlyData[] => {
-    return correctedCurrencyData; // Use corrected data
-  };
+  };  
   
   // Handle navigation - Navigate to '/settings'
   const handleNavigation = (path: string): void => {
@@ -457,12 +410,12 @@ const Dashboard: React.FC = () => {
                 <Tabs 
                   defaultValue="all" 
                   value={activeTab} 
-                  onValueChange={(value) => setActiveTab(value as 'all' | 'balance' | 'received' | 'sent')} 
+                  onValueChange={(value) => setActiveTab(value as 'all' | 'revenue' | 'received' | 'sent')} 
                   className="w-full sm:w-auto"
                 >
                   <TabsList className="grid grid-cols-4 w-full sm:w-auto">
                     <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-                    <TabsTrigger value="balance" className="text-xs sm:text-sm">Revenue</TabsTrigger>
+                    <TabsTrigger value="revenue" className="text-xs sm:text-sm">Revenue</TabsTrigger>
                     <TabsTrigger value="received" className="text-xs sm:text-sm">Received</TabsTrigger>
                     <TabsTrigger value="sent" className="text-xs sm:text-sm">Sent</TabsTrigger>
                   </TabsList>
@@ -513,7 +466,7 @@ const Dashboard: React.FC = () => {
                     />
                     
                     {/* Show all lines when activeTab is 'all' */}
-                    {(activeTab === 'all' || activeTab === 'balance') && (
+                    {(activeTab === 'all' || activeTab === 'revenue') && (
                       <Line 
                         type="monotone" 
                         dataKey="revenue" 

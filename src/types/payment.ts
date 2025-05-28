@@ -41,7 +41,7 @@ export interface MonthlyData {
   name: string;
   received: number;
   sent: number;
-  revenue: number;
+  revenue?: number;
 }
 
 export interface FinancialData {

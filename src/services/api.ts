@@ -1,5 +1,5 @@
 import axios from "axios";
-import { PaymentCard } from '@/types/payment';
+import { MonthlyData, PaymentCard } from '@/types/payment';
 
 // Base API configuration
 const API_URL = "http://146.19.215.133:8000/api/v1";
@@ -508,3 +508,10 @@ export const profileService = {
     return response.data;
   }
 };
+
+export const statisticsService = {
+  getStatistics: async () => {
+    const respnse = await api.get('/statistics');
+    return respnse.data; 
+  }
+}
