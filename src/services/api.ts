@@ -292,8 +292,14 @@ export const adminService = {
   },
 
   // Get platform statistics
-  getStatistics: async () => {
-    const response = await api.get("/admin/statistics");
+  getTransactionStatistics: async () => {
+    const response = await api.get("/admin/transactions/summary");
+    return response.data;
+  },
+
+  // Get balance statistics
+  getBalanceStatistics: async () => {
+    const response = await api.get("/admin/balances/summary");
     return response.data;
   },
 

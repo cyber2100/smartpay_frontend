@@ -52,9 +52,11 @@ const UserManagement: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // Filter users based on search term and status
+  console.log('users = ', users);
+  
   const filteredUsers: User[] = (users?.length ? [...users] : mockUsers).filter((user: User) => {
     
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.phone?.includes(searchTerm);
     
@@ -191,7 +193,7 @@ const UserManagement: React.FC = () => {
             User Management
           </CardTitle>
           <CardDescription>
-            Manage user accounts, reset passwords, control activation status, and manage access
+            Manage user accounts, control activation status, and manage access
           </CardDescription>
         </CardHeader>
         
@@ -269,16 +271,17 @@ const UserManagement: React.FC = () => {
                     <TableCell>
                       <div className="flex gap-2">
                         {/* Activate/Deactivate User Button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openDialog(user, 'activate')}
-                          className="h-8 w-8 p-0"
-                          title={user.isActive ? "Deactivate User" : "Activate User"}
-                        >
-                          <UserCheck className="h-3 w-3" />
-                        </Button>
-                        
+                        {!user.isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDialog(user, 'activate')}
+                            className="h-8 w-8 p-0"
+                            title={user.isActive ? "Deactivate User" : "Activate User"}
+                          >
+                            <UserCheck className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

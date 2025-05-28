@@ -1,193 +1,18 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, DollarSign, Users, Wallet, UserPlus, Info, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, DollarSign, Users, Wallet, UserPlus, Info, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-// Mock data structure - replace with your actual data hooks
-interface UserBalance {
-  userId: string;
-  balances: {
-    month: number;
-    year: number;
-    endOfMonthBalance: number;
-  }[];
-}
-
-interface MonthlyBalanceStats {
-  month: string;
-  monthNumber: number;
-  averageBalance: number;
-  totalBalance: number;
-  userCount: number;
-  avgTrend: 'up' | 'down' | 'stable';
-  totalTrend: 'up' | 'down' | 'stable';
-  userTrend: 'up' | 'down' | 'stable';
-  avgChangePercentage: number;
-  totalChangePercentage: number;
-  userChangePercentage: number;
-  newUsers: number;
-}
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useBalanceStatistics } from '@/hooks/use-balance-statistics';
 
 const BalanceStatistics: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useBalanceStatistics();
 
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 1000);
+    refreshStatistics();
   };
-
-  // Mock data - replace with your actual data hook
-  const userBalances: UserBalance[] = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    
-    // Generate mock data with realistic user growth patterns
-    const mockUsers = Array.from({ length: 120 }, (_, i) => {
-      // Simulate users joining at different times throughout the year
-      const userJoinMonth = Math.floor(Math.random() * (currentMonth + 1));
-      
-      return {
-        userId: `user_${i + 1}`,
-        balances: Array.from({ length: currentMonth + 1 }, (_, monthIndex) => {
-          // Only include balances for months after the user joined
-          if (monthIndex >= userJoinMonth) {
-            return {
-              month: monthIndex,
-              year: currentYear,
-              endOfMonthBalance: Math.random() * 8000 + 2000 + ((monthIndex - userJoinMonth) * 150) // Growing trend from join date
-            };
-          }
-          return null;
-        }).filter(Boolean) as { month: number; year: number; endOfMonthBalance: number; }[]
-      };
-    });
-    
-    return mockUsers;
-  }, []);
-
-  const monthlyStats: MonthlyBalanceStats[] = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    const stats: MonthlyBalanceStats[] = [];
-
-    // Process each month from January to current month
-    for (let monthIndex = 0; monthIndex <= currentMonth; monthIndex++) {
-      // Get users who have balances for this month (i.e., users who had joined by this month)
-      const usersWithBalancesThisMonth = userBalances.filter(user => 
-        user.balances.some(b => b.month === monthIndex && b.year === currentYear)
-      );
-
-      const monthlyUserBalances = usersWithBalancesThisMonth.map(user => 
-        user.balances.find(b => b.month === monthIndex && b.year === currentYear)?.endOfMonthBalance || 0
-      ).filter(balance => balance > 0);
-
-      const totalBalance = monthlyUserBalances.reduce((sum, balance) => sum + balance, 0);
-      const averageBalance = monthlyUserBalances.length > 0 ? totalBalance / monthlyUserBalances.length : 0;
-      const userCount = usersWithBalancesThisMonth.length;
-
-      // Calculate new users (users who joined this month)
-      const newUsers = monthIndex === 0 ? userCount : userCount - (stats[monthIndex - 1]?.userCount || 0);
-
-      // Calculate trends compared to previous month
-      let avgTrend: 'up' | 'down' | 'stable' = 'stable';
-      let totalTrend: 'up' | 'down' | 'stable' = 'stable';
-      let userTrend: 'up' | 'down' | 'stable' = 'stable';
-      let avgChangePercentage = 0;
-      let totalChangePercentage = 0;
-      let userChangePercentage = 0;
-
-      if (monthIndex > 0 && stats[monthIndex - 1]) {
-        const prevAvgBalance = stats[monthIndex - 1].averageBalance;
-        const prevTotalBalance = stats[monthIndex - 1].totalBalance;
-        const prevUserCount = stats[monthIndex - 1].userCount;
-        
-        // Average balance trend
-        if (prevAvgBalance > 0) {
-          avgChangePercentage = ((averageBalance - prevAvgBalance) / prevAvgBalance) * 100;
-          if (avgChangePercentage > 2) avgTrend = 'up';
-          else if (avgChangePercentage < -2) avgTrend = 'down';
-          else avgTrend = 'stable';
-        }
-
-        // Total balance trend
-        if (prevTotalBalance > 0) {
-          totalChangePercentage = ((totalBalance - prevTotalBalance) / prevTotalBalance) * 100;
-          if (totalChangePercentage > 2) totalTrend = 'up';
-          else if (totalChangePercentage < -2) totalTrend = 'down';
-          else totalTrend = 'stable';
-        }
-
-        // User count trend
-        if (prevUserCount > 0) {
-          userChangePercentage = ((userCount - prevUserCount) / prevUserCount) * 100;
-          if (userChangePercentage > 0) userTrend = 'up';
-          else if (userChangePercentage < 0) userTrend = 'down';
-          else userTrend = 'stable';
-        }
-      }
-
-      stats.push({
-        month: months[monthIndex],
-        monthNumber: monthIndex + 1,
-        averageBalance,
-        totalBalance,
-        userCount,
-        avgTrend,
-        totalTrend,
-        userTrend,
-        avgChangePercentage,
-        totalChangePercentage,
-        userChangePercentage,
-        newUsers
-      });
-    }
-
-    return stats;
-  }, [userBalances]);
-
-  const overallStats = useMemo(() => {
-    const currentMonthStats = monthlyStats[monthlyStats.length - 1];
-    const previousMonthStats = monthlyStats[monthlyStats.length - 2];
-    
-    const totalUsers = currentMonthStats?.userCount || 0;
-    const currentTotalBalance = currentMonthStats?.totalBalance || 0;
-    const currentAverageBalance = currentMonthStats?.averageBalance || 0;
-    const totalNewUsersThisYear = monthlyStats.reduce((sum, stat) => sum + stat.newUsers, 0);
-
-    // Calculate month-over-month growth
-    let avgMonthOverMonthGrowth = 0;
-    let totalMonthOverMonthGrowth = 0;
-    let userMonthOverMonthGrowth = 0;
-    
-    if (previousMonthStats && currentMonthStats) {
-      if (previousMonthStats.averageBalance > 0) {
-        avgMonthOverMonthGrowth = ((currentMonthStats.averageBalance - previousMonthStats.averageBalance) / previousMonthStats.averageBalance) * 100;
-      }
-      if (previousMonthStats.totalBalance > 0) {
-        totalMonthOverMonthGrowth = ((currentMonthStats.totalBalance - previousMonthStats.totalBalance) / previousMonthStats.totalBalance) * 100;
-      }
-      if (previousMonthStats.userCount > 0) {
-        userMonthOverMonthGrowth = ((currentMonthStats.userCount - previousMonthStats.userCount) / previousMonthStats.userCount) * 100;
-      }
-    }
-
-    return {
-      totalUsers,
-      currentTotalBalance,
-      currentAverageBalance,
-      avgMonthOverMonthGrowth,
-      totalMonthOverMonthGrowth,
-      userMonthOverMonthGrowth,
-      totalNewUsersThisYear
-    };
-  }, [userBalances, monthlyStats]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -224,45 +49,96 @@ const BalanceStatistics: React.FC = () => {
     }
   };
 
-  return (
-    <div className="space-y-6 m-6">
-      {/* Data Source Notice */}
-      <Card className="border-2 border-blue-200 bg-blue-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Info className="h-5 w-5 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">
-                  Demo Mode - Showing Sample Data
-                </p>
-                <p className="text-xs mt-1 text-blue-700">
-                  This page shows balance analytics and trends. Connect your backend to see real data.
-                </p>
-              </div>
-            </div>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Loading State */}
-      {isLoading && (
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6 m-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-center gap-3 py-8">
               <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
-              <p className="text-muted-foreground">Loading balance data...</p>
+              <p className="text-muted-foreground">Loading balance statistics...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state (shouldn't happen since we have fallback, but just in case)
+  if (!statisticsData) {
+    return (
+      <div className="space-y-6 m-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-4" />
+              <h3 className="font-medium mb-2">Failed to Load Statistics</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Unable to load balance statistics data.
+              </p>
+              <Button onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { overallStats, monthlyStats } = statisticsData;
+
+  return (
+    <div className="space-y-6 m-6">
+      {/* API Status Notice */}
+      {!isFromAPI ? (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <strong>Using Demo Data:</strong> API connection failed. Showing mock statistics for demonstration.
+                {error && <div className="text-xs mt-1 opacity-75">Error: {error}</div>}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="ml-4 gap-2 border-orange-300 text-orange-700 hover:bg-orange-100"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry API
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Card className="border-2 border-green-200 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Info className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-green-900">
+                    Live Data - Connected to API
+                  </p>
+                  <p className="text-xs mt-1 text-green-700">
+                    Balance statistics loaded from backend server.
+                  </p>
+                </div>
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                className="gap-2 border-green-300 text-green-700 hover:bg-green-100"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -349,7 +225,7 @@ const BalanceStatistics: React.FC = () => {
         </Card>
       </div>
 
-      {/* Enhanced Combined Chart with Better Colors */}
+      {/* Enhanced Combined Chart */}
       <Card>
         <CardHeader>
           <CardTitle>User Growth & Average Balance Trends</CardTitle>
@@ -457,7 +333,6 @@ const BalanceStatistics: React.FC = () => {
 
       {/* Two Line Charts in a Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Count Line Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Monthly User Count</CardTitle>
@@ -515,7 +390,6 @@ const BalanceStatistics: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Total Balance Line Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Total Platform Balance by Month</CardTitle>
