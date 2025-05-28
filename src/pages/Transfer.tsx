@@ -48,9 +48,7 @@ const Transfer: React.FC = () => {
   const [transferSuccess, setTransferSuccess] = useState<boolean>(false);
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
 
-  // Remove navigation logic for demo
   useEffect(() => {
-    // Mock authentication check
     if(!user?.isVerified){
       navigate('/verify');
     }

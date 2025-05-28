@@ -24,12 +24,7 @@ const CardPage: React.FC = () => {
     addCard, 
     setDefaultCard, 
     deleteCard,
-    getCards
   } = useCard();
-
-  useEffect(() => {
-    getCards();
-  }, [])
 
   const handleSetDefault = async (cardId: string) => {
     try {

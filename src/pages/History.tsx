@@ -33,7 +33,7 @@ const History: React.FC = () => {
     if (!isAuthenticated) {
       return navigate('/signin');
     } else if (!user?.isVerified) {
-      // return navigate('/verify');
+      return navigate('/verify');
     }
     
     // Set loading state and fetch transactions
@@ -51,10 +51,6 @@ const History: React.FC = () => {
     
     fetchData();
   }, []);
-
-  const handleDirectToPath = (path: string) => {
-    navigate(path);
-  };
 
   // Format timestamp for display - handling both Date objects and ISO strings from backend
   const formatDate = (timestamp: Date | string): string => {

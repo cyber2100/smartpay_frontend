@@ -26,8 +26,6 @@ const Notifications: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
-    } else {
-      getNotifications();
     }
   }, [])
 

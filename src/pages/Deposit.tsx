@@ -17,7 +17,7 @@ const Deposit: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { deposit: walletDeposit } = useWallet();
   const { balance } = useWallet();
-  const { cards: paymentCards, getCards } = useCard();
+  const { cards: paymentCards } = useCard();
   const navigate = useNavigate();
 
   const deposit = async (cardId: string, amount: number) => {
@@ -36,10 +36,6 @@ const Deposit: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
-
-  useEffect(() => {
-    getCards();
-  }, [])
 
   // Remove navigation logic for demo
   useEffect(() => {

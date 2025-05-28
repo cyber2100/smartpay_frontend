@@ -475,15 +475,16 @@ const BalanceStatistics: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <div className="font-medium">{formatCurrency(stat.averageBalance)}</div>
-                    <div className="text-sm text-muted-foreground">avg balance</div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="font-medium">{formatCurrency(stat.totalBalance)}</div>
-                    <div className="text-sm text-muted-foreground">total balance</div>
+                <div className="flex flex-col min-[1100px]:flex-row min-[1100px]:items-center gap-6">
+                  <div className='flex justify-end'>
+                    <div className="text-right mr-2">
+                      <div className="font-medium">{formatCurrency(stat.averageBalance)}</div>
+                      <div className="text-sm text-muted-foreground">avg balance</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">{formatCurrency(stat.totalBalance)}</div>
+                      <div className="text-sm text-muted-foreground">total balance</div>
+                    </div>
                   </div>
                   
                   {index > 0 && (

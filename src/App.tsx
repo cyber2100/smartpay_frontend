@@ -61,7 +61,7 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => {
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-screen bg-background">
-      <div className="hidden md:block w-64">
+      <div className="hidden min-[955px]:block w-64">
         <Sidebar />
       </div>
       <div className="flex-1">{children}</div>
