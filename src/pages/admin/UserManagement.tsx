@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Key, UserX, Trash2, Shield, UserCheck } from 'lucide-react';
+import { Search, Key, Trash2, Shield, UserCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -33,37 +32,32 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAuth } from '@/hooks/use-auth';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string | null;
-  isVerified: boolean;
-  isActive: boolean;
-  isAdmin: boolean;
-}
+import { User, mockUsers } from '@/mockData/users';
 
 const UserManagement: React.FC = () => {
-  const { user: currentUser, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { toast } = useToast();
   const {
     users,
     loading,
-    resetUserPassword,
     updateUserActivation,
-    deleteUser,
     refreshUsers
   } = useUserManagement();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState<string>('');
-  const [actionType, setActionType] = useState<'reset' | 'activate' | 'delete' | null>(null);
+  const [actionType, setActionType] = useState<'reset' | 'activate' | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'unverified' | 'active' | 'inactive'>('all');
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    refreshUsers();
+  }, [])
+
   // Filter users based on search term and status
-  const filteredUsers: User[] = users.filter((user: User) => {
+  const filteredUsers: User[] = (users?.length ? [...users] : mockUsers).filter((user: User) => {
+    
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.phone?.includes(searchTerm);
@@ -81,7 +75,7 @@ const UserManagement: React.FC = () => {
     setSearchTerm(e.target.value);
   };
 
-  const openDialog = (user: User, action: 'reset' | 'activate' | 'delete') => {
+  const openDialog = (user: User, action: 'activate' ) => {
     setSelectedUser(user);
     setActionType(action);
   };
@@ -91,32 +85,6 @@ const UserManagement: React.FC = () => {
     setActionType(null);
     setNewPassword('');
     setActionLoading(false);
-  };
-
-  const handlePasswordReset = async () => {
-    if (!selectedUser || !newPassword) return;
-    
-    try {
-      setActionLoading(true);
-      await resetUserPassword(selectedUser.id, newPassword);
-      
-      toast({
-        title: "Success",
-        description: `Password reset for ${selectedUser.name}. The new password is: ${newPassword}`,
-        variant: "default"
-      });
-      
-      closeDialog();
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to reset password.",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(false);
-    }
   };
 
   const handleActivateUser = async () => {
@@ -133,41 +101,12 @@ const UserManagement: React.FC = () => {
       });
       
       closeDialog();
-      // Refresh users to get updated data
       await refreshUsers();
     } catch (error: any) {
       console.error('Activation update error:', error);
       toast({
         title: "Error",
         description: error.response?.data?.detail || "Failed to update activation status.",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      setActionLoading(true);
-      await deleteUser(selectedUser.id);
-      
-      toast({
-        title: "Success",
-        description: `User ${selectedUser.name} deleted successfully.`,
-        variant: "default"
-      });
-      
-      closeDialog();
-      // Refresh users to get updated data
-      await refreshUsers();
-    } catch (error: any) {
-      console.error('Delete user error:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to delete user.",
         variant: "destructive"
       });
     } finally {
@@ -333,17 +272,6 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {/* Reset Password Button */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openDialog(user, 'reset')}
-                          className="h-8 w-8 p-0"
-                          title="Reset Password"
-                        >
-                          <Key className="h-3 w-3" />
-                        </Button>
-                        
                         {/* Activate/Deactivate User Button */}
                         <Button
                           variant="outline"
@@ -355,18 +283,6 @@ const UserManagement: React.FC = () => {
                           <UserCheck className="h-3 w-3" />
                         </Button>
                         
-                        {/* Delete User Button (not available for admins or current user) */}
-                        {!user.isAdmin && user.id !== currentUser?.id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openDialog(user, 'delete')}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                            title="Delete User"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -383,44 +299,13 @@ const UserManagement: React.FC = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {actionType === 'reset' && 'Reset Password'}
                   {actionType === 'activate' && (selectedUser?.isActive ? 'Deactivate User' : 'Activate User')}
-                  {actionType === 'delete' && 'Delete User'}
                 </DialogTitle>
                 <DialogDescription>
-                  {actionType === 'reset' && `Reset password for ${selectedUser?.name}. The user will need to use this new password to log in.`}
                   {actionType === 'activate' && selectedUser?.isActive && `Deactivate ${selectedUser?.name}? They will lose access to the platform but their account data will remain intact.`}
                   {actionType === 'activate' && !selectedUser?.isActive && `Activate ${selectedUser?.name}? This will restore their access to the platform.`}
-                  {actionType === 'delete' && `Permanently delete ${selectedUser?.name}? This action cannot be undone and will remove all their data.`}
                 </DialogDescription>
               </DialogHeader>
-
-              {actionType === 'reset' && (
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter new password"
-                      type="text"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button 
-                      variant="outline" 
-                      onClick={generateRandomPassword}
-                      type="button"
-                      disabled={actionLoading}
-                    >
-                      Generate
-                    </Button>
-                  </div>
-                  {newPassword && (
-                    <div className="text-sm text-muted-foreground">
-                      Make sure to share this password securely with the user.
-                    </div>
-                  )}
-                </div>
-              )}
 
               {actionType === 'activate' && (
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -437,11 +322,8 @@ const UserManagement: React.FC = () => {
                 </Button>
                 <Button
                   onClick={() => {
-                    if (actionType === 'reset') handlePasswordReset();
                     if (actionType === 'activate') handleActivateUser();
-                    if (actionType === 'delete') handleDeleteUser();
                   }}
-                  variant={actionType === 'delete' ? 'destructive' : 'default'}
                   disabled={actionLoading || (actionType === 'reset' && !newPassword)}
                 >
                   {actionLoading ? (
@@ -453,7 +335,6 @@ const UserManagement: React.FC = () => {
                     <>
                       {actionType === 'reset' && 'Reset Password'}
                       {actionType === 'activate' && (selectedUser?.isActive ? 'Deactivate' : 'Activate')}
-                      {actionType === 'delete' && 'Delete User'}
                     </>
                   )}
                 </Button>

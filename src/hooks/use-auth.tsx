@@ -287,14 +287,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Determine admin status
   const isAdmin =
-    true; 
-    // !!user?.isAdmin;
+    // true; 
+    !!user?.isAdmin;
 
   const value = {
     user,
     isAuthenticated: 
-      true, 
-      // !!user,
+      // true, 
+      !!user,
     isLoading,
     signin,
     signup,

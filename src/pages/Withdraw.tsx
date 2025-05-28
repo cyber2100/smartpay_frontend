@@ -44,12 +44,17 @@ const Withdraw: React.FC = () => {
   // Remove navigation logic for demo
   useEffect(() => {
     // Set default card
-    const defaultCard = paymentCards.find(card => card.isDefault);
-    if (defaultCard) {
-      setSelectedCardId(defaultCard.id);
-      setSelectedCard(defaultCard);
+    if(paymentCards.length){
+      const defaultCard = paymentCards.find(card => card.isDefault);
+      if (defaultCard) {
+        setSelectedCardId(defaultCard.id);
+        setSelectedCard(defaultCard);
+      }
+    } else {
+      setSelectedCardId("");
+      setSelectedCard(null);
     }
-  }, []);
+  }, [paymentCards]);
 
   // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);

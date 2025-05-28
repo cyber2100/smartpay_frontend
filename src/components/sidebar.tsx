@@ -3,16 +3,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Home,
-  LogOut, 
-  Settings, 
-  User,
   Wallet, 
   Clock,
   Send,
   CreditCard,
   ArrowUpCircle,
   ArrowDownCircle,
-  UserCheck,
   Users,
   Receipt,
   DollarSign,

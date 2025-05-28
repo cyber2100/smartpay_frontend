@@ -2,104 +2,66 @@ import React, { useEffect, useState } from 'react';
 import { Bell, X, Clock, CheckCircle, AlertTriangle, Info, User, DollarSign, CreditCard, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
+import { useNotifications } from '@/hooks/use-notifications';
 
-// Type definitions for notifications
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'transaction' | 'security' | 'system' | 'promotion';
-  priority: 'low' | 'medium' | 'high';
-  isRead: boolean;
-  timestamp: Date;
-  metadata?: {
-    transactionId?: string;
-    amount?: number;
-    userId?: string;
-    actionUrl?: string;
-  };
-}
+import { Notification, mockNotifications } from '@/mockData/notification';
 
 const Notifications: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [highlightedNotificationId, setHighlightedNotificationId] = useState<string | null>(null);
+  const {notifications: realNotifications, getNotifications} = useNotifications();
+  const location = useLocation();
+  const selectedNotificationId = location.search.split("?id=")[1];
   
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     if (!isAuthenticated) {
-        // If user is not authenticated, redirect to sign-in page
       return navigate('/signin');
+    } else {
+      getNotifications();
     }
-    
-    // Mock notifications data - replace with actual API call
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'Transfer Received',
-        message: 'You received $250.00 from John Smith',
-        type: 'transaction',
-        priority: 'medium',
-        isRead: false,
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        metadata: {
-          transactionId: 'tx_123',
-          amount: 250.00,
-          userId: 'user_456'
-        }
-      },
-      {
-        id: '2',
-        title: 'Security Alert',
-        message: 'New device login detected from Chrome on Windows',
-        type: 'security',
-        priority: 'high',
-        isRead: false,
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-      },
-      {
-        id: '3',
-        title: 'Deposit Successful',
-        message: 'Your deposit of $500.00 has been processed successfully',
-        type: 'transaction',
-        priority: 'low',
-        isRead: true,
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-        metadata: {
-          transactionId: 'tx_789',
-          amount: 500.00
-        }
-      },
-      {
-        id: '4',
-        title: 'System Maintenance',
-        message: 'Scheduled maintenance will occur on Sunday 2:00 AM - 4:00 AM EST',
-        type: 'system',
-        priority: 'medium',
-        isRead: true,
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      },
-      {
-        id: '5',
-        title: 'Special Offer',
-        message: 'Get 2% cashback on all transfers this month!',
-        type: 'promotion',
-        priority: 'low',
-        isRead: true,
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        metadata: {
-          actionUrl: '/promotions'
-        }
+  }, [])
+
+  useEffect(() => {
+    if (realNotifications.length) {
+      setNotifications([...realNotifications]);
+    } else {
+      setNotifications([...mockNotifications]);
+    }
+  }, [realNotifications])
+
+  // Handle highlighting selected notification from URL
+  useEffect(() => {
+    if (selectedNotificationId && notifications.length > 0) {
+      const targetNotification = notifications.find(n => n.id === selectedNotificationId);
+      if (targetNotification) {
+        setHighlightedNotificationId(selectedNotificationId);
+        
+        // Auto-scroll to the notification after a brief delay
+        setTimeout(() => {
+          const element = document.getElementById(`notification-${selectedNotificationId}`);
+          if (element) {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }, 100);
+
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedNotificationId(null);
+        }, 3000);
       }
-    ];
-    
-    setNotifications(mockNotifications);
-  }, []);
+    }
+  }, [selectedNotificationId, notifications]);
 
   // Format timestamp for display
   const formatDate = (timestamp: Date): string => {
@@ -156,7 +118,7 @@ const Notifications: React.FC = () => {
     const display = baseDisplay[notification.type];
     
     // Adjust for priority
-    if (notification.priority === 'high' && !notification.isRead) {
+    if (!notification.read) {
       return {
         ...display,
         bgColor: 'bg-red-500/20',
@@ -171,11 +133,16 @@ const Notifications: React.FC = () => {
     setSelectedNotification(notification);
     setIsModalOpen(true);
     
+    // Clear URL parameter when opening modal
+    if (selectedNotificationId) {
+      navigate(location.pathname, { replace: true });
+    }
+    
     // Mark as read if not already
-    if (!notification.isRead) {
+    if (!notification.read) {
       setNotifications(prev => 
         prev.map(n => 
-          n.id === notification.id ? { ...n, isRead: true } : n
+          n.id === notification.id ? { ...n, read: true } : n
         )
       );
     }
@@ -188,11 +155,11 @@ const Notifications: React.FC = () => {
 
   const markAllAsRead = () => {
     setNotifications(prev => 
-      prev.map(n => ({ ...n, isRead: true }))
+      prev.map(n => ({ ...n, read: true }))
     );
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
   
   // Sort notifications by timestamp (newest first)
   const sortedNotifications = [...notifications].sort((a, b) => 
@@ -247,19 +214,28 @@ const Notifications: React.FC = () => {
                 {sortedNotifications.length > 0 ? (
                   sortedNotifications.map((notification) => {
                     const display = getNotificationDisplay(notification);
+                    const isHighlighted = highlightedNotificationId === notification.id;
                     
                     return (
                       <div
                         key={notification.id}
+                        id={`notification-${notification.id}`}
                         onClick={() => handleNotificationClick(notification)}
                         className={`
                           flex items-start gap-4 p-4 rounded-lg border cursor-pointer
-                          transition-all duration-200 hover:bg-muted/50 hover:shadow-sm
-                          ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'bg-card'}
+                          transition-all duration-300 hover:bg-muted/50 hover:shadow-sm
+                          ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'bg-card'}
                           ${display.borderColor}
+                          ${isHighlighted ? 
+                            'ring-2 ring-blue-500 ring-offset-2 shadow-lg scale-[1.02] bg-blue-50 dark:bg-blue-950/30 border-blue-400' : 
+                            ''
+                          }
                         `}
+                        style={{
+                          animation: isHighlighted ? 'pulse 0.8s ease-in-out 2' : undefined
+                        }}
                       >
-                        <div className={`p-2 rounded-full ${display.bgColor} flex-shrink-0`}>
+                        <div className={`p-2 rounded-full ${display.bgColor} flex-shrink-0 ${isHighlighted ? 'scale-110' : ''} transition-transform duration-300`}>
                           <div className={display.textColor}>
                             {display.icon}
                           </div>
@@ -268,18 +244,21 @@ const Notifications: React.FC = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
-                              <p className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              <p className={`font-medium ${!notification.read ? 'text-foreground' : 'text-muted-foreground'} ${isHighlighted ? 'text-blue-700 dark:text-blue-300' : ''}`}>
                                 {notification.title}
-                                {!notification.isRead && (
-                                  <span className="inline-block w-2 h-2 bg-blue-500 rounded-full ml-2"></span>
+                                {!notification.read && (
+                                  <span className={`inline-block w-2 h-2 rounded-full ml-2 ${isHighlighted ? 'bg-blue-600 animate-pulse' : 'bg-blue-500'}`}></span>
+                                )}
+                                {isHighlighted && (
+                                  <span className="inline-block w-2 h-2 bg-amber-400 rounded-full ml-2 animate-ping"></span>
                                 )}
                               </p>
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                              <p className={`text-sm mt-1 line-clamp-2 ${isHighlighted ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`}>
                                 {notification.message}
                               </p>
                             </div>
                             
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-shrink-0">
+                            <div className={`flex items-center gap-2 text-xs flex-shrink-0 ${isHighlighted ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`}>
                               <Clock className="h-3 w-3" />
                               {formatDate(notification.timestamp)}
                             </div>
@@ -287,7 +266,7 @@ const Notifications: React.FC = () => {
                           
                           {notification.metadata?.amount && (
                             <div className="mt-2">
-                              <span className="text-sm font-medium text-green-600">
+                              <span className={`text-sm font-medium ${isHighlighted ? 'text-emerald-600' : 'text-green-600'}`}>
                                 ${notification.metadata.amount.toLocaleString('en-US', {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2
@@ -297,7 +276,7 @@ const Notifications: React.FC = () => {
                           )}
                         </div>
                         
-                        <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <ArrowRight className={`h-4 w-4 flex-shrink-0 ${isHighlighted ? 'text-blue-600 dark:text-blue-400 scale-110' : 'text-muted-foreground'} transition-all duration-300`} />
                       </div>
                     );
                   })
@@ -377,16 +356,6 @@ const Notifications: React.FC = () => {
                       <span className="text-muted-foreground">Type:</span>
                       <span className="capitalize">{selectedNotification.type}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Priority:</span>
-                      <span className={`capitalize ${
-                        selectedNotification.priority === 'high' ? 'text-red-600' :
-                        selectedNotification.priority === 'medium' ? 'text-yellow-600' :
-                        'text-green-600'
-                      }`}>
-                        {selectedNotification.priority}
-                      </span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -395,18 +364,6 @@ const Notifications: React.FC = () => {
                 <Button onClick={closeModal} className="flex-1">
                   Close
                 </Button>
-                {selectedNotification.metadata?.actionUrl && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      navigate(selectedNotification.metadata!.actionUrl!);
-                      closeModal();
-                    }}
-                    className="flex-1"
-                  >
-                    View Details
-                  </Button>
-                )}
               </div>
             </div>
           </div>

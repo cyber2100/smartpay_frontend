@@ -60,36 +60,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
       
       setTransactions(formattedTransactions);
-      
-      // If admin, fetch all transactions and users
-      if (isAdmin) {
-        try {
-          const allTxData = await transactionService.getAllTransactions();
-          const formattedAllTx = allTxData.map((tx: any) => ({
-            ...tx,
-            senderId: tx.sender_id,
-            recipientId: tx.recipient_id,
-            cardId: tx.card_id,
-            status: tx.status as 'completed' | 'pending' | 'failed',
-            timestamp: tx.created_at
-          }));
-          setAllTransactions(formattedAllTx);
-          
-          const allUsersData = await adminService.getAllUsers();
-          const formattedUsers = allUsersData.map((u: any) => ({
-            id: u.id,
-            name: u.fullname,
-            email: u.email,
-            phone: u.phone,
-            isAdmin: u.is_admin,
-            balance: u.balance,
-            isVerified: u.is_verified
-          }));
-          setAllUsers(formattedUsers);
-        } catch (error) {
-          console.error('Error fetching admin data:', error);
-        }
-      }
     } catch (error) {
       console.error('Error loading wallet data:', error);
       toast({
@@ -194,24 +164,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       // Refresh transactions to show the new deposit transaction
       await refreshTransactions();
-      
-      // If admin, refresh all transactions as well
-      if (isAdmin) {
-        try {
-          const allTxData = await transactionService.getAllTransactions();
-          const formattedAllTx = allTxData.map((tx: any) => ({
-            ...tx,
-            senderId: tx.sender_id,
-            recipientId: tx.recipient_id,
-            cardId: tx.card_id,
-            status: tx.status as 'completed' | 'pending' | 'failed',
-            timestamp: tx.created_at
-          }));
-          setAllTransactions(formattedAllTx);
-        } catch (adminError) {
-          console.error('Error refreshing admin transactions:', adminError);
-        }
-      }
       
       toast({
         title: "Deposit successful",

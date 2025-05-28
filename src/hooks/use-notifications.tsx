@@ -1,23 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from './use-websocket';
 import { notificationService } from '@/services/api';
 
 // Types
 export interface Notification {
   id: string;
-  type: 'received' | 'system' | 'transfer' | 'deposit' | 'withdraw';
-  amount?: number;
-  from?: string;
   title: string;
   message: string;
-  timestamp: Date;
+  type: 'transaction' | 'system';
   read: boolean;
-  transaction_id?: string;
-  from_user?: {
-    id: string;
-    fullname: string;
-    email: string;
+  timestamp: Date;
+  metadata?: {
+    transactionId?: string;
+    amount?: number;
   };
 }
 
@@ -25,6 +22,7 @@ export type NotificationContextType = {
   notifications: Notification[];
   unreadCount: number;
   loading: boolean;
+  isWebSocketConnected: boolean;
   getNotifications: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<boolean>;
   markAllAsRead: () => Promise<boolean>;
@@ -38,30 +36,70 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // WebSocket event handlers
+  const handleUnreadCountUpdate = useCallback((count: number) => {
+    console.log('WebSocket: Unread count updated to:', count);
+    setUnreadCount(count);
+  }, []);
+
+  const handleNewNotification = useCallback((notification: any) => {
+    console.log('WebSocket: New notification received:', notification);
+    const transformedNotification = transformNotification(notification);
+    
+    setNotifications(prev => [transformedNotification, ...prev]);
+    
+    // Show toast for new notification
+    toast({
+      title: notification.title,
+      description: notification.message,
+      duration: 5000,
+    });
+  }, [toast]);
+
+  const handleNotificationRead = useCallback((notificationId: string) => {
+    console.log('WebSocket: Notification marked as read:', notificationId);
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
+  }, []);
+
+  // Initialize WebSocket
+  const { isConnected: isWebSocketConnected } = useWebSocket({
+    onUnreadCountUpdate: handleUnreadCountUpdate,
+    onNewNotification: handleNewNotification,
+    onNotificationRead: handleNotificationRead,
+  });
+
   // Load notifications when user changes
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated) {
+      console.log('notification page come');
       getNotifications();
     } else {
       setNotifications([]);
+      setUnreadCount(0);
     }
+
   }, [isAuthenticated]);
-  
+
   // Transform API notifications to our app format
   const transformNotification = (apiNotification: any): Notification => ({
     id: apiNotification.id,
     type: apiNotification.type,
-    amount: apiNotification.amount,
-    from: apiNotification.from_user?.fullname || apiNotification.from_user?.email || apiNotification.from,
     title: apiNotification.title,
     message: apiNotification.message,
-    timestamp: new Date(apiNotification.created_at),
-    read: apiNotification.read,
-    transaction_id: apiNotification.transaction_id,
-    from_user: apiNotification.from_user
+    metadata: {
+      transactionId: apiNotification.extra_data?.transaction_id,
+      amount: apiNotification.extra_data?.amount,
+    },
+    timestamp: new Date(apiNotification.timestamp),
+    read: apiNotification.read
   });
 
   // Get all notifications
@@ -73,6 +111,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const response = await notificationService.getNotifications();
       const formattedNotifications = response.map(transformNotification);
       setNotifications(formattedNotifications);
+      
+      // Calculate unread count from fetched notifications
+      const unreadFromAPI = formattedNotifications.filter(notif => !notif.read).length;
+      setUnreadCount(unreadFromAPI);
+      
     } catch (error) {
       console.error('Error fetching notifications:', error);
       toast({
@@ -92,12 +135,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.markAsRead(notificationId);
       
-      // Update local state
+      // Update local state immediately for better UX
       setNotifications(prev => 
         prev.map(notif => 
           notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
+      
+      // Update unread count locally (WebSocket will also update it)
+      setUnreadCount(prev => Math.max(0, prev - 1));
       
       return true;
     } catch (error) {
@@ -118,10 +164,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.markAllAsRead();
       
-      // Update local state
+      // Update local state immediately
       setNotifications(prev => 
         prev.map(notif => ({ ...notif, read: true }))
       );
+      
+      // Reset unread count
+      setUnreadCount(0);
       
       toast({
         title: "Success",
@@ -144,6 +193,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const deleteNotification = async (notificationId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
     
+    // Check if the notification being deleted is unread
+    const notificationToDelete = notifications.find(notif => notif.id === notificationId);
+    const wasUnread = notificationToDelete && !notificationToDelete.read;
+    
     try {
       await notificationService.deleteNotification(notificationId);
       
@@ -151,6 +204,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setNotifications(prev => 
         prev.filter(notif => notif.id !== notificationId)
       );
+      
+      // Update unread count if deleted notification was unread
+      if (wasUnread) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
       
       toast({
         title: "Success",
@@ -174,14 +232,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await getNotifications();
   };
 
-  // Calculate unread count
-  const unreadCount = notifications.filter(notif => !notif.read).length;
+  console.log('unreadcount = ', unreadCount);
+  console.log('WebSocket connected:', isWebSocketConnected);
 
   // Value to provide
   const value: NotificationContextType = {
     notifications,
-    unreadCount,
+    unreadCount, // This will be updated in real-time via WebSocket
     loading,
+    isWebSocketConnected,
     getNotifications,
     markAsRead,
     markAllAsRead,

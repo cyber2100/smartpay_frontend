@@ -3,6 +3,8 @@ import { PaymentCard } from '@/types/payment';
 
 // Base API configuration
 const API_URL = "http://146.19.215.133:8000/api/v1";
+// const API_URL = "http://lcoalhost:8000";
+
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -78,7 +80,7 @@ export const authService = {
     formData.append("username", email); // FastAPI OAuth expects 'username'
     formData.append("password", password);
 
-    const response = await api.post(`${API_URL}/auth/login`, formData);
+    const response = await axios.post(`${API_URL}/auth/login`, formData);
     localStorage.setItem("auth_token", response.data.access_token);
     localStorage.setItem("refresh_token", response.data.refresh_token);
     return response.data;
@@ -217,6 +219,8 @@ export const transactionService = {
 export const adminService = {
   // Get all users
   getAllUsers: async () => {
+    console.log('users called !!!!!!!!!!!!!!!!!!!');
+    
     const response = await api.get("/admin/users");    
     return response.data;
   },
@@ -432,31 +436,31 @@ export const notificationService = {
 
   // NEW: Get all notifications for the current user
   getNotifications: async () => {
-    const response = await api.get('/notifications');
+    const response = await api.get('/notification');
     return response.data;
   },
 
   // NEW: Mark a specific notification as read
   markAsRead: async (notificationId: string) => {
-    const response = await api.patch(`/notifications/${notificationId}/read`);
+    const response = await api.patch(`/notification/${notificationId}/read`);
     return response.data;
   },
 
   // NEW: Mark all notifications as read
   markAllAsRead: async () => {
-    const response = await api.patch('/notifications/mark-all-read');
+    const response = await api.patch('/notification/mark-all-read');
     return response.data;
   },
 
   // NEW: Delete a specific notification
   deleteNotification: async (notificationId: string) => {
-    const response = await api.delete(`/notifications/${notificationId}`);
+    const response = await api.delete(`/notification/${notificationId}`);
     return response.data;
   },
 
   // NEW: Get unread notification count
   getUnreadCount: async () => {
-    const response = await api.get('/notifications/unread-count');
+    const response = await api.get('/notification/unread-count');
     return response.data.count;
   },
 
@@ -469,7 +473,7 @@ export const notificationService = {
     amount?: number;
     transaction_id?: string;
   }) => {
-    const response = await api.post('/notifications', notificationData);
+    const response = await api.post('/notification', notificationData);
     return response.data;
   },
 };

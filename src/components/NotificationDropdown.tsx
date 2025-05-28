@@ -1,5 +1,5 @@
 import React, { ReactElement } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,17 +13,18 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useNavigate } from "react-router-dom";
+import { Notification, mockNotifications } from "@/mockData/notification";
 
 export function NotificationDropdown(): ReactElement {
-  const { user } = useAuth();
   const { 
     notifications, 
     unreadCount, 
     loading, 
+    isWebSocketConnected,
     markAsRead, 
     markAllAsRead 
   } = useNotifications();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const formatTime = (date: Date): string => {
     const now: Date = new Date();
@@ -43,15 +44,14 @@ export function NotificationDropdown(): ReactElement {
 
   const handleNotificationClick = async (notificationId: string): Promise<void> => {
     await markAsRead(notificationId);
+    navigate(`/notifications/?id=${notificationId}`);
   };
 
-  // Sort notifications by timestamp (newest first)
-  const sortedNotifications = [...notifications].sort((a, b) => 
+  const sortedNotifications = [...(notifications.length ? notifications : mockNotifications)].sort((a, b) => 
     b.timestamp.getTime() - a.timestamp.getTime()
   );
 
   const handleToNotification = (): void => {
-    // Navigate to the notification page
     navigate('/notifications');
   };
 
@@ -66,13 +66,33 @@ export function NotificationDropdown(): ReactElement {
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
+            <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
           )}
+          {/* WebSocket connection indicator */}
+          <span 
+            className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${
+              isWebSocketConnected ? 'bg-green-500' : 'bg-red-500'
+            }`}
+            title={isWebSocketConnected ? 'Real-time connected' : 'Real-time disconnected'}
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notifications</span>
+          <div className="flex items-center gap-2">
+            <span>Notifications</span>
+            {isWebSocketConnected ? (
+              <span title="Real-time connected">
+                <Wifi className="h-4 w-4 text-green-500" />
+              </span>
+            ) : (
+              <span title="Real-time disconnected">
+                <WifiOff className="h-4 w-4 text-red-500" />
+              </span>
+            )}
+          </div>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
@@ -116,9 +136,9 @@ export function NotificationDropdown(): ReactElement {
                     <p className="text-sm text-muted-foreground">
                       {notification.message}
                     </p>
-                    {notification.amount && (
+                    {notification.metadata?.amount && (
                       <p className="text-xs font-medium text-green-600">
-                        ${notification.amount.toFixed(2)}
+                        ${notification.metadata?.amount.toFixed(2)}
                       </p>
                     )}
                   </div>

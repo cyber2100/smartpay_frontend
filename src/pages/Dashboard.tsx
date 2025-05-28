@@ -35,6 +35,7 @@ import {
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { PaymentCard, Transaction, MonthlyData, FinancialData } from '@/types/payment';
+import { useNotifications } from '@/hooks/use-notifications';
 
 const currencyData: MonthlyData[] = [
   { name: 'Jan', received: 2000, sent: 1200, revenue: 800 },
@@ -67,6 +68,7 @@ const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { transactions, getTransactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading, getCards } = useCard();
+  const { getNotifications } = useNotifications();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'balance' | 'received' | 'sent'>('all');
   
@@ -92,6 +94,7 @@ const Dashboard: React.FC = () => {
       // Fetch transactions and cards when component mounts
       getTransactions();
       getCards();
+      getNotifications();
     }
   }, []);
   

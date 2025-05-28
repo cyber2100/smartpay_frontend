@@ -16,13 +16,14 @@ interface UseUserManagementReturn {
   users: User[];
   loading: boolean;
   error: string | null;
-  resetUserPassword: (userId: string, newPassword: string) => Promise<void>;
   updateUserActivation: (userId: string, isActive: boolean) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   refreshUsers: () => Promise<void>;
 }
 
 export const useUserManagement = (): UseUserManagementReturn => {
+  console.log('called ==========================>');
+  
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,16 +61,6 @@ export const useUserManagement = (): UseUserManagementReturn => {
       setLoading(false);
     }
   }, [isAdmin]);
-
-  // Reset user password
-  const resetUserPassword = async (userId: string, newPassword: string): Promise<void> => {
-    try {
-      await adminService.resetUserPassword(userId, newPassword);
-    } catch (error: any) {
-      console.error('Error resetting password:', error);
-      throw error;
-    }
-  };
 
   // Update user activation status (NOT verification)
   const updateUserActivation = async (userId: string, isActive: boolean): Promise<void> => {
@@ -111,7 +102,7 @@ export const useUserManagement = (): UseUserManagementReturn => {
   // Initial fetch on mount
   useEffect(() => {
     if(isAdmin){
-      refreshUsers();
+      fetchUsers();
     }
   }, [isAdmin]);
 
@@ -119,7 +110,6 @@ export const useUserManagement = (): UseUserManagementReturn => {
     users,
     loading,
     error,
-    resetUserPassword,
     updateUserActivation,
     deleteUser,
     refreshUsers,
