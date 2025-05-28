@@ -41,7 +41,7 @@ const UserManagement: React.FC = () => {
     users,
     loading,
     updateUserActivation,
-    refreshUsers
+    refreshUsers,
   } = useUserManagement();
   
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -50,10 +50,6 @@ const UserManagement: React.FC = () => {
   const [actionType, setActionType] = useState<'reset' | 'activate' | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'unverified' | 'active' | 'inactive'>('all');
   const [actionLoading, setActionLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    refreshUsers();
-  }, [])
 
   // Filter users based on search term and status
   const filteredUsers: User[] = (users?.length ? [...users] : mockUsers).filter((user: User) => {

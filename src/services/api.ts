@@ -219,8 +219,7 @@ export const transactionService = {
 export const adminService = {
   // Get all users
   getAllUsers: async () => {
-    console.log('users called !!!!!!!!!!!!!!!!!!!');
-    
+    // const response = await axios.get("http://localhost:3000/users");        
     const response = await api.get("/admin/users");    
     return response.data;
   },
@@ -442,13 +441,13 @@ export const notificationService = {
 
   // NEW: Mark a specific notification as read
   markAsRead: async (notificationId: string) => {
-    const response = await api.patch(`/notification/${notificationId}/read`);
+    const response = await api.post(`/notification/${notificationId}/read`);
     return response.data;
   },
 
   // NEW: Mark all notifications as read
   markAllAsRead: async () => {
-    const response = await api.patch('/notification/mark-all-read');
+    const response = await api.post('/notification/mark-all-read');
     return response.data;
   },
 

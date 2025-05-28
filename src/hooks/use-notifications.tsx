@@ -95,7 +95,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     title: apiNotification.title,
     message: apiNotification.message,
     metadata: {
-      transactionId: apiNotification.extra_data?.transaction_id,
+      transactionId: apiNotification.extra_data?.transactionId,
       amount: apiNotification.extra_data?.amount,
     },
     timestamp: new Date(apiNotification.timestamp),

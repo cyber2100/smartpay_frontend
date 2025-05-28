@@ -1,5 +1,5 @@
-import React, { ReactElement } from "react";
-import { Bell, Wifi, WifiOff } from "lucide-react";
+import React, { ReactElement, useState } from "react";
+import { Bell, Wifi, WifiOff, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,9 +22,11 @@ export function NotificationDropdown(): ReactElement {
     loading, 
     isWebSocketConnected,
     markAsRead, 
-    markAllAsRead 
+    markAllAsRead,
+    deleteNotification
   } = useNotifications();
   const navigate = useNavigate();
+  const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
 
   const formatTime = (date: Date): string => {
     const now: Date = new Date();
@@ -45,6 +47,21 @@ export function NotificationDropdown(): ReactElement {
   const handleNotificationClick = async (notificationId: string): Promise<void> => {
     await markAsRead(notificationId);
     navigate(`/notifications/?id=${notificationId}`);
+  };
+
+  const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string): Promise<void> => {
+    e.stopPropagation(); // Prevent triggering the notification click
+    
+    setDeletingNotificationId(notificationId);
+    
+    try {
+      await deleteNotification(notificationId);
+      // The notification will be removed from the list automatically via the hook's state management
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    } finally {
+      setDeletingNotificationId(null);
+    }
   };
 
   const sortedNotifications = [...(notifications.length ? notifications : mockNotifications)].sort((a, b) => 
@@ -113,37 +130,66 @@ export function NotificationDropdown(): ReactElement {
             </div>
           ) : sortedNotifications.length > 0 ? (
             <DropdownMenuGroup>
-              {sortedNotifications.slice(0, 10).map((notification) => (
-                <DropdownMenuItem 
-                  key={notification.id}
-                  className={`p-3 cursor-pointer ${!notification.read ? 'bg-muted/50' : ''}`}
-                  onClick={() => handleNotificationClick(notification.id)}
-                >
-                  <div className="flex flex-col space-y-1 w-full">
-                    <div className="flex justify-between items-start">
-                      <span className="font-medium">
-                        {notification.title}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          {formatTime(notification.timestamp)}
-                        </span>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              {sortedNotifications.slice(0, 10).map((notification) => {
+                const isDeleting = deletingNotificationId === notification.id;
+                
+                return (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    className={`
+                      p-0 cursor-pointer group relative
+                      ${!notification.read ? 'bg-muted/50' : ''}
+                      ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
+                    `}
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <div className="flex w-full">
+                      {/* Main notification content */}
+                      <div className="flex flex-col space-y-1 w-full p-3 pr-10">
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium">
+                            {notification.title}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {formatTime(notification.timestamp)}
+                            </span>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        {notification.metadata?.amount && (
+                          <p className="text-xs font-medium text-green-600">
+                            ${notification.metadata?.amount.toFixed(2)}
+                          </p>
                         )}
                       </div>
+                      
+                      {/* Delete button - positioned absolutely to overlay on hover */}
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                          onClick={(e) => handleDeleteNotification(e, notification.id)}
+                          disabled={isDeleting}
+                          title="Delete notification"
+                        >
+                          {isDeleting ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {notification.message}
-                    </p>
-                    {notification.metadata?.amount && (
-                      <p className="text-xs font-medium text-green-600">
-                        ${notification.metadata?.amount.toFixed(2)}
-                      </p>
-                    )}
-                  </div>
-                </DropdownMenuItem>
-              ))}
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuGroup>
           ) : (
             <div className="p-4 text-center text-muted-foreground">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, X, Clock, CheckCircle, AlertTriangle, Info, User, DollarSign, CreditCard, ArrowRight } from "lucide-react";
+import { Bell, X, Clock, CheckCircle, AlertTriangle, Info, User, DollarSign, CreditCard, ArrowRight, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -15,9 +15,11 @@ const Notifications: React.FC = () => {
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedNotificationId, setHighlightedNotificationId] = useState<string | null>(null);
-  const {notifications: realNotifications, getNotifications} = useNotifications();
+  const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
+  const {notifications: realNotifications, getNotifications, deleteNotification} = useNotifications();
   const location = useLocation();
   const selectedNotificationId = location.search.split("?id=")[1];
+  const { markAllAsRead, markAsRead } = useNotifications();
   
   const navigate = useNavigate();
 
@@ -129,9 +131,11 @@ const Notifications: React.FC = () => {
     return display;
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     setSelectedNotification(notification);
     setIsModalOpen(true);
+
+    await markAsRead(notification.id);
     
     // Clear URL parameter when opening modal
     if (selectedNotificationId) {
@@ -148,12 +152,33 @@ const Notifications: React.FC = () => {
     }
   };
 
+  const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string) => {
+    e.stopPropagation(); // Prevent opening the modal when clicking delete
+    
+    setDeletingNotificationId(notificationId);
+    
+    try {
+      const success = await deleteNotification(notificationId);
+      if (success) {
+        // Remove from local state immediately for better UX
+        setNotifications(prev => 
+          prev.filter(n => n.id !== notificationId)
+        );
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    } finally {
+      setDeletingNotificationId(null);
+    }
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedNotification(null);
   };
 
-  const markAllAsRead = () => {
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
     setNotifications(prev => 
       prev.map(n => ({ ...n, read: true }))
     );
@@ -192,7 +217,7 @@ const Notifications: React.FC = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={markAllAsRead}
+                  onClick={handleMarkAllAsRead}
                   className="gap-2"
                 >
                   <CheckCircle className="h-4 w-4" />
@@ -215,6 +240,7 @@ const Notifications: React.FC = () => {
                   sortedNotifications.map((notification) => {
                     const display = getNotificationDisplay(notification);
                     const isHighlighted = highlightedNotificationId === notification.id;
+                    const isDeleting = deletingNotificationId === notification.id;
                     
                     return (
                       <div
@@ -223,13 +249,14 @@ const Notifications: React.FC = () => {
                         onClick={() => handleNotificationClick(notification)}
                         className={`
                           flex items-start gap-4 p-4 rounded-lg border cursor-pointer
-                          transition-all duration-300 hover:bg-muted/50 hover:shadow-sm
+                          transition-all duration-300 hover:bg-muted/50 hover:shadow-sm group
                           ${!notification.read ? 'bg-blue-50/50 dark:bg-blue-950/20' : 'bg-card'}
                           ${display.borderColor}
                           ${isHighlighted ? 
                             'ring-2 ring-blue-500 ring-offset-2 shadow-lg scale-[1.02] bg-blue-50 dark:bg-blue-950/30 border-blue-400' : 
                             ''
                           }
+                          ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
                         `}
                         style={{
                           animation: isHighlighted ? 'pulse 0.8s ease-in-out 2' : undefined
@@ -276,7 +303,24 @@ const Notifications: React.FC = () => {
                           )}
                         </div>
                         
-                        <ArrowRight className={`h-4 w-4 flex-shrink-0 ${isHighlighted ? 'text-blue-600 dark:text-blue-400 scale-110' : 'text-muted-foreground'} transition-all duration-300`} />
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {/* Delete Button */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleDeleteNotification(e, notification.id)}
+                            disabled={isDeleting}
+                            className={`
+                              opacity-0 group-hover:opacity-100 transition-opacity duration-200
+                              hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20
+                              ${isDeleting ? 'opacity-50' : ''}
+                            `}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                          
+                          <ArrowRight className={`h-4 w-4 ${isHighlighted ? 'text-blue-600 dark:text-blue-400 scale-110' : 'text-muted-foreground'} transition-all duration-300`} />
+                        </div>
                       </div>
                     );
                   })
@@ -301,9 +345,24 @@ const Notifications: React.FC = () => {
           <div className="bg-background rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-lg font-semibold">Notification Details</h2>
-              <Button variant="ghost" size="sm" onClick={closeModal}>
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Delete button in modal */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteNotification(e, selectedNotification.id);
+                    closeModal();
+                  }}
+                  className="hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={closeModal}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             <div className="p-6">
