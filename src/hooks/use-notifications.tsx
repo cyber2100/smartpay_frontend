@@ -85,7 +85,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setNotifications([]);
       setUnreadCount(0);
     }
-
   }, [isAuthenticated]);
 
   // Transform API notifications to our app format

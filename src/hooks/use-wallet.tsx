@@ -5,9 +5,11 @@ import { walletService, transactionService, adminService } from '@/services/api'
 
 // Types
 import { Transaction } from '@/types/payment';
+import { set } from 'date-fns';
 
 export type WalletContextType = {
   balance: number;
+  isLoading: boolean;
   transactions: Transaction[];
   withdraw: (amount: number, cardId: string) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
@@ -27,6 +29,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Initialize balance and fetch transactions when user changes
   useEffect(() => {
@@ -41,6 +44,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [isAuthenticated]);
   
   const loadWalletData = async () => {
+    setIsLoading(true);
+
     try {
       // Get user balance
       const userBalance = await walletService.getBalance();
@@ -67,12 +72,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: "Failed to load wallet data",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Helper function to refresh transactions
   const refreshTransactions = async () => {
     if (!isAuthenticated || !user) return;
+    setIsLoading(true);
     
     try {
       const userTransactionData = await walletService.getTransactions();
@@ -87,13 +95,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setTransactions(formattedTransactions);
     } catch (error) {
       console.error('Error refreshing transactions:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Top up wallet
   const withdraw = async (amount: number, cardId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
-    
+
+    setIsLoading(true);    
     try {
       const result = await walletService.withdraw(amount, cardId);
       
@@ -116,6 +127,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -149,6 +162,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       return false;
     }
+
+    setIsLoading(true);
 
     try {
       // Call the deposit API service
@@ -192,12 +207,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Transfer money
   const transfer = async (recipientIdentifier: string, amount: number, description?: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
+    setIsLoading(true);
     
     try {
       await walletService.transfer(recipientIdentifier, amount, description);
@@ -219,12 +237,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
   // Get user's transactions
   const getTransactions = async (): Promise<Transaction[]> => {
     if (!user) return [];
+
+    setIsLoading(true);
+
     try {
       const userTransactionData = await walletService.getTransactions();
       const result = userTransactionData.map((tx: any) => ({
@@ -240,12 +263,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
+    } finally { 
+      setIsLoading(false);
     }
   };
   
   // Value to provide
   const value: WalletContextType = {
     balance,
+    isLoading,
     transactions,
     withdraw,
     transfer,

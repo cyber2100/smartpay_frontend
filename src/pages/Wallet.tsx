@@ -46,7 +46,6 @@ const Wallet: React.FC = () => {
     if (!isAuthenticated) {
       return navigate('/signin');
     }
-    getTransactions();
   }, []);
 
   const handleDirectToPath = (path: string) => {

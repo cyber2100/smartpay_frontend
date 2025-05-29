@@ -37,9 +37,8 @@ import { useStatistics } from '@/hooks/use-statistics';
 
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { transactions, getTransactions, balance } = useWallet();
+  const { transactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading, getCards } = useCard();
-  const { getNotifications } = useNotifications();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
   const { getChartData, financialData } = useStatistics();
@@ -48,11 +47,6 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/signin');
-    } else {
-      // Fetch transactions and cards when component mounts
-      getTransactions();
-      getCards();
-      getNotifications();
     }
   }, []);
   

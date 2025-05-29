@@ -15,7 +15,7 @@ import { MoneyLoadingOverlay } from '@/components/MoneySpinner'; // Import the s
 
 const History: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { transactions, getTransactions, balance } = useWallet();
+  const { transactions, isLoading } = useWallet();
   
   const navigate = useNavigate();
   
@@ -25,31 +25,12 @@ const History: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
-  // Loading state
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
     } else if (!user?.isVerified) {
       return navigate('/verify');
     }
-    
-    // Set loading state and fetch transactions
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        await getTransactions();
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-      } finally {
-        setIsLoading(false);
-        setIsInitialLoad(false);
-      }
-    };
-    
-    fetchData();
   }, []);
 
   // Format timestamp for display - handling both Date objects and ISO strings from backend
@@ -297,7 +278,7 @@ const History: React.FC = () => {
   };
 
   // Show loading spinner during initial load
-  if (isLoading && isInitialLoad) {
+  if (isLoading) {
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto pb-16">
@@ -395,7 +376,7 @@ const History: React.FC = () => {
             
             <CardContent>
               {/* Show mini loading spinner when filtering/searching */}
-              {isLoading && !isInitialLoad ? (
+              {isLoading ? (
                 <div className="flex justify-center py-8">
                   <MoneyLoadingOverlay size="md" message="Updating..." />
                 </div>

@@ -14,10 +14,9 @@ interface WithdrawFormData {
 
 const Withdraw: React.FC = () => {
   // Mock auth and wallet for demo
-  const { user, isAuthenticated } = useAuth();
   const { withdraw: walletWithdraw } = useWallet();
   const { balance } = useWallet();
-  const { cards: paymentCards, getCards } = useCard();
+  const { cards: paymentCards } = useCard();
   const navigate = useNavigate();
 
   const withdraw = async (cardId: string, amount: number) => {
@@ -36,10 +35,6 @@ const Withdraw: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [withdrawSuccess, setWithdrawSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
-
-  useEffect(() => {
-    getCards();
-  }, [])
 
   // Remove navigation logic for demo
   useEffect(() => {

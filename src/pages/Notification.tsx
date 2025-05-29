@@ -10,16 +10,19 @@ import { useNotifications } from '@/hooks/use-notifications';
 import { Notification, mockNotifications } from '@/mockData/notification';
 
 const Notifications: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedNotificationId, setHighlightedNotificationId] = useState<string | null>(null);
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
-  const {notifications: realNotifications, getNotifications, deleteNotification} = useNotifications();
+  const { 
+    notifications: realNotifications, 
+    deleteNotification, 
+    markAllAsRead, 
+    markAsRead } = useNotifications();
   const location = useLocation();
   const selectedNotificationId = location.search.split("?id=")[1];
-  const { markAllAsRead, markAsRead } = useNotifications();
   
   const navigate = useNavigate();
 

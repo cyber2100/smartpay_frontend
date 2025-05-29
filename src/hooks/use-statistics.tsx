@@ -144,8 +144,10 @@ export const useStatistics = () => {
   };
 
   useEffect(() => {
-    fetchStatistics();
-  }, [])
+    if(isAuthenticated) {
+      fetchStatistics();
+    }
+  }, [isAuthenticated]);
 
   return {
     getFilteredCurrencyData,
