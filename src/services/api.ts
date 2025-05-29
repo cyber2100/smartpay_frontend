@@ -175,7 +175,7 @@ export const authService = {
     try {
       const response = await api.post("/auth/forgot-password/reset-password", {
         token,
-        new_password: newPassword
+        newpassword: newPassword
       });
       return {
         success: true,
@@ -630,7 +630,7 @@ export const profileService = {
 
 export const statisticsService = {
   getStatistics: async () => {
-    const respnse = await api.get('/statistics');
-    return respnse.data; 
+    const response = await api.get('/profile/monthly-summary');
+    return response.data;
   }
 }

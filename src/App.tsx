@@ -88,9 +88,9 @@ const AppRoutes = () => {
         <Route path="/withdraw" element={ <ProtectedRoute><AuthLayout><Withdraw /></AuthLayout></ProtectedRoute>} />
         <Route path="/history" element={ <ProtectedRoute><AuthLayout><History /></AuthLayout></ProtectedRoute>} />
 
-        <Route path="/setting" element={ <ProtectedRoute><Setting /></ProtectedRoute>} />
-        <Route path="/card" element={ <ProtectedRoute><Card /></ProtectedRoute>} />
-        <Route path="/notifications" element={ <ProtectedRoute><Notification /></ProtectedRoute>} />
+        <Route path="/setting" element={ <ProtectedRoute><AuthLayout><Setting /></AuthLayout></ProtectedRoute>} />
+        <Route path="/card" element={ <ProtectedRoute><AuthLayout><Card /></AuthLayout></ProtectedRoute>} />
+        <Route path="/notifications" element={ <ProtectedRoute><AuthLayout><Notification /></AuthLayout></ProtectedRoute>} />
 
         <Route path="/admin" element={ <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/admin/users" element={ <ProtectedRoute><UserManagement /></ProtectedRoute>} />
