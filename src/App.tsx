@@ -16,9 +16,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MobileButtonNavigation } from "./components/MobileButtonNavigation";
 import { PublicOnlyRoute, ProtectedRoute } from "./components/RouteGuard";
 import Index from "./pages/Index";
-import Signin from "./pages/Signin";
-import Signup from "./pages/Signup";
+import Signin from "./pages/auth/Signin";
+import Signup from "./pages/auth/Signup";
 import Verify from "./pages/Verify";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import Wallet from "./pages/Wallet";
 import Transfer from "./pages/Transfer";
 import Deposit from "./pages/Deposit";
@@ -73,160 +74,29 @@ const AppRoutes = () => {
   return (
     <PageTransition>
       <Routes>
-        {/* Public routes - accessible to everyone */}
         <Route path="/" element={<Index />} />
-        
-        {/* Public routes - only for non-authenticated users */}
-        <Route 
-          path="/signin" 
-          element={
-            <PublicOnlyRoute>
-              <Signin />
-            </PublicOnlyRoute>
-          } 
-        />
-        <Route 
-          path="/signup" 
-          element={
-            <PublicOnlyRoute>
-              <Signup />
-            </PublicOnlyRoute>
-          } 
-        />
-        
-        {/* Verify route - accessible to everyone (needed for email verification) */}
+        <Route path="/signin" element={ <PublicOnlyRoute><Signin /></PublicOnlyRoute> } />
+        <Route path="/signup" element={ <PublicOnlyRoute><Signup /></PublicOnlyRoute> } />
+        <Route path="/forgot-password" element={ <PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute> } />
+
         <Route path="/verify" element={<Verify />} />
-        
-        {/* Protected routes - only for authenticated users */}
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Dashboard />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/wallet" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Wallet />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/transfer" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Transfer />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/deposit" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Deposit />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/withdraw" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Withdraw />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/history" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <History />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/users" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <UserManagement />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/transactions" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <TransactionStatistics />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/balances" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <BalanceStatistics />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/setting" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Setting />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/card" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Card />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/notifications" 
-          element={
-            <ProtectedRoute>
-              <AuthLayout>
-                <Notification />
-              </AuthLayout>
-            </ProtectedRoute>
-          } 
-        />
-        
+
+        <Route path="/dashboard" element={ <ProtectedRoute><AuthLayout><Dashboard /></AuthLayout></ProtectedRoute>} />
+        <Route path="/wallet" element={ <ProtectedRoute><AuthLayout><Wallet /></AuthLayout></ProtectedRoute>} />
+        <Route path="/transfer" element={ <ProtectedRoute><AuthLayout><Transfer /></AuthLayout></ProtectedRoute>} />
+        <Route path="/deposit" element={ <ProtectedRoute><AuthLayout><Deposit /></AuthLayout></ProtectedRoute>} />
+        <Route path="/withdraw" element={ <ProtectedRoute><AuthLayout><Withdraw /></AuthLayout></ProtectedRoute>} />
+        <Route path="/history" element={ <ProtectedRoute><AuthLayout><History /></AuthLayout></ProtectedRoute>} />
+
+        <Route path="/setting" element={ <ProtectedRoute><Setting /></ProtectedRoute>} />
+        <Route path="/card" element={ <ProtectedRoute><Card /></ProtectedRoute>} />
+        <Route path="/notifications" element={ <ProtectedRoute><Notification /></ProtectedRoute>} />
+
+        <Route path="/admin" element={ <ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/users" element={ <ProtectedRoute><UserManagement /></ProtectedRoute>} />
+        <Route path="/admin/transactions" element={ <ProtectedRoute><TransactionStatistics /></ProtectedRoute>} />
+        <Route path="/admin/balances" element={ <ProtectedRoute><BalanceStatistics /></ProtectedRoute>} />
+
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
       </Routes>

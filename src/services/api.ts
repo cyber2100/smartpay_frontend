@@ -129,6 +129,125 @@ export const authService = {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("refresh_token");
   },
+
+  sendPasswordResetCode: async (email: string) => {
+    try {
+      const response = await api.post("/auth/forgot-password/send-code", {
+        email
+      });
+      console.log("Send password reset code response:", response.data);
+      return {
+        success: true,
+        message: response.data.message || "Verification code sent successfully",
+      };
+    } catch (error: any) {
+      console.error("Send password reset code error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.response?.data?.message || "Failed to send verification code"
+      };
+    }
+  },
+
+  // Verify password reset code
+  verifyPasswordResetCode: async (email: string, code: string) => {
+    try {
+      const response = await api.post("/auth/forgot-password/verify-code", {
+        email,
+        verify_code: code
+      });
+      return {
+        success: true,
+        message: response.data.message || "Code verified successfully",
+        ...response.data
+      };
+    } catch (error: any) {
+      console.error("Verify password reset code error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.response?.data?.message || "Invalid or expired verification code"
+      };
+    }
+  },
+
+  // Reset password with verified code
+  resetPassword: async (token: string, newPassword: string) => {
+    try {
+      const response = await api.post("/auth/forgot-password/reset-password", {
+        token,
+        new_password: newPassword
+      });
+      return {
+        success: true,
+        message: response.data.message || "Password reset successfully",
+      };
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.response?.data?.message || "Failed to reset password"
+      };
+    }
+  },
+
+  // Alternative: Combined reset password method (if your backend supports it)
+  resetPasswordDirect: async (email: string, code: string, newPassword: string) => {
+    try {
+      const response = await api.put("/auth/reset-password", {
+        email,
+        verification_code: code,
+        new_password: newPassword
+      });
+      return {
+        success: true,
+        message: response.data.message || "Password reset successfully",
+        ...response.data
+      };
+    } catch (error: any) {
+      console.error("Reset password direct error:", error);
+      return {
+        success: false,
+        message: error.response?.data?.detail || error.response?.data?.message || "Failed to reset password"
+      };
+    }
+  },
+
+  // Check if email exists (optional - for better UX)
+  checkEmailExists: async (email: string) => {
+    try {
+      const response = await api.post("/auth/check-email", {
+        email
+      });
+      return {
+        exists: response.data.exists || false,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error("Check email exists error:", error);
+      return {
+        exists: false,
+        message: error.response?.data?.detail || "Could not verify email"
+      };
+    }
+  },
+
+  // Validate reset token (if your backend uses tokens instead of codes)
+  validateResetToken: async (token: string) => {
+    try {
+      const response = await api.get(`/auth/validate-reset-token/${token}`);
+      return {
+        valid: true,
+        email: response.data.email,
+        expires_at: response.data.expires_at
+      };
+    } catch (error: any) {
+      console.error("Validate reset token error:", error);
+      return {
+        valid: false,
+        message: error.response?.data?.detail || "Invalid or expired reset token"
+      };
+    }
+  },
 };
 
 // Wallet
