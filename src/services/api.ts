@@ -16,7 +16,7 @@ const api = axios.create({
 const refreshToken = async () => {
   try {
     const refresh_token = localStorage.getItem("refresh_token");
-    const response = await api.post(`${API_URL}/auth/token/refresh`, {
+    const response = await api.post(`${API_URL}/auth/refresh-token`, {
       refresh_token,
     });
 
@@ -65,6 +65,7 @@ api.interceptors.response.use(
         // Optional: handle logout or redirection to signin here
         localStorage.removeItem("auth_token");
         localStorage.removeItem("refresh_token");
+        window.location.href = "/signin"; // Redirect to signin page
         return Promise.reject(refreshError);
       }
     }

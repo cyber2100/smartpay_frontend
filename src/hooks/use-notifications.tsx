@@ -231,9 +231,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     await getNotifications();
   };
 
-  console.log('unreadcount = ', unreadCount);
-  console.log('WebSocket connected:', isWebSocketConnected);
-
   // Value to provide
   const value: NotificationContextType = {
     notifications,

@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PaymentCard } from "@/types/payment";
+import { useToast } from "@/hooks/use-toast";
 
 interface WithdrawFormData {
   cardId: string;
@@ -18,6 +19,7 @@ const Withdraw: React.FC = () => {
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const withdraw = async (cardId: string, amount: number) => {
     // Mock withdraw function
@@ -25,10 +27,6 @@ const Withdraw: React.FC = () => {
     return response;
   };
   
-  const toast = ({ title, description, variant }: any) => {
-    console.log(`Toast: ${title} - ${description} - ${variant || 'default'}`);
-  };
-
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);

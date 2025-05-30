@@ -3,6 +3,7 @@ import { useWallet } from "@/hooks/use-wallet";
 import { ArrowRight, CheckCircle2, User, DollarSign } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 // Type definitions
 interface UserSuggestion {
@@ -26,15 +27,12 @@ const Transfer: React.FC = () => {
   const {transfer: moneyTransfer} = useWallet();
   const { balance } = useWallet();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const transfer = async (recipient: string, amount: number, description: string) => {
     // Mock transfer function
     const response = await moneyTransfer(recipient, amount, description);
     return response;
-  };
-  
-  const toast = ({ title, description, variant }: any) => {
-    console.log(`Toast: ${title} - ${description}`);
   };
 
   const { findUser } = useAuth();

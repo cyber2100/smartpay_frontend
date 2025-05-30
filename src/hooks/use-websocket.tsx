@@ -32,19 +32,24 @@ export const useWebSocket = ({
     if (!isAuthenticated || !user || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
     }
+    const userId = user.id;
 
     try {
       // WebSocket URL - adjust this to match your backend
-      const wsUrl = `ws://146.19.215.133:8000/ws/notifications?token=${localStorage.getItem('auth_token')}`;
+      const wsUrl = `ws://146.19.215.133:8000/ws/notifications/${userId}`;
       
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected ========================================= >');
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
       };
 
       wsRef.current.onmessage = (event) => {
+        const notification = JSON.parse(event.data);
+        console.log(":bell: Received notification:", notification);
+        // You can trigger toast or update global state here
+
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
           
@@ -138,7 +143,7 @@ export const useWebSocket = ({
     return () => {
       disconnect();
     };
-  }, [isAuthenticated, user, connect, disconnect]);
+  }, [isAuthenticated]);
 
   // Cleanup on unmount
   useEffect(() => {

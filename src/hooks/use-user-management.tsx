@@ -22,8 +22,6 @@ interface UseUserManagementReturn {
 }
 
 export const useUserManagement = (): UseUserManagementReturn => {
-  console.log('called ==========================>');
-  
   const { isAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

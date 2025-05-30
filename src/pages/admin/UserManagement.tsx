@@ -52,8 +52,6 @@ const UserManagement: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // Filter users based on search term and status
-  console.log('users = ', users);
-  
   const filteredUsers: User[] = (users?.length ? [...users] : mockUsers).filter((user: User) => {
     
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 

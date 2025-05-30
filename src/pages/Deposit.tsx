@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PaymentCard } from "@/types/payment";
+import { useToast } from "@/hooks/use-toast";
 
 interface DepositFormData {
   cardId: string;
@@ -19,16 +20,14 @@ const Deposit: React.FC = () => {
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const deposit = async (cardId: string, amount: number) => {
     // Mock deposit function
     const response = await walletDeposit(cardId, amount);
     return response;
   };
-  
-  const toast = ({ title, description, variant }: any) => {
-    console.log(`Toast: ${title} - ${description} - ${variant || 'default'}`);
-  };
+
 
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");

@@ -87,7 +87,6 @@ export function NotificationDropdown(): ReactElement {
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
-          {/* WebSocket connection indicator */}
           <span 
             className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${
               isWebSocketConnected ? 'bg-green-500' : 'bg-red-500'

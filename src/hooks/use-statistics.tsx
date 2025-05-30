@@ -6,12 +6,12 @@ import { MonthlyData, FinancialData } from '@/types/payment';
 
 interface StatisticsData {
   financialData: FinancialData;
-  currencyData: MonthlyData[];
+  getChartData: () => MonthlyData[];
   isFromAPI: boolean;
   isLoading?: boolean,
   error?: string,
-  refreshStatistics?: Promise<void>,
-  loadStatistics?: Promise<void>
+  refreshStatistics?: () => Promise<void>,
+  loadStatistics?: () => Promise<void>
 }
 
 const mockCurrencyData: MonthlyData[] = [
@@ -29,14 +29,13 @@ const mockCurrencyData: MonthlyData[] = [
   { name: 'Dec', received: 8500, sent: 3900 }
 ];
 
-export const useStatistics = () => {
+export const useStatistics = (): StatisticsData => {
   const { isAuthenticated } = useAuth();
   const [statisticsData, setStatisticsData] = useState<MonthlyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromAPI, setIsFromAPI] = useState(false);
   const { toast } = useToast();
-  const [currencyData, setCurrencyData] = useState<MonthlyData[]>([]);
 
   // Fetch statistics from API
   const fetchStatistics = useCallback(async (): Promise<MonthlyData[]> => {
@@ -110,7 +109,7 @@ export const useStatistics = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchStatistics, isAuthenticated, toast]);
+  }, [isAuthenticated]);
 
   // Refresh statistics
   const refreshStatistics = useCallback(async () => {
@@ -147,12 +146,10 @@ export const useStatistics = () => {
     if(isAuthenticated) {
       fetchStatistics();
     }
-  }, [isAuthenticated]);
+  }, []);
 
   return {
-    getFilteredCurrencyData,
     getChartData,
-    currencyData,
     financialData,
     isLoading,
     error,
