@@ -11,7 +11,7 @@ export interface WebSocketMessage {
 }
 
 interface UseWebSocketProps {
-  onUnreadCountUpdate?: (count: number) => void;
+  onUnreadCountUpdate?: (count: number, update?: boolean) => void;
   onNewNotification?: (notification: any) => void;
   onNotificationRead?: (notificationId: string) => void;
 }
@@ -36,7 +36,7 @@ export const useWebSocket = ({
 
     try {
       // WebSocket URL - adjust this to match your backend
-      const wsUrl = `ws://146.19.215.133:8000/ws/notifications/${userId}`;
+      const wsUrl = `ws://146.19.215.133:8000/ws/${userId}`;
       
       wsRef.current = new WebSocket(wsUrl);
 
@@ -47,41 +47,15 @@ export const useWebSocket = ({
 
       wsRef.current.onmessage = (event) => {
         const notification = JSON.parse(event.data);
-        console.log(":bell: Received notification:", notification);
         // You can trigger toast or update global state here
-
+        
         try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          
-          switch (message.type) {
-            case 'notification_count_update':
-              if (message.data.unreadCount !== undefined && onUnreadCountUpdate) {
-                onUnreadCountUpdate(message.data.unreadCount);
-              }
-              break;
-              
-            case 'new_notification':
-              if (message.data.notification && onNewNotification) {
-                onNewNotification(message.data.notification);
-              }
-              // Also update unread count if provided
-              if (message.data.unreadCount !== undefined && onUnreadCountUpdate) {
-                onUnreadCountUpdate(message.data.unreadCount);
-              }
-              break;
-              
-            case 'notification_read':
-              if (message.data.notificationId && onNotificationRead) {
-                onNotificationRead(message.data.notificationId);
-              }
-              // Also update unread count if provided
-              if (message.data.unreadCount !== undefined && onUnreadCountUpdate) {
-                onUnreadCountUpdate(message.data.unreadCount);
-              }
-              break;
-              
-            default:
-              console.log('Unknown WebSocket message type:', message.type);
+          const newData = notification.data;
+          console.log(":bell: Received notification:", newData);
+          if (newData && onUnreadCountUpdate) {
+            onUnreadCountUpdate(1, true);
+            onNewNotification(newData);
+            onNotificationRead(newData.id);
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

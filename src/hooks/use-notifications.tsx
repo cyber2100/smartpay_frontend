@@ -41,10 +41,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { toast } = useToast();
 
   // WebSocket event handlers
-  const handleUnreadCountUpdate = useCallback((count: number) => {
-    console.log('WebSocket: Unread count updated to:', count);
-    setUnreadCount(count);
-  }, []);
+  const handleUnreadCountUpdate = useCallback((count: number, update?: boolean) => {
+    if(update) {
+      setUnreadCount(unreadCount + count);
+      console.log('WebSocket: Unread count updated to:', unreadCount + count);
+    } else {
+      setUnreadCount(count);
+    }
+  }, [unreadCount]);
 
   const handleNewNotification = useCallback((notification: any) => {
     console.log('WebSocket: New notification received:', notification);
