@@ -175,8 +175,10 @@ export const useTransactionStatistics = () => {
   }, [loadStatistics]);
 
   useEffect(() => {
-    fetchStatistics();
-  }, [])
+    if(isAuthenticated){
+      fetchStatistics();
+    }
+  }, [isAuthenticated])
 
   return {
     statisticsData,

@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from './use-websocket';
 import { notificationService } from '@/services/api';
+import { useTransactionStatistics } from './use-transation-statistics';
 
 // Types
 export interface Notification {
@@ -37,47 +38,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCountRef = useRef(unreadCount);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { refreshStatistics: refreshTransactions } = useTransactionStatistics();
+
+  useEffect(()=>{
+    unreadCountRef.current=unreadCount;
+  },[unreadCount]);
 
   // WebSocket event handlers
-  const handleUnreadCountUpdate = useCallback((count: number, update?: boolean) => {
-    if(update) {
-      setUnreadCount(unreadCount + count);
-      console.log('WebSocket: Unread count updated to:', unreadCount + count);
-    } else {
-      setUnreadCount(count);
-    }
-  }, [unreadCount]);
-
-  const handleNewNotification = useCallback((notification: any) => {
-    console.log('WebSocket: New notification received:', notification);
-    const transformedNotification = transformNotification(notification);
+  const handleNewNotification = (notification: any) => {
+    setUnreadCount(unreadCountRef.current + 1);
+    console.log('WebSocket: Unread count updated to:', unreadCountRef.current + 1);
     
+    const transformedNotification = transformNotification(notification);
     setNotifications(prev => [transformedNotification, ...prev]);
     
-    // Show toast for new notification
     toast({
       title: notification.title,
       description: notification.message,
       duration: 5000,
     });
-  }, [toast]);
-
-  const handleNotificationRead = useCallback((notificationId: string) => {
-    console.log('WebSocket: Notification marked as read:', notificationId);
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      )
-    );
-  }, []);
+  };
 
   // Initialize WebSocket
   const { isConnected: isWebSocketConnected } = useWebSocket({
-    onUnreadCountUpdate: handleUnreadCountUpdate,
     onNewNotification: handleNewNotification,
-    onNotificationRead: handleNotificationRead,
+    refreshTransactions
   });
 
   // Load notifications when user changes
@@ -112,10 +100,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setLoading(true);
     try {
       const response = await notificationService.getNotifications();
+      
       const formattedNotifications = response.map(transformNotification);
       setNotifications(formattedNotifications);
       
-      // Calculate unread count from fetched notifications
       const unreadFromAPI = formattedNotifications.filter(notif => !notif.read).length;
       setUnreadCount(unreadFromAPI);
       

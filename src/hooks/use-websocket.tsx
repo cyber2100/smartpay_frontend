@@ -5,21 +5,19 @@ export interface WebSocketMessage {
   type: 'notification_count_update' | 'new_notification' | 'notification_read';
   data: {
     unreadCount?: number;
-    notification?: any;
+    notification: any;
     notificationId?: string;
   };
 }
 
 interface UseWebSocketProps {
-  onUnreadCountUpdate?: (count: number, update?: boolean) => void;
   onNewNotification?: (notification: any) => void;
-  onNotificationRead?: (notificationId: string) => void;
+  refreshTransactions?: () => void;
 }
 
 export const useWebSocket = ({
-  onUnreadCountUpdate,
   onNewNotification,
-  onNotificationRead
+  refreshTransactions
 }: UseWebSocketProps = {}) => {
   const { user, isAuthenticated } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
@@ -52,10 +50,9 @@ export const useWebSocket = ({
         try {
           const newData = notification.data;
           console.log(":bell: Received notification:", newData);
-          if (newData && onUnreadCountUpdate) {
-            onUnreadCountUpdate(1, true);
+          if (newData && onNewNotification) {
             onNewNotification(newData);
-            onNotificationRead(newData.id);
+            refreshTransactions();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
@@ -83,7 +80,7 @@ export const useWebSocket = ({
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
     }
-  }, [isAuthenticated, user, onUnreadCountUpdate, onNewNotification, onNotificationRead]);
+  }, [isAuthenticated, user, onNewNotification]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

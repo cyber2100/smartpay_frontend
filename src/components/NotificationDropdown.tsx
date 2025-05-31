@@ -45,7 +45,6 @@ export function NotificationDropdown(): ReactElement {
   };
 
   const handleNotificationClick = async (notificationId: string): Promise<void> => {
-    await markAsRead(notificationId);
     navigate(`/notifications/?id=${notificationId}`);
   };
 

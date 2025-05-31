@@ -12,8 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
-import { NotificationDropdown } from "./NotificationDropdown";
-import { ModeToggle } from "./mode-toggle";
+import { NotificationDropdown } from "../components/NotificationDropdown";
+import { ModeToggle } from "../components/mode-toggle";
 
 export function Navbar(): ReactElement {
   const { isAuthenticated, user, signout, isAdmin } = useAuth();
