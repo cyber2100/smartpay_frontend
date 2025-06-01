@@ -1,12 +1,13 @@
 import axios from "axios";
-import { MonthlyData, PaymentCard } from '@/types/payment';
+import { PaymentCard } from '@/types/payment';
 
 // Base API configuration
-const API_URL = "http://146.19.215.133:8000/api/v1";
-// const API_URL = "http://lcoalhost:8000";
+const API_URL = import.meta.env.VITE_API_URL; // Default to local API if not set
+console.log('API URL:', API_URL);
+
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL, 
   headers: {
     "Content-Type": "application/json",
   },
@@ -47,7 +48,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and we haven't already tried to refresh
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -65,7 +65,7 @@ api.interceptors.response.use(
         // Optional: handle logout or redirection to signin here
         localStorage.removeItem("auth_token");
         localStorage.removeItem("refresh_token");
-        window.location.href = "/signin"; // Redirect to signin page
+        window.location.href = "/signin";
         return Promise.reject(refreshError);
       }
     }
@@ -76,6 +76,12 @@ api.interceptors.response.use(
 
 // Authentication
 export const authService = {
+  /**
+   * User sign-in
+   * @param email - The email address of the user.
+   * @param password - The password of the user.
+   * @returns A promise that resolves to the response data.
+   */
   signin: async (email: string, password: string) => {
     const formData = new FormData();
     formData.append("username", email); // FastAPI OAuth expects 'username'
@@ -87,6 +93,14 @@ export const authService = {
     return response.data;
   },
 
+  /**
+   * User sign-up
+   * @param name - The name of the user.
+   * @param phone - The phone number of the user.
+   * @param email - The email address of the user.
+   * @param password - The password of the user.
+   * @returns A promise that resolves to the response data.
+   */
   signup: async (
     name: string,
     phone: string,
@@ -118,7 +132,7 @@ export const authService = {
     const response = await api.post(
       `/auth/resend-verification/${verification_type}`
     );
-    return response.data; // Should return { code: "182712" }
+    return response.data;
   },
 
   getCurrentUser: async () => {
@@ -131,6 +145,11 @@ export const authService = {
     localStorage.removeItem("refresh_token");
   },
 
+  /**
+   * Sends a password reset code to the user's email.
+   * @param email - The email address of the user.
+   * @returns A promise that resolves to the response data.
+   */
   sendPasswordResetCode: async (email: string) => {
     try {
       const response = await api.post("/auth/forgot-password/send-code", {
@@ -150,7 +169,12 @@ export const authService = {
     }
   },
 
-  // Verify password reset code
+  /**
+   * Verifies the password reset code sent to the user's email.
+   * @param email - The email address of the user.
+   * @param code - The verification code sent to the user's email.
+   * @returns A promise that resolves to the response data.
+   */
   verifyPasswordResetCode: async (email: string, code: string) => {
     try {
       const response = await api.post("/auth/forgot-password/verify-code", {
@@ -171,7 +195,12 @@ export const authService = {
     }
   },
 
-  // Reset password with verified code
+  /**
+   * Resets the user's password.
+   * @param token - The password reset token.
+   * @param newPassword - The new password for the user.
+   * @returns A promise that resolves to the response data.
+   */
   resetPassword: async (token: string, newPassword: string) => {
     try {
       const response = await api.post("/auth/forgot-password/reset-password", {
@@ -191,7 +220,13 @@ export const authService = {
     }
   },
 
-  // Alternative: Combined reset password method (if your backend supports it)
+  /**
+   * Resets the user's password using email, code, and new password.
+   * @param email - The email address of the user.
+   * @param code - The verification code sent to the user's email.
+   * @param newPassword - The new password for the user.
+   * @returns A promise that resolves to the response data.
+   */
   resetPasswordDirect: async (email: string, code: string, newPassword: string) => {
     try {
       const response = await api.put("/auth/reset-password", {
@@ -213,7 +248,11 @@ export const authService = {
     }
   },
 
-  // Check if email exists (optional - for better UX)
+  /**
+   * Checks if the email exists in the system.
+   * @param email - The email address to check.
+   * @returns A promise that resolves to an object containing the existence status and message.
+   */
   checkEmailExists: async (email: string) => {
     try {
       const response = await api.post("/auth/check-email", {
@@ -232,7 +271,11 @@ export const authService = {
     }
   },
 
-  // Validate reset token (if your backend uses tokens instead of codes)
+  /**
+   * Validates the password reset token.
+   * @param token - The password reset token.
+   * @returns A promise that resolves to the response data.
+   */
   validateResetToken: async (token: string) => {
     try {
       const response = await api.get(`/auth/validate-reset-token/${token}`);
@@ -338,8 +381,7 @@ export const transactionService = {
 // Admin - Updated with user management functions
 export const adminService = {
   // Get all users
-  getAllUsers: async () => {
-    // const response = await axios.get("http://localhost:3000/users");        
+  getAllUsers: async () => {     
     const response = await api.get("/admin/users");    
     return response.data;
   },
@@ -470,7 +512,7 @@ export const adminService = {
   }
 };
 
-//Card
+// Payment Card Service
 export const cardService = {
   // Get all cards
   getCards: async (): Promise<PaymentCard[]> => {

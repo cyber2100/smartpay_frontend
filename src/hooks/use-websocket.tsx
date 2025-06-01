@@ -33,7 +33,7 @@ export const useWebSocket = ({
 
     try {
       // WebSocket URL - adjust this to match your backend
-      const baseUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+      const baseUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws';
       const wsUrl = `${baseUrl}/${userId}`;
 
       wsRef.current = new WebSocket(wsUrl);
