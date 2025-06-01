@@ -27,6 +27,7 @@ const Register = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
+  // Validate form inputs before submission
   const validateForm = () => {
     if (password !== confirmPassword) {
       setPasswordError("Passwords don't match");
@@ -42,6 +43,7 @@ const Register = () => {
     return true;
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,7 +68,6 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <AnimatedBackground />
-
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">

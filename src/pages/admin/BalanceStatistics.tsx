@@ -10,10 +10,12 @@ import { useBalanceStatistics } from '@/hooks/use-balance-statistics';
 const BalanceStatistics: React.FC = () => {
   const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useBalanceStatistics();
 
+  // Handle refresh button click
   const handleRefresh = () => {
     refreshStatistics();
   };
 
+  // Helper functions for formatting
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,10 +25,12 @@ const BalanceStatistics: React.FC = () => {
     }).format(amount);
   };
 
+  // Format percentage with sign
   const formatPercentage = (percentage: number) => {
     return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(1)}%`;
   };
 
+  // Get trend icon and color based on trend type
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -38,6 +42,7 @@ const BalanceStatistics: React.FC = () => {
     }
   };
 
+  // Get trend color based on trend type
   const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -92,7 +97,6 @@ const BalanceStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6 m-6">
-      {/* API Status Notice */}
       {!isFromAPI ? (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
@@ -144,7 +148,6 @@ const BalanceStatistics: React.FC = () => {
         </Card>
       )}
 
-      {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -224,8 +227,6 @@ const BalanceStatistics: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Enhanced Combined Chart */}
       <Card>
         <CardHeader>
           <CardTitle>User Growth & Average Balance Trends</CardTitle>
@@ -330,8 +331,6 @@ const BalanceStatistics: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Two Line Charts in a Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -389,7 +388,6 @@ const BalanceStatistics: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Total Platform Balance by Month</CardTitle>
@@ -448,8 +446,6 @@ const BalanceStatistics: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Monthly Breakdown Table */}
       <Card>
         <CardHeader>
           <CardTitle>Monthly Balance & User Analysis</CardTitle>
@@ -486,7 +482,6 @@ const BalanceStatistics: React.FC = () => {
                       <div className="text-sm text-muted-foreground">total balance</div>
                     </div>
                   </div>
-                  
                   {index > 0 && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-2">

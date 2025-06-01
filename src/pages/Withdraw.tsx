@@ -8,13 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { PaymentCard } from "@/types/payment";
 import { useToast } from "@/hooks/use-toast";
 
-interface WithdrawFormData {
-  cardId: string;
-  amount: string;
-}
-
 const Withdraw: React.FC = () => {
-  // Mock auth and wallet for demo
   const { withdraw: walletWithdraw } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
@@ -22,7 +16,6 @@ const Withdraw: React.FC = () => {
   const { toast } = useToast();
 
   const withdraw = async (cardId: string, amount: number) => {
-    // Mock withdraw function
     const response = await walletWithdraw(amount, cardId);
     return response;
   };
@@ -36,7 +29,6 @@ const Withdraw: React.FC = () => {
 
   // Remove navigation logic for demo
   useEffect(() => {
-    // Set default card
     if(paymentCards.length){
       const defaultCard = paymentCards.find(card => card.isDefault);
       if (defaultCard) {
@@ -54,8 +46,8 @@ const Withdraw: React.FC = () => {
   const minWithdraw = 10;
   const maxWithdraw = 10000;
 
+  // Validate step 1 inputs
   const validateStep1 = (): boolean => {
-    // Validate amount
     if (!amount || isNaN(amountValue) || amountValue <= 0) {
       toast({
         title: "Invalid amount",
@@ -96,6 +88,7 @@ const Withdraw: React.FC = () => {
     return true;
   };
 
+  // Handle form submission
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
@@ -138,18 +131,28 @@ const Withdraw: React.FC = () => {
     }
   };
 
+  /**
+   * Reset the withdraw form to initial state.
+   * This function resets the step, amount, success state, and selected card.
+   * It also sets the selected card to the default card if available.
+   * @returns {void}
+   */
   const handleReset = (): void => {
     setStep(1);
     setAmount("");
     setWithdrawSuccess(false);
     setSelectedCard(null);
-    // Reset to default card
+
     const defaultCard = paymentCards.find(card => card.isDefault);
     if (defaultCard) {
       setSelectedCardId(defaultCard.id);
     }
   };
 
+  /**
+   * Handle card selection.
+   * @param cardId - The ID of the selected card.
+   */
   const handleCardSelect = (cardId: string): void => {
     setSelectedCardId(cardId);
     const card = paymentCards.find(c => c.id === cardId);
@@ -169,6 +172,11 @@ const Withdraw: React.FC = () => {
     console.log('Navigate to wallet');
   };
 
+  /**
+   * Get the card icon based on the card type.
+   * @param type - The type of the card (visa, mastercard, amex)
+   * @returns The corresponding card icon.
+   */
   const getCardIcon = (type: string) => {
     switch (type) {
       case 'visa':
@@ -182,6 +190,11 @@ const Withdraw: React.FC = () => {
     }
   };
 
+  /**
+   * Get the name of the card type based on its type.
+   * @param type - The type of the card (visa, mastercard, amex)
+   * @returns The corresponding card type name.
+   */
   const getCardTypeName = (type: string) => {
     switch (type) {
       case 'visa':
@@ -234,7 +247,6 @@ const Withdraw: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-16 bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -inset-10 opacity-50">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -259,7 +271,6 @@ const Withdraw: React.FC = () => {
           <div className="p-6">
             <StepIndicator />
 
-            {/* Current Balance Display */}
             <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -328,7 +339,6 @@ const Withdraw: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 {step === 1 ? (
                   <div className="space-y-6">
-                    {/* Amount Input */}
                     <div className="space-y-2">
                       <label htmlFor="amount" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         Withdraw Amount ($)
@@ -350,7 +360,6 @@ const Withdraw: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Payment Method Selection */}
                     <div className="space-y-3">
                       <label className="text-sm font-medium leading-none">
                         Select Payment Method

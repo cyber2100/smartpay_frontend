@@ -7,38 +7,11 @@ import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
 import { useWallet } from '@/hooks/use-wallet';
 
-// Type definitions updated to match backend data structure
-export interface Transaction {
-  id: string;
-  senderId?: string;
-  sender?: {
-    id: string,
-    fullname: string,
-    email: string,
-    phone: string|null
-  }|null;
-  recipientId?: string;
-  recipient?: {
-    id: string,
-    fullname: string,
-    email: string,
-    phone: string|null
-  }|null;
-  cardId?: string;
-  card?: {
-    id: string;
-    name: string;
-  }|null;
-  amount: number;
-  status: 'completed' | 'pending' | 'failed';
-  description?: string;
-  type: string;
-  timestamp: Date;
-}
+import { Transaction } from '@/types/payment';
 
 const Wallet: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { transactions, getTransactions, balance } = useWallet();
+  const { transactions, balance } = useWallet();
   
   const navigate = useNavigate();
   
@@ -48,6 +21,7 @@ const Wallet: React.FC = () => {
     }
   }, []);
 
+  // Handle navigation to different paths
   const handleDirectToPath = (path: string) => {
     navigate(path);
   };
@@ -56,7 +30,6 @@ const Wallet: React.FC = () => {
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
-    // Check if date is valid
     if (isNaN(date.getTime())) {
       return 'Invalid date';
     }
@@ -79,14 +52,12 @@ const Wallet: React.FC = () => {
       case 'withdraw':
         return 'Withdrawal from Account';
       case 'transfer':
-        // Check if current user is the sender
         if (transaction.senderId === user.id) {
           const recipientName = transaction.recipient?.fullname || 
                                transaction.recipient?.email || 
                                'Unknown User';
           return `Transfer to ${recipientName}`;
         } 
-        // Check if current user is the recipient
         else if (transaction.recipientId === user.id) {
           const senderName = transaction.sender?.fullname || 
                             transaction.sender?.email || 
@@ -110,7 +81,6 @@ const Wallet: React.FC = () => {
       };
     }
 
-    // Determine if this is an incoming or outgoing transaction for the current user
     const isIncoming = transaction.recipientId === user.id;
     const isOutgoing = transaction.senderId === user.id;
     
@@ -145,7 +115,6 @@ const Wallet: React.FC = () => {
             amountColor: 'text-red-600'
           };
         }
-        // Fallback for transfer type
         return {
           icon: <ArrowRight className="h-4 w-4" />,
           bgColor: 'bg-purple-500/10',
@@ -172,18 +141,14 @@ const Wallet: React.FC = () => {
       case 'withdraw':
         return -transaction.amount;
       case 'transfer':
-        // If current user is the recipient, it's a positive amount
         if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
           return transaction.amount;
         } 
-        // If current user is the sender, it's a negative amount
         else if (transaction.senderId === user.id) {
           return -transaction.amount;
         }
-        // Fallback: return the amount as-is
         return transaction.amount;
       default:
-        // For other transaction types, assume positive
         return transaction.amount;
     }
   };
@@ -216,13 +181,11 @@ const Wallet: React.FC = () => {
         <AnimatedBackground />
         
         <div className="container px-4 pt-8 max-w-4xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold">My Wallet</h1>
             <p className="text-muted-foreground">Manage your account balance and transactions</p>
           </div>
 
-          {/* Balance Card */}
           <Card className="mb-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-600/10 z-0"></div>
             
@@ -280,7 +243,6 @@ const Wallet: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Supported Cards Info */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -306,7 +268,6 @@ const Wallet: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Transaction History */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">

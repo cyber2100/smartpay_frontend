@@ -18,7 +18,7 @@ interface ForgotPasswordFormData {
 const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   const {
-    sendVerificationCode,
+    getVerificationCode,
     verifyCode,
     resetPassword,
     isLoading,
@@ -61,7 +61,7 @@ const ForgotPassword: React.FC = () => {
       return;
     }
 
-    const success = await sendVerificationCode(formData.email);
+    const success = await getVerificationCode(formData.email);
     if (success) {
       setStep(2);
     }
@@ -101,7 +101,7 @@ const ForgotPassword: React.FC = () => {
   };
 
   const handleResendCode = async (): Promise<void> => {
-    await sendVerificationCode(formData.email);
+    await getVerificationCode(formData.email);
   };
 
   // Step indicator component

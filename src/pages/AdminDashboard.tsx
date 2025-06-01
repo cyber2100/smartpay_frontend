@@ -32,7 +32,6 @@ const AdminDashboard: React.FC = () => {
   ];
 
   const handleTabClick = (path: string) => {
-    // In a real app, you'd use navigate(path) here
     setCurrentPath(path);
     navigate(path);
     console.log(`Navigating to: ${path}`);
@@ -44,13 +43,11 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Animated Background Effect */}
       <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-700/25 bg-[size:20px_20px] opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-50/50 to-transparent dark:via-slate-900/50" />
       
       <div className="relative container px-4 pt-12">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-foreground mb-4">
               Admin Dashboard
@@ -59,8 +56,6 @@ const AdminDashboard: React.FC = () => {
               Manage your platform with comprehensive administrative tools
             </p>
           </div>
-
-          {/* Navigation Tabs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {tabs.map((tab) => {
               const IconComponent = tab.icon;
@@ -108,8 +103,6 @@ const AdminDashboard: React.FC = () => {
               );
             })}
           </div>
-
-          {/* Additional Info */}
           <div className="mt-16 text-center">
             <Card className="bg-muted/30 border-dashed">
               <CardContent className="py-8">

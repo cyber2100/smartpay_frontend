@@ -34,8 +34,6 @@ const Index: React.FC = () => {
   return (
     <div className="relative">
       <AnimatedBackground />
-
-      {/* Hero Section */}
       <div id="hero" className="container px-4 md:px-6 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-10">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
@@ -79,8 +77,6 @@ const Index: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 w-full max-w-5xl">
           <div className="flex flex-col items-center p-6 bg-card shadow-sm rounded-lg border">
             <div className="p-2 bg-primary/10 rounded-full mb-4">
@@ -154,8 +150,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Full Features Section */}
       <div id="features" ref={featuresRef} className="py-20 bg-muted/50">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
@@ -259,8 +253,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* About Section */}
       <div id="about" ref={aboutRef} className="py-20">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row gap-12 items-center">

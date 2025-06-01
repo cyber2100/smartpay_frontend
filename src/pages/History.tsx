@@ -37,7 +37,6 @@ const History: React.FC = () => {
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
-    // Check if date is valid
     if (isNaN(date.getTime())) {
       return 'Invalid date';
     }
@@ -79,14 +78,12 @@ const History: React.FC = () => {
       case 'withdraw':
         return 'Withdrawal from Account';
       case 'transfer':
-        // Check if current user is the sender
         if (transaction.senderId === user.id) {
           const recipientName = transaction.recipient?.fullname || 
                                transaction.recipient?.email || 
                                'Unknown User';
           return `Transfer to ${recipientName}`;
         } 
-        // Check if current user is the recipient
         else if (transaction.recipientId === user.id) {
           const senderName = transaction.sender?.fullname || 
                             transaction.sender?.email || 
@@ -110,7 +107,6 @@ const History: React.FC = () => {
       };
     }
 
-    // Determine if this is an incoming or outgoing transaction for the current user
     const isIncoming = transaction.recipientId === user.id;
     const isOutgoing = transaction.senderId === user.id;
     
@@ -145,7 +141,6 @@ const History: React.FC = () => {
             amountColor: 'text-red-600'
           };
         }
-        // Fallback for transfer type
         return {
           icon: <ArrowRight className="h-4 w-4" />,
           bgColor: 'bg-purple-500/10',
@@ -172,18 +167,14 @@ const History: React.FC = () => {
       case 'withdraw':
         return -transaction.amount;
       case 'transfer':
-        // If current user is the recipient, it's a positive amount
         if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
           return transaction.amount;
         } 
-        // If current user is the sender, it's a negative amount
         else if (transaction.senderId === user.id) {
           return -transaction.amount;
         }
-        // Fallback: return the amount as-is
         return transaction.amount;
       default:
-        // For other transaction types, assume positive
         return transaction.amount;
     }
   };
@@ -222,12 +213,10 @@ const History: React.FC = () => {
 
     let filtered = [...transactions];
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(transaction => transaction.type === selectedCategory);
     }
 
-    // Filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(transaction => {
@@ -247,7 +236,6 @@ const History: React.FC = () => {
       });
     }
 
-    // Sort by timestamp (newest first)
     return filtered.sort((a, b) => {
       const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
       const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
@@ -308,7 +296,6 @@ const History: React.FC = () => {
         <AnimatedBackground />
         
         <div className="container px-4 pt-8 max-w-4ml mx-auto">
-          {/* Transaction History */}
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -324,8 +311,6 @@ const History: React.FC = () => {
                       className="pl-10 w-full sm:w-64"
                     />
                   </div>
-                  
-                  {/* Category Filter */}
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                     <SelectTrigger className="w-full sm:w-40">
                       <Filter className="h-4 w-4 mr-2" />
@@ -340,8 +325,6 @@ const History: React.FC = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  
-                  {/* Clear Filters Button */}
                   {(searchTerm || selectedCategory !== 'all') && (
                     <Button
                       variant="outline"
@@ -355,8 +338,6 @@ const History: React.FC = () => {
                   )}
                 </div>
               </div>
-              
-              {/* Filter Summary */}
               {(searchTerm || selectedCategory !== 'all') && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>Showing {filteredTransactions.length} of {transactions?.length || 0} transactions</span>
@@ -375,7 +356,6 @@ const History: React.FC = () => {
             </CardHeader>
             
             <CardContent>
-              {/* Show mini loading spinner when filtering/searching */}
               {isLoading ? (
                 <div className="flex justify-center py-8">
                   <MoneyLoadingOverlay size="md" message="Updating..." />
@@ -473,8 +453,6 @@ const History: React.FC = () => {
           </Card>
         </div>
       </div>
-
-      {/* Transaction Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -489,7 +467,6 @@ const History: React.FC = () => {
           
           {selectedTransaction && (
             <div className="space-y-6">
-              {/* Transaction Header */}
               <div className="flex items-center gap-4">
                 <div className={`p-3 rounded-full ${getTransactionDisplay(selectedTransaction).bgColor}`}>
                   <div className={getTransactionDisplay(selectedTransaction).textColor}>
@@ -505,8 +482,6 @@ const History: React.FC = () => {
                   </Badge>
                 </div>
               </div>
-
-              {/* Amount */}
               <div className="text-center p-4 bg-muted/30 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-1">Amount</p>
                 <p className={`text-3xl font-bold ${getTransactionAmount(selectedTransaction) < 0 ? 'text-red-600' : 'text-green-600'}`}>
@@ -517,8 +492,6 @@ const History: React.FC = () => {
                   })}
                 </p>
               </div>
-
-              {/* Transaction Details */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Hash className="h-4 w-4 text-muted-foreground" />

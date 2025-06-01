@@ -16,7 +16,6 @@ interface UserSuggestion {
 }
 
 const Transfer: React.FC = () => {
-  // Mock auth and wallet for demo
   const { user , findUser } = useAuth();
   const { transfer: moneyTransfer, balance } = useWallet();
   const navigate = useNavigate();
@@ -31,19 +30,17 @@ const Transfer: React.FC = () => {
   const [transferSuccess, setTransferSuccess] = useState<boolean>(false);
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
 
-  const transfer = async (recipient: string, amount: number, description: string) => {
-    // Mock transfer function
-    const response = await moneyTransfer(recipient, amount, description);
-    return response;
-  };
-
   useEffect(() => {
     if(!user?.isVerified){
       navigate('/verify', {replace: false});
     }
-    console.log('user = ', user);
-    
   }, []);
+
+  // Function to handle money transfer
+  const transfer = async (recipient: string, amount: number, description: string) => {
+    const response = await moneyTransfer(recipient, amount, description);
+    return response;
+  };
 
   // Function to verify if user exists in database
   const verifyUser = async (emailOrPhone: string): Promise<UserSuggestion | null> => {
@@ -63,10 +60,11 @@ const Transfer: React.FC = () => {
   // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);
 
+  // Handle form submission
+  // This function handles both verification and transfer steps
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
-    // Validate amount
     if (isNaN(amountValue) || amountValue <= 0) {
       toast({
         title: "Invalid amount",
@@ -76,7 +74,6 @@ const Transfer: React.FC = () => {
       return;
     }
 
-    // Validate recipient
     if (!recipient) {
       toast({
         title: "Invalid recipient",
@@ -91,12 +88,8 @@ const Transfer: React.FC = () => {
       setIsVerifying(true);
       
       try {
-        const user = 
-          await verifyUser(recipient);
-          console.log('user = ', user);
+        const user = await verifyUser(recipient);
           
-        // {id: '1', name: 'cyber', email: 'cybernovax055@gmail.com'};
-        
         if (user) {
           setVerifiedUser(user);
           setStep(2);
@@ -172,9 +165,7 @@ const Transfer: React.FC = () => {
   };
 
   const handleNavigateToWallet = (): void => {
-    // Mock navigation
     navigate('/wallet');
-    console.log('Navigate to wallet');
   };
 
   // Step indicator component
@@ -218,7 +209,6 @@ const Transfer: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-16 bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -inset-10 opacity-50">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -242,8 +232,6 @@ const Transfer: React.FC = () => {
 
           <div className="p-6">
             <StepIndicator />
-
-            {/* Current Balance Display */}
             <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

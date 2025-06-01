@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 
-// Define interfaces for form data and status
 interface PasswordFormData {
   currentPassword: string;
   newPassword: string;
@@ -56,7 +55,6 @@ export const SettingPage: React.FC = () => {
   const [currentView, setCurrentView] = useState<'main' | 'profile' | 'notification'>('main');
   const [activeTab, setActiveTab] = useState<string>("account");
 
-  // Password change state
   const [passwordFormData, setPasswordFormData] = useState<PasswordFormData>({
     currentPassword: "",
     newPassword: "",
@@ -88,12 +86,10 @@ export const SettingPage: React.FC = () => {
       ...passwordFormData,
       [name]: value,
     });
-    // Clear error when user types
     setPasswordFormErrors({
       ...passwordFormErrors,
       [name]: "",
     });
-    // Clear status when user makes changes
     setPasswordChangeStatus(null);
   };
 
@@ -104,12 +100,10 @@ export const SettingPage: React.FC = () => {
       ...phoneFormData,
       [name]: value,
     });
-    // Clear error when user types
     setPhoneFormErrors({
       ...phoneFormErrors,
       [name]: "",
     });
-    // Clear status when user makes changes
     setPhoneChangeStatus(null);
   };
 
@@ -292,8 +286,6 @@ export const SettingPage: React.FC = () => {
       </div>
     );
   }
-
-  // Profile settings view
   if (currentView === 'profile') {
     return (
       <div className="container max-w-4xl py-8">
@@ -540,7 +532,6 @@ export const SettingPage: React.FC = () => {
     );
   }
 
-  // Notification settings view (simplified)
   return (
     <div className="container max-w-4xl py-8">
       <div className="flex items-center mb-6">
@@ -552,7 +543,6 @@ export const SettingPage: React.FC = () => {
       </div>
 
       <div className="space-y-6">
-        {/* Delivery Channel */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -619,8 +609,6 @@ export const SettingPage: React.FC = () => {
             </RadioGroup>
           </CardContent>
         </Card>
-
-        {/* Status Message */}
         {notificationSaveStatus && (
           <Alert variant={notificationSaveStatus.success ? "default" : "destructive"}>
             <AlertTitle>

@@ -14,6 +14,7 @@ import { CardDetailModal } from '@/components/CardDetailModal';
 import { CardListItem } from '@/components/CardListItem';
 import { PaymentCard } from '@/types/payment';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 const CardPage: React.FC = () => {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
@@ -30,7 +31,7 @@ const CardPage: React.FC = () => {
     try {
       await setDefaultCard(cardId);
     } catch (error) {
-      // Error handling is done in the hook
+      toast({ description: "Failed to set default card. Please try again." });
     }
   };
 
@@ -38,7 +39,7 @@ const CardPage: React.FC = () => {
     try {
       await deleteCard(cardId);
     } catch (error) {
-      // Error handling is done in the hook
+      toast({ description: "Failed to delete card. Please try again." });
     }
   };
 
@@ -47,7 +48,7 @@ const CardPage: React.FC = () => {
       await addCard(newCard);
       setIsAddCardOpen(false);
     } catch (error) {
-      // Error handling is done in the hook
+      toast({ description: "Failed to add card. Please try again." });
     }
   };
 
@@ -66,15 +67,11 @@ const CardPage: React.FC = () => {
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto pb-16">
         <AnimatedBackground />
-        
         <div className="container px-4 pt-8">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold">Payment Cards</h1>
             <p className="text-muted-foreground">Manage your payment cards</p>
           </div>
-
-          {/* Payment Cards Section */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -131,15 +128,12 @@ const CardPage: React.FC = () => {
               )}
             </CardContent>
           </Card>
-
           <AddCardDialog
             isOpen={isAddCardOpen}
             onClose={() => setIsAddCardOpen(false)}
             onAddCard={handleAddCard}
             isLoading={isLoading}
           />
-
-          {/* Card Detail Modal */}
           {selectedCard && (
             <CardDetailModal
               card={selectedCard}

@@ -7,7 +7,8 @@ import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
 
-import { Notification, mockNotifications } from '@/mockData/notification';
+import { Notification } from '@/types/notification';
+import { mockNotifications } from '@/mockData/notification';
 
 const Notifications: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -26,12 +27,14 @@ const Notifications: React.FC = () => {
   
   const navigate = useNavigate();
 
+  // Redirect to sign-in if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       return navigate('/signin');
     }
   }, [])
 
+  // Load notifications from the hook or mock data
   useEffect(() => {
     if (realNotifications.length) {
       setNotifications([...realNotifications]);
@@ -138,12 +141,10 @@ const Notifications: React.FC = () => {
 
     await markAsRead(notification.id);
     
-    // Clear URL parameter when opening modal
     if (selectedNotificationId) {
       navigate(location.pathname, { replace: true });
     }
     
-    // Mark as read if not already
     if (!notification.read) {
       setNotifications(prev => 
         prev.map(n => 
@@ -154,14 +155,13 @@ const Notifications: React.FC = () => {
   };
 
   const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string) => {
-    e.stopPropagation(); // Prevent opening the modal when clicking delete
-    
+    e.stopPropagation();
+
     setDeletingNotificationId(notificationId);
     
     try {
       const success = await deleteNotification(notificationId);
       if (success) {
-        // Remove from local state immediately for better UX
         setNotifications(prev => 
           prev.filter(n => n.id !== notificationId)
         );
@@ -187,7 +187,6 @@ const Notifications: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
   
-  // Sort notifications by timestamp (newest first)
   const sortedNotifications = [...notifications].sort((a, b) => 
     b.timestamp.getTime() - a.timestamp.getTime()
   );
@@ -227,8 +226,6 @@ const Notifications: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Notifications List */}
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">All Notifications</CardTitle>
@@ -305,7 +302,6 @@ const Notifications: React.FC = () => {
                         </div>
                         
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {/* Delete Button */}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -340,14 +336,12 @@ const Notifications: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal */}
       {isModalOpen && selectedNotification && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-background rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-lg font-semibold">Notification Details</h2>
               <div className="flex items-center gap-2">
-                {/* Delete button in modal */}
                 <Button 
                   variant="ghost" 
                   size="sm" 

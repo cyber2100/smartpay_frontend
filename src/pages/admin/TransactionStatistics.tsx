@@ -10,10 +10,13 @@ import { useTransactionStatistics } from '@/hooks/use-transation-statistics';
 const TransactionStatistics: React.FC = () => {
   const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useTransactionStatistics();
 
+  // Handler to refresh statistics
   const handleRefresh = () => {
     refreshStatistics();
   };
 
+  // Helper functions for formatting
+  // Format currency and percentage values for display
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -23,10 +26,12 @@ const TransactionStatistics: React.FC = () => {
     }).format(amount);
   };
 
+  // Format percentage with sign and one decimal place
   const formatPercentage = (percentage: number) => {
     return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(1)}%`;
   };
 
+  // Get trend icon and color based on the trend type
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -38,6 +43,7 @@ const TransactionStatistics: React.FC = () => {
     }
   };
 
+  // Get trend color class based on the trend type
   const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
       case 'up':
@@ -92,7 +98,6 @@ const TransactionStatistics: React.FC = () => {
 
   return (
     <div className="space-y-6 m-6">
-      {/* API Status Notice */}
       {!isFromAPI ? (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
@@ -143,8 +148,6 @@ const TransactionStatistics: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -200,8 +203,6 @@ const TransactionStatistics: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Enhanced Combined Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Average Transaction Amount & Transaction Count</CardTitle>
@@ -305,8 +306,6 @@ const TransactionStatistics: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Two Line Charts in a Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Transaction Count Line Chart */}
         <Card>
@@ -425,8 +424,6 @@ const TransactionStatistics: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Monthly Breakdown Table */}
       <Card>
         <CardHeader>
           <CardTitle>Monthly Analysis</CardTitle>

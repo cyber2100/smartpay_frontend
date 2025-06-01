@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 type VerificationType = "email" | "phone";
 
+// Verify component for account verification via email or phone
 const Verify: React.FC = () => {
   const [code, setCode] = useState<string>("");
   const [verificationType, setVerificationType] =
@@ -26,16 +27,16 @@ const Verify: React.FC = () => {
   const { verifyAccount, user, isAuthenticated, resendVerification } = useAuth();
   const navigate = useNavigate();
 
-  // If user is already verified or not logged in, redirect
+  // Redirect if user is not authenticated or already verified
+  // and resend verification code on mount
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/signin");
     } else if (user?.isVerified) {
       navigate("/dashboard");
     }
-    console.log('User verification status:', user?.isVerified);
     
-    // resendCode();
+    resendCode();
   }, []);
 
   // Countdown timer
@@ -49,6 +50,8 @@ const Verify: React.FC = () => {
     return () => clearTimeout(timer);
   }, [timeLeft]);
 
+  // Handle form submission
+  // Calls verifyAccount with the code and verification type
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -56,7 +59,6 @@ const Verify: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Pass verification_type to the API call
       const success = await verifyAccount(code, verificationType);
       if (success) {
         navigate("/dashboard");
@@ -68,23 +70,25 @@ const Verify: React.FC = () => {
     }
   };
 
+  // Resend verification code
   const resendCode = async (): Promise<void> => {
-    // In a real app, this would trigger an API call to send a new code
-    // Include verification_type in the resend request
     await resendVerification(verificationType);
     setTimeLeft(60);
     console.log(`New code sent via ${verificationType}: 123456`);
   };
 
+  // Handle code input change
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setCode(e.target.value);
   };
 
+  // Handle verification type change
   const handleVerificationTypeChange = (value: VerificationType): void => {
     setVerificationType(value);
     setCode(""); // Clear code when switching verification method
   };
 
+  // Get the target for verification message
   const getVerificationTarget = (): string => {
     if (verificationType === "email") {
       return user?.email
@@ -100,7 +104,6 @@ const Verify: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <AnimatedBackground />
-
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">

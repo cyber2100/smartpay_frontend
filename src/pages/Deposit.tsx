@@ -14,8 +14,6 @@ interface DepositFormData {
 }
 
 const Deposit: React.FC = () => {
-  // Mock auth and wallet for demo
-  const { user, isAuthenticated } = useAuth();
   const { deposit: walletDeposit } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
@@ -23,7 +21,6 @@ const Deposit: React.FC = () => {
   const { toast } = useToast();
 
   const deposit = async (cardId: string, amount: number) => {
-    // Mock deposit function
     const response = await walletDeposit(cardId, amount);
     return response;
   };
@@ -36,9 +33,7 @@ const Deposit: React.FC = () => {
   const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
 
-  // Remove navigation logic for demo
   useEffect(() => {
-    // Set default card
     const defaultCard = paymentCards.find(card => card.isDefault);
     if (defaultCard) {
       setSelectedCardId(defaultCard.id);
@@ -46,13 +41,11 @@ const Deposit: React.FC = () => {
     }
   }, []);
 
-  // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);
   const minDeposit = 10;
   const maxDeposit = 10000;
 
   const validateStep1 = (): boolean => {
-    // Validate amount
     if (!amount || isNaN(amountValue) || amountValue <= 0) {
       toast({
         title: "Invalid amount",
@@ -80,7 +73,6 @@ const Deposit: React.FC = () => {
       return false;
     }
 
-    // Validate card selection
     if (!selectedCardId) {
       toast({
         title: "No card selected",
@@ -96,7 +88,6 @@ const Deposit: React.FC = () => {
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
-    // Step 1: Validate inputs and proceed to confirmation
     if (step === 1) {
       if (!validateStep1()) {
         return;
@@ -108,7 +99,6 @@ const Deposit: React.FC = () => {
       return;
     }
 
-    // Step 2: Process the deposit
     if (step === 2) {
       setIsSubmitting(true);
       
@@ -140,7 +130,6 @@ const Deposit: React.FC = () => {
     setAmount("");
     setDepositSuccess(false);
     setSelectedCard(null);
-    // Reset to default card
     const defaultCard = paymentCards.find(card => card.isDefault);
     if (defaultCard) {
       setSelectedCardId(defaultCard.id);
@@ -231,7 +220,6 @@ const Deposit: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-16 bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -inset-10 opacity-50">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -239,7 +227,6 @@ const Deposit: React.FC = () => {
           <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-gradient-to-r from-purple-400 to-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
       </div>
-
       <div className="container px-4 pt-8 relative z-10">
         <div className="max-w-lg mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
           <div className="text-center p-6 border-b border-gray-200/50 dark:border-gray-700/50">
@@ -255,8 +242,6 @@ const Deposit: React.FC = () => {
 
           <div className="p-6">
             <StepIndicator />
-
-            {/* Current Balance Display */}
             <div className="mb-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -325,7 +310,6 @@ const Deposit: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 {step === 1 ? (
                   <div className="space-y-6">
-                    {/* Amount Input */}
                     <div className="space-y-2">
                       <label htmlFor="amount" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                         Deposit Amount ($)
@@ -346,8 +330,6 @@ const Deposit: React.FC = () => {
                         Min: ${minDeposit} • Max: ${maxDeposit.toLocaleString()}
                       </p>
                     </div>
-
-                    {/* Payment Method Selection */}
                     <div className="space-y-3">
                       <label className="text-sm font-medium leading-none">
                         Select Payment Method
@@ -398,7 +380,6 @@ const Deposit: React.FC = () => {
                         ))}
                       </div>
                     </div>
-
                     <button 
                       type="button"
                       onClick={() => handleSubmit()}

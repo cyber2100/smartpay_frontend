@@ -21,7 +21,6 @@ const Signin = () => {
   const { signin } = useAuth();
   const navigate = useNavigate();
 
-  // Rate limiting constants
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION = 60; // 60 seconds
 
@@ -38,7 +37,6 @@ const Signin = () => {
         setIsRateLimited(true);
         setRemainingTime(Math.ceil(LOCKOUT_DURATION - timeDiff));
       } else if (timeDiff >= LOCKOUT_DURATION) {
-        // Reset attempts after lockout period
         localStorage.removeItem('signin_attempts');
         setAttemptCount(0);
       } else {
@@ -87,7 +85,6 @@ const Signin = () => {
     e.preventDefault();
     setError('');
 
-    // Check rate limiting
     if (isRateLimited) {
       setError(`Too many attempts. Please wait ${remainingTime} seconds.`);
       return;
@@ -98,19 +95,15 @@ const Signin = () => {
     try {
       const success = await signin(email, password);
       if (success) {
-        // Reset attempts on successful signin
         localStorage.removeItem('signin_attempts');
         setAttemptCount(0);
         navigate('/dashboard');
       } else {
-        // Increment attempt count on failed signin
         const newCount = attemptCount + 1;
         updateAttemptCount(newCount);
         setError('Invalid email or password');
       }
     } catch (error) {
-      console.error('Signin error:', error);
-      // Increment attempt count on error
       const newCount = attemptCount + 1;
       updateAttemptCount(newCount);
       setError('An error occurred during signin. Please try again.');
@@ -192,23 +185,17 @@ const Signin = () => {
                 </button>
               </div>
             </div>
-
-            {/* Error message */}
             {error && (
               <div className="text-red-500 text-sm text-center">
                 {error}
               </div>
             )}
-
-            {/* Rate limiting warning */}
             {attemptCount > 0 && attemptCount < MAX_ATTEMPTS && !isRateLimited && (
               <div className="text-yellow-600 text-sm text-center">
                 Warning: {attemptCount}/{MAX_ATTEMPTS} failed attempts. 
                 Account will be temporarily locked after {MAX_ATTEMPTS} attempts.
               </div>
             )}
-
-            {/* Rate limited message */}
             {isRateLimited && (
               <div className="text-red-500 text-sm text-center font-medium">
                 Too many failed attempts. Please wait {formatTime(remainingTime)} before trying again.

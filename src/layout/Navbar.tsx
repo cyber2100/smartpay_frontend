@@ -46,12 +46,10 @@ export function Navbar(): ReactElement {
   };
 
   const handleAdminPanel = (): void => {
-    // Open admin panel in new tab
     navigate('/admin');
   };
 
   const handleBackToUserView = (): void => {
-    // Navigate back to main user area
     navigate('/', { replace: true });
   };
 
@@ -75,10 +73,8 @@ export function Navbar(): ReactElement {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              {/* Show notifications and profile only in user view */}
               {!isAdminPanelView && (
                 <>
-                  {/* Notification Bell with Dropdown */}
                   <NotificationDropdown />
 
                   <DropdownMenu>
@@ -135,7 +131,6 @@ export function Navbar(): ReactElement {
                 </>
               )}
 
-              {/* Admin Panel Controls - moved after profile dropdown for alignment */}
               {isAdmin && (
                 <>
                   {!isAdminPanelView ? (
@@ -162,7 +157,6 @@ export function Navbar(): ReactElement {
                 </>
               )}
 
-              {/* Sign out button for admin panel view */}
               {isAdminPanelView && (
                 <Button
                   variant="ghost"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Key, Trash2, Shield, UserCheck } from 'lucide-react';
+import { Search, Shield, UserCheck } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserManagement } from '@/hooks/use-user-management';
 import { useAuth } from '@/hooks/use-auth';
 
-import { User, mockUsers } from '@/mockData/users';
+import { User } from '@/types/users';
+import { mockUsers } from '@/mockData/users';
 
 const UserManagement: React.FC = () => {
   const { isAdmin } = useAuth();
@@ -67,15 +68,18 @@ const UserManagement: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
   };
 
+  // Open dialog for user actions
   const openDialog = (user: User, action: 'activate' ) => {
     setSelectedUser(user);
     setActionType(action);
   };
 
+  // Close dialog and reset state
   const closeDialog = () => {
     setSelectedUser(null);
     setActionType(null);
@@ -83,6 +87,7 @@ const UserManagement: React.FC = () => {
     setActionLoading(false);
   };
 
+  // Handle user activation/deactivation
   const handleActivateUser = async () => {
     if (!selectedUser) return;
     
@@ -110,15 +115,7 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const generateRandomPassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setNewPassword(password);
-  };
-
+  // Get verification badge based on user status
   const getVerificationBadge = (user: User) => {
     if (user.isVerified) {
       return <Badge variant="default" className="bg-green-500">Verified</Badge>;
@@ -126,6 +123,7 @@ const UserManagement: React.FC = () => {
     return <Badge variant="destructive">Unverified</Badge>;
   };
 
+  // Get activation badge based on user status
   const getActivationBadge = (user: User) => {
     if (user.isActive) {
       return <Badge variant="default">Active</Badge>;
@@ -194,9 +192,7 @@ const UserManagement: React.FC = () => {
             Manage user accounts, control activation status, and manage access
           </CardDescription>
         </CardHeader>
-        
         <CardContent>
-          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -221,8 +217,6 @@ const UserManagement: React.FC = () => {
               </SelectContent>
             </Select>
           </div>
-
-          {/* Users Table */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -268,7 +262,6 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {/* Activate/Deactivate User Button */}
                         {!user.isAdmin && (
                           <Button
                             variant="outline"
@@ -290,8 +283,6 @@ const UserManagement: React.FC = () => {
               )}
             </Table>
           </div>
-
-          {/* Action Dialogs */}
           <Dialog open={!!selectedUser && !!actionType} onOpenChange={closeDialog}>
             <DialogContent>
               <DialogHeader>

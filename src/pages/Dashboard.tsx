@@ -52,8 +52,6 @@ const Dashboard: React.FC = () => {
   // Get recent transactions (latest 5) from backend data
   const recentTransactions = React.useMemo(() => {
     if (!transactions || transactions.length === 0) return [];
-    
-    // Sort by timestamp (newest first) and take the first 5
     return [...transactions]
       .sort((a, b) => {
         const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
@@ -66,8 +64,6 @@ const Dashboard: React.FC = () => {
   // Format date for display - handling both Date objects and ISO strings from backend
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-    
-    // Check if date is valid
     if (isNaN(date.getTime())) {
       return 'Invalid date';
     }
@@ -101,14 +97,12 @@ const Dashboard: React.FC = () => {
       case 'withdraw':
         return 'Withdrawal from Account';
       case 'transfer':
-        // Check if current user is the sender
         if (transaction.senderId === user.id) {
           const recipientName = transaction.recipient?.fullname || 
                                transaction.recipient?.email || 
                                'Unknown User';
           return `Transfer to ${recipientName}`;
         } 
-        // Check if current user is the recipient
         else if (transaction.recipientId === user.id) {
           const senderName = transaction.sender?.fullname || 
                             transaction.sender?.email || 
@@ -132,7 +126,6 @@ const Dashboard: React.FC = () => {
       };
     }
 
-    // Determine if this is an incoming or outgoing transaction for the current user
     const isIncoming = transaction.recipientId === user.id;
     const isOutgoing = transaction.senderId === user.id;
     
@@ -194,18 +187,14 @@ const Dashboard: React.FC = () => {
       case 'withdraw':
         return -transaction.amount;
       case 'transfer':
-        // If current user is the recipient, it's a positive amount
         if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
           return transaction.amount;
         } 
-        // If current user is the sender, it's a negative amount
         else if (transaction.senderId === user.id) {
           return -transaction.amount;
         }
-        // Fallback: return the amount as-is
         return transaction.amount;
       default:
-        // For other transaction types, assume positive
         return transaction.amount;
     }
   };
@@ -227,8 +216,6 @@ const Dashboard: React.FC = () => {
   // Get transaction details for display
   const getTransactionDetails = (transaction: Transaction) => {
     const currentUserId = user?.id || 'current_user';
-    
-    // Determine transaction direction
     const isIncoming = transaction.recipientId === currentUserId;
     const isOutgoing = transaction.senderId === currentUserId;
     
@@ -329,8 +316,6 @@ const Dashboard: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold">Welcome back, {user?.name || 'User'}</h1>
             <p className="text-muted-foreground">Here's an overview of your account</p>
           </div>
-          
-          {/* Currency stats cards - Responsive grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             <Card className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-600/10 z-0"></div>
@@ -389,8 +374,6 @@ const Dashboard: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Chart section - Line Chart with improved responsive design */}
           <Card className="mb-8">
             <CardHeader className="pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -497,8 +480,6 @@ const Dashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
-          {/* Dashboard main content - Responsive layout */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
             <div className="xl:col-span-2">
               <Card>
@@ -577,8 +558,6 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-            
-            {/* User's Payment Cards - Now fetched from backend */}
             <div>
               <Card>
                 <CardHeader>
