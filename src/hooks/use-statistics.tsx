@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { statisticsService } from '@/services/api';
 import { useAuth } from '@/hooks/use-auth';
@@ -148,13 +148,15 @@ export const useStatistics = (): StatisticsData => {
     }
   }, []);
 
-  return {
-    getChartData,
+  const result = useMemo(() => ({
     financialData,
+    getChartData,
+    isFromAPI,
     isLoading,
     error,
-    isFromAPI,
     refreshStatistics,
     loadStatistics
-  };
+  }), [financialData, getChartData, isFromAPI, isLoading, error, refreshStatistics, loadStatistics]);
+
+  return result;
 };

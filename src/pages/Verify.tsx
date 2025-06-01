@@ -33,7 +33,9 @@ const Verify: React.FC = () => {
     } else if (user?.isVerified) {
       navigate("/dashboard");
     }
-    resendCode();
+    console.log('User verification status:', user?.isVerified);
+    
+    // resendCode();
   }, []);
 
   // Countdown timer

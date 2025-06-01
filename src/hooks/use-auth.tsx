@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/api";
 
@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     loadUser();
   }, []);
-  
+
   const loadUser = async () => {
     const token = localStorage.getItem("auth_token");
     if (token) {
@@ -286,15 +286,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Determine admin status
-  const isAdmin =
-    true; 
-    // !!user?.isAdmin;
+  const isAdmin = !!user?.isAdmin;
 
-  const value = {
+  const value = useMemo(() => ({
     user,
-    isAuthenticated: 
-      true, 
-      // !!user,
+    isAuthenticated: !!user,
     isLoading,
     signin,
     signup,
@@ -306,7 +302,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isAdmin,
     isAdminPanelView,
     setIsAdminPanelView,
-  };
+  }), [
+    user,
+    isLoading,
+    isAdminPanelView,
+    setIsAdminPanelView,
+    signin,
+    signup,
+    signout,
+    verifyAccount,
+    resendVerification,
+    findUser,
+    refreshUser,
+    isAdmin
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

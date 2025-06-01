@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth, User } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { walletService, transactionService, adminService } from '@/services/api';
@@ -269,7 +269,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   // Value to provide
-  const value: WalletContextType = {
+  const value: WalletContextType = useMemo(() => ({
     balance,
     isLoading,
     transactions,
@@ -279,7 +279,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     getTransactions,
     allTransactions,
     allUsers
-  };
+  }), [balance, isLoading, transactions, allTransactions, allUsers, withdraw, transfer, deposit, getTransactions]);
   
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

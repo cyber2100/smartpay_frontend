@@ -15,27 +15,12 @@ interface UserSuggestion {
   is_admin?: boolean;
 }
 
-interface TransferFormData {
-  recipient: string;
-  amount: string;
-  description: string;
-}
-
 const Transfer: React.FC = () => {
   // Mock auth and wallet for demo
-  const {user , isAuthenticated} = useAuth();
-  const {transfer: moneyTransfer} = useWallet();
-  const { balance } = useWallet();
+  const { user , findUser } = useAuth();
+  const { transfer: moneyTransfer, balance } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const transfer = async (recipient: string, amount: number, description: string) => {
-    // Mock transfer function
-    const response = await moneyTransfer(recipient, amount, description);
-    return response;
-  };
-
-  const { findUser } = useAuth();
 
   const [recipient, setRecipient] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
@@ -46,10 +31,18 @@ const Transfer: React.FC = () => {
   const [transferSuccess, setTransferSuccess] = useState<boolean>(false);
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
 
+  const transfer = async (recipient: string, amount: number, description: string) => {
+    // Mock transfer function
+    const response = await moneyTransfer(recipient, amount, description);
+    return response;
+  };
+
   useEffect(() => {
     if(!user?.isVerified){
-      navigate('/verify');
+      navigate('/verify', {replace: false});
     }
+    console.log('user = ', user);
+    
   }, []);
 
   // Function to verify if user exists in database
