@@ -27,21 +27,14 @@ export const MoneySpinner: React.FC<MoneySpinnerProps> = ({
   return (
     <div className={`flex items-center justify-center ${className}`}>
       <div className={`relative ${sizeClasses[size]}`}>
-        {/* Outer rotating ring */}
         <div className="absolute inset-0 border-2 border-green-200 border-t-green-500 rounded-full animate-spin"></div>
-        
-        {/* Inner rotating ring (opposite direction) */}
         <div 
           className="absolute inset-2 border-2 border-emerald-200 border-b-emerald-500 rounded-full"
           style={{ animation: 'spin 1.5s linear infinite reverse' }}
         ></div>
-        
-        {/* Center dollar sign */}
         <div className="absolute inset-0 flex items-center justify-center">
           <DollarSign className={`${iconSizes[size]} text-green-600 animate-pulse`} />
         </div>
-        
-        {/* Floating money symbols */}
         <div className="absolute inset-0">
           {[...Array(6)].map((_, i) => (
             <div

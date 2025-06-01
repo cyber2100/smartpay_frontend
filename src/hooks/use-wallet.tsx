@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth, User } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
-import { walletService, transactionService, adminService } from '@/services/api';
+import { walletService } from '@/services/api';
 
-// Types
 import { Transaction } from '@/types/payment';
-import { set } from 'date-fns';
 
-export type WalletContextType = {
+type WalletContextType = {
   balance: number;
   isLoading: boolean;
   transactions: Transaction[];
@@ -19,9 +17,14 @@ export type WalletContextType = {
   allUsers: User[];
 };
 
-// Context
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
+/**
+ * WalletProvider component to provide wallet-related context to the application.
+ *
+ * @param param0 - The props for the provider component.
+ * @returns The WalletProvider component.
+ */
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const [balance, setBalance] = useState(0);
@@ -43,18 +46,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [isAuthenticated]);
   
+  // Fetch all transactions and users if admin
   const loadWalletData = async () => {
     setIsLoading(true);
 
     try {
-      // Get user balance
       const userBalance = await walletService.getBalance();
       setBalance(userBalance);
       
-      // Get user transactions
       const userTransactionData = await walletService.getTransactions();
       
-      // Transform API transactions to our app format
       const formattedTransactions = userTransactionData.map((tx: any) => ({
         ...tx,
         senderId: tx.sender_id,
@@ -108,10 +109,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const result = await walletService.withdraw(amount, cardId);
       
-      // Update local balance
       setBalance(result.balance);
       
-      // Refresh transactions
       await refreshTransactions();
       
       toast({
@@ -143,7 +142,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return false;
     }
 
-    // Validate amount
     if (amount <= 0) {
       toast({
         title: "Invalid amount",
@@ -153,7 +151,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return false;
     }
 
-    // Validate cardId
     if (!cardId) {
       toast({
         title: "Payment method required",
@@ -166,18 +163,14 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsLoading(true);
 
     try {
-      // Call the deposit API service
       const result = await walletService.deposit(cardId, amount);
       
-      // Update local balance with the new balance from the API response
       if (result.balance !== undefined) {
         setBalance(result.balance);
       } else {
-        // Fallback: add the deposit amount to current balance
         setBalance(prevBalance => prevBalance + amount);
       }
       
-      // Refresh transactions to show the new deposit transaction
       await refreshTransactions();
       
       toast({
@@ -191,7 +184,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       let errorMessage = "Failed to process deposit.";
       
-      // Handle different types of errors
       if (error.response?.data?.detail) {
         errorMessage = error.response.data.detail;
       } else if (error.response?.data?.message) {

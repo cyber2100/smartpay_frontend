@@ -4,15 +4,10 @@ import {
   Check,
   Trash2,
   Star,
-  Eye,
-  EyeOff,
   X,
-  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
-import { useCard } from "@/hooks/use-card";
 import { 
   AlertDialog,
   AlertDialogAction,

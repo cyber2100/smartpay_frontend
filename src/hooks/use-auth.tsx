@@ -44,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const { toast } = useToast();
   const [isAdminPanelView, setIsAdminPanelView] = useState(false);
 
-  // Load user on mount if token exists
   useEffect(() => {
     loadUser();
   }, []);
@@ -54,7 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (token) {
       try {
         const userData = await authService.getCurrentUser();
-        // Transform API format to our app format
+
         setUser({
           id: userData.id,
           name: userData.name,
@@ -79,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await authService.signin(email, password);
       const userData = await authService.getCurrentUser();
 
-      // Transform API format to our app format
       const appUser: User = {
         id: userData.id,
         name: userData.name,
@@ -122,7 +120,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.signup(name, phone, email, password);
 
-      // Transform API format to our app format
       const appUser: User = {
         id: userData.id,
         name: userData.fullname,
@@ -134,7 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser(appUser);
 
-      // After registration, signin to get the token
       await authService.signin(email, password);
 
       toast({
@@ -187,7 +183,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await authService.verifyAccount(code, verification_type);
 
-      // Update local user state
       const updatedUser = { ...user, isVerified: true };
       setUser(updatedUser);
 
@@ -222,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      const response = await authService.resendVerification(verification_type);
+      await authService.resendVerification(verification_type);
       
       const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
       
@@ -230,11 +225,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         title: "Verification code sent",
         description: `A new verification code has been sent to your ${verificationMethod}.`,
       });
-
-      // Optional: Log the mock code for development (remove in production)
-      if (response?.code) {
-        console.log(`Mock verification code: ${response.code}`);
-      }
 
       return true;
     } catch (error: any) {
@@ -258,7 +248,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.getCurrentUser();
       
-      // Transform API format to our app format
       const updatedUser: User = {
         id: userData.id,
         name: userData.name,
@@ -288,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Determine admin status
   const isAdmin = !!user?.isAdmin;
 
-  const value = useMemo(() => ({
+  const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
@@ -302,20 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     isAdmin,
     isAdminPanelView,
     setIsAdminPanelView,
-  }), [
-    user,
-    isLoading,
-    isAdminPanelView,
-    setIsAdminPanelView,
-    signin,
-    signup,
-    signout,
-    verifyAccount,
-    resendVerification,
-    findUser,
-    refreshUser,
-    isAdmin
-  ]);
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -118,12 +118,11 @@ export const useStatistics = (): StatisticsData => {
 
   const getFilteredCurrencyData = (): MonthlyData[] => {
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); // 0-based (0 = January, 4 = May)
+    const currentMonth = currentDate.getMonth();
     
-    // Filter currencyData to only include months up to current month
     return statisticsData.slice(0, currentMonth + 1).map(month => ({
       ...month,
-      revenue: month.received - month.sent // Ensure correct balance calculation
+      revenue: month.received - month.sent
     }));
   };
 

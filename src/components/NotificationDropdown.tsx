@@ -10,10 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/use-auth";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useNavigate } from "react-router-dom";
-import { Notification, mockNotifications } from "@/mockData/notification";
+import { mockNotifications } from "@/mockData/notification";
 
 export function NotificationDropdown(): ReactElement {
   const { 
@@ -55,7 +54,6 @@ export function NotificationDropdown(): ReactElement {
     
     try {
       await deleteNotification(notificationId);
-      // The notification will be removed from the list automatically via the hook's state management
     } catch (error) {
       console.error('Error deleting notification:', error);
     } finally {

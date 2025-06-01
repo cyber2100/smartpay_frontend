@@ -73,7 +73,6 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
       [field]: value
     }));
     
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -83,21 +82,16 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
   };
 
   const formatCardNumber = (value: string) => {
-    // Remove all non-digits
     const cleaned = value.replace(/\D/g, '');
     
-    // Add spaces every 4 digits
     const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
     
-    // Limit to 19 characters (16 digits + 3 spaces)
     return formatted.substring(0, 19);
   };
 
   const formatExpireDate = (value: string) => {
-    // Remove all non-digits
     const cleaned = value.replace(/\D/g, '');
     
-    // Add slash after month
     if (cleaned.length >= 2) {
       return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
     }
@@ -155,7 +149,6 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
       return;
     }
 
-    // Mask the card number for display
     const cardNumberDigits = formData.cardNumber.replace(/\s/g, '');
     const maskedCardNumber = cardNumberDigits;
 

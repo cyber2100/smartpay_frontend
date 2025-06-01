@@ -29,15 +29,12 @@ interface TransactionStatisticsData {
 
 // Mock data generator for fallback
 const generateMockStatisticsData = (): TransactionStatisticsData => {
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
   
   const monthlyStats: MonthlyStats[] = [];
   let totalTransactions = 0;
   let totalVolume = 0;
 
-  // Generate monthly statistics
   for (let i = 0; i < 6; i++) {
     const transactionCount = Math.floor(Math.random() * 25) + 20;
     const avgAmount = 75 + (Math.random() * 50);
@@ -86,8 +83,9 @@ const generateMockStatisticsData = (): TransactionStatisticsData => {
   };
 };
 
+// Custom hook to fetch and manage transaction statistics
 export const useTransactionStatistics = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAdmin, isAuthenticated } = useAuth();
   const [statisticsData, setStatisticsData] = useState<TransactionStatisticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,10 +173,10 @@ export const useTransactionStatistics = () => {
   }, [loadStatistics]);
 
   useEffect(() => {
-    if(isAuthenticated){
+    if(isAdmin && isAuthenticated){
       fetchStatistics();
     }
-  }, [isAuthenticated])
+  }, [isAdmin, isAuthenticated])
 
   return {
     statisticsData,

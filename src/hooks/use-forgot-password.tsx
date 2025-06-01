@@ -3,7 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/api';
 
 interface UseForgotPasswordReturn {
-  sendVerificationCode: (email: string) => Promise<boolean>;
+  getVerificationCode: (email: string) => Promise<boolean>;
   verifyCode: (email: string, code: string) => Promise<boolean>;
   resetPassword: (token: string, newPassword: string) => Promise<boolean>;
   resendCode: (email: string) => Promise<boolean>;
@@ -46,7 +46,8 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
     };
   }, [codeExpireTime]);
 
-  const sendVerificationCode = useCallback(async (email: string): Promise<boolean> => {
+  // Function to get verification code for email
+  const getVerificationCode = useCallback(async (email: string): Promise<boolean> => {
     if (!email) {
       toast({
         title: "Email required",
@@ -108,6 +109,7 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
     }
   }, [toast]);
 
+  // Function to verify the code
   const verifyCode = useCallback(async (email: string, code: string): Promise<boolean> => {
     if (!code) {
       toast({
@@ -140,7 +142,8 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
     
     try {
       const response = await authService.verifyPasswordResetCode(email, code);
-      localStorage.setItem("forgot-password-token", response.token); // Store email for later use
+
+      localStorage.setItem("forgot-password-token", response.token); // Store token for reseting paswsword
       
       if (response.success) {
         toast({
@@ -174,6 +177,7 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
     }
   }, [toast, isCodeExpired]);
 
+  // Function to reset password
   const resetPassword = useCallback(async (token: string, newPassword: string): Promise<boolean> => {
     if (!newPassword) {
       toast({
@@ -238,11 +242,11 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
   }, [toast]);
 
   const resendCode = useCallback(async (email: string): Promise<boolean> => {
-    return await sendVerificationCode(email);
-  }, [sendVerificationCode]);
+    return await getVerificationCode(email);
+  }, [getVerificationCode]);
 
   return {
-    sendVerificationCode,
+    getVerificationCode,
     verifyCode,
     resetPassword,
     resendCode,

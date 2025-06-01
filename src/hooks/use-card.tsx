@@ -105,7 +105,6 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const updatedCard = await cardService.updateCard(cardId, updateData);
       
-      // Update local state
       setCards(prevCards =>
         prevCards.map(card =>
           card.id === cardId ? { ...card, ...updatedCard } : card
@@ -134,7 +133,6 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await cardService.setDefaultCard(cardId);
       
-      // Update local state - set all cards to non-default, then set the selected one as default
       setCards(prevCards =>
         prevCards.map(card => ({
           ...card,
@@ -164,9 +162,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       
       const cardToDelete = cards.find(card => card.id === cardId);
       
-      // Update local state
       if (cardToDelete?.isDefault && cards.length > 1) {
-        // If deleting default card and there are other cards, refresh to get updated default
         await refreshCards();
       } else {
         setCards(prevCards => prevCards.filter(card => card.id !== cardId));

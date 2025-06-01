@@ -65,7 +65,6 @@ export const useUserManagement = (): UseUserManagementReturn => {
     try {
       await adminService.updateUserActivation(userId, isActive);
       
-      // Update local state - only update isActive, keep isVerified unchanged
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.id === userId 
@@ -84,7 +83,6 @@ export const useUserManagement = (): UseUserManagementReturn => {
     try {
       await adminService.deleteUser(userId);
       
-      // Update local state
       setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
     } catch (error: any) {
       console.error('Error deleting user:', error);

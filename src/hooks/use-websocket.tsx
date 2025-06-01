@@ -1,20 +1,18 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './use-auth';
 
-export interface WebSocketMessage {
-  type: 'notification_count_update' | 'new_notification' | 'notification_read';
-  data: {
-    unreadCount?: number;
-    notification: any;
-    notificationId?: string;
-  };
-}
-
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
   refreshTransactions?: () => void;
 }
 
+/**
+ * Custom hook to manage WebSocket connections for notifications.
+ * Automatically reconnects on disconnection and handles incoming messages.
+ *
+ * @param {UseWebSocketProps} props - Optional properties for handling new notifications and refreshing transactions.
+ * @returns {Object} - An object containing WebSocket connection status and methods to send messages, reconnect, and disconnect.
+ */
 export const useWebSocket = ({
   onNewNotification,
   refreshTransactions
@@ -26,6 +24,7 @@ export const useWebSocket = ({
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
 
+  // Function to connect to WebSocket
   const connect = useCallback(() => {
     if (!isAuthenticated || !user || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -34,18 +33,18 @@ export const useWebSocket = ({
 
     try {
       // WebSocket URL - adjust this to match your backend
-      const wsUrl = `ws://146.19.215.133:8000/ws/${userId}`;
-      
+      const baseUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+      const wsUrl = `${baseUrl}/${userId}`;
+
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('WebSocket connected ========================================= >');
+        console.log('WebSocket connected');
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
       };
 
       wsRef.current.onmessage = (event) => {
         const notification = JSON.parse(event.data);
-        // You can trigger toast or update global state here
         
         try {
           const newData = notification.data;
@@ -62,7 +61,6 @@ export const useWebSocket = ({
       wsRef.current.onclose = (event) => {
         console.log('WebSocket disconnected:', event.code, event.reason);
         
-        // Attempt to reconnect if it wasn't a manual close
         if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current += 1;
           console.log(`Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`);
@@ -82,6 +80,7 @@ export const useWebSocket = ({
     }
   }, [isAuthenticated, user, onNewNotification]);
 
+  // Function to disconnect WebSocket
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);

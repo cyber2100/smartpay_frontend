@@ -1,16 +1,4 @@
-// Type definitions for notifications
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'transaction' | 'system';
-  read: boolean;
-  timestamp: Date;
-  metadata?: {
-    transactionId?: string;
-    amount?: number;
-  };
-}
+import { Notification } from "@/types/notification";
 
 export const mockNotifications: Notification[] = [
   {

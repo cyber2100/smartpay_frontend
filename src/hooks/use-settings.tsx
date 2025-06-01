@@ -1,41 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { notificationService, profileService } from '@/services/api';
+import { NotificationSettings, VerificationStatus, DeliveryChannel, SettingsContextType } from '@/types/settings';
 
-// Types
-export type DeliveryChannel = 'system' | 'email' | 'phone' | 'both';
-
-export type NotificationSettings = {
-  deliveryChannel: DeliveryChannel;
-};
-
-export type VerificationStatus = {
-  isVerified: boolean;
-};
-
-export type SettingsContextType = {
-  // Notification settings
-  notificationSettings: NotificationSettings;
-  updateDeliveryChannel: (channel: DeliveryChannel) => Promise<boolean>;
-  
-  // Profile settings
-  verificationStatus: VerificationStatus;
-  updatePhoneNumber: (phoneNumber: string) => Promise<boolean>;
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
-  
-  // Loading states
-  isLoading: boolean;
-};
-
-// Context
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, refreshUser } = useAuth();
   const { toast } = useToast();
   
-  // States
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     deliveryChannel: 'both'
   });
@@ -46,7 +20,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize settings when user changes
+  // Load settings when user is authenticated
+  // or when the component mounts
   useEffect(() => {
     if(isAuthenticated){
       loadSettings();
@@ -56,10 +31,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [isAuthenticated]);
 
+  // Load settings from API
   const loadSettings = async () => {
     setIsLoading(true);
     try {
-      // Load notification settings
       const notifSettings = await notificationService.getNotificationSettings();
       setNotificationSettings({
         deliveryChannel: notifSettings.notif_setting || 'both'
@@ -165,15 +140,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Context value
-  const value: SettingsContextType = {
+  // Memoize context value to avoid unnecessary re-renders
+  const value: SettingsContextType = useMemo(() => ({
     notificationSettings,
     updateDeliveryChannel,
     verificationStatus,
     updatePhoneNumber,
     updatePassword,
     isLoading
-  };
+  }), [notificationSettings, verificationStatus, isLoading, updateDeliveryChannel, updatePhoneNumber, updatePassword]);
   
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };

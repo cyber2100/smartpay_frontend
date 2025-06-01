@@ -1,39 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from './use-websocket';
 import { notificationService } from '@/services/api';
 import { useTransactionStatistics } from './use-transation-statistics';
 
-// Types
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'transaction' | 'system';
-  read: boolean;
-  timestamp: Date;
-  metadata?: {
-    transactionId?: string;
-    amount?: number;
-  };
-}
+import { Notification, NotificationContextType } from '@/types/notification';
 
-export type NotificationContextType = {
-  notifications: Notification[];
-  unreadCount: number;
-  loading: boolean;
-  isWebSocketConnected: boolean;
-  getNotifications: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<boolean>;
-  markAllAsRead: () => Promise<boolean>;
-  deleteNotification: (notificationId: string) => Promise<boolean>;
-  refreshNotifications: () => Promise<void>;
-};
-
-// Context
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+
+/**
+ * NotificationProvider component to provide notification context to the application.
+ * @param param0 - React props
+ * @returns NotificationProvider component
+ */
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -126,14 +107,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.markAsRead(notificationId);
       
-      // Update local state immediately for better UX
       setNotifications(prev => 
         prev.map(notif => 
           notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
       
-      // Update unread count locally (WebSocket will also update it)
       setUnreadCount(prev => Math.max(0, prev - 1));
       
       return true;
@@ -155,12 +134,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       await notificationService.markAllAsRead();
       
-      // Update local state immediately
       setNotifications(prev => 
         prev.map(notif => ({ ...notif, read: true }))
       );
       
-      // Reset unread count
       setUnreadCount(0);
       
       toast({
@@ -184,19 +161,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const deleteNotification = async (notificationId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
     
-    // Check if the notification being deleted is unread
     const notificationToDelete = notifications.find(notif => notif.id === notificationId);
     const wasUnread = notificationToDelete && !notificationToDelete.read;
     
     try {
       await notificationService.deleteNotification(notificationId);
       
-      // Update local state
       setNotifications(prev => 
         prev.filter(notif => notif.id !== notificationId)
       );
       
-      // Update unread count if deleted notification was unread
       if (wasUnread) {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
