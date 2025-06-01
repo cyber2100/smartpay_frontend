@@ -67,6 +67,11 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  /**
+   * Handles input changes for form fields.
+   * @param field - The name of the field being updated.
+   * @param value - The new value for the field.
+   */
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -81,6 +86,11 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     }
   };
 
+  /**
+   * Formats the card number input.
+   * @param value - The raw card number input.
+   * @returns The formatted card number.
+   */
   const formatCardNumber = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
     
@@ -89,6 +99,11 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     return formatted.substring(0, 19);
   };
 
+  /**
+   * Formats the expiry date input.
+   * @param value - The raw expiry date input.
+   * @returns The formatted expiry date.
+   */
   const formatExpireDate = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
     
@@ -99,16 +114,30 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     return cleaned;
   };
 
+  /**
+   * Handles changes to the card number input.
+   * Formats the input and updates the form data.
+   * @param value - The raw card number input.
+   */
   const handleCardNumberChange = (value: string) => {
     const formatted = formatCardNumber(value);
     handleInputChange('cardNumber', formatted);
   };
 
+  /**
+   * Handles changes to the expiry date input.
+   * Formats the input and updates the form data.
+   * @param value - The raw expiry date input.
+   */
   const handleExpireDateChange = (value: string) => {
     const formatted = formatExpireDate(value);
     handleInputChange('expireDate', formatted);
   };
 
+  /**
+   * Validates the form data.
+   * @returns {boolean} - Whether the form is valid.
+   */
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -142,6 +171,11 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * Handles the form submission for adding a new card.
+   * @param e - The form event.
+   * @returns {void}
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -165,8 +199,11 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     onAddCard(newCard);
   };
 
+  /**
+   * Closes the dialog and resets the form.
+   * @returns {void}
+   */
   const handleClose = () => {
-    // Prevent closing dialog while loading
     if (isLoading) return;
     
     setFormData({

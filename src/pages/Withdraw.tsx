@@ -46,7 +46,10 @@ const Withdraw: React.FC = () => {
   const minWithdraw = 10;
   const maxWithdraw = 10000;
 
-  // Validate step 1 inputs
+  /**
+   * Validates the inputs for step 1 of the withdrawal process.
+   * @returns True if the inputs are valid, false otherwise.
+   */
   const validateStep1 = (): boolean => {
     if (!amount || isNaN(amountValue) || amountValue <= 0) {
       toast({
@@ -75,7 +78,6 @@ const Withdraw: React.FC = () => {
       return false;
     }
 
-    // Validate card selection
     if (!selectedCardId) {
       toast({
         title: "No card selected",
@@ -88,7 +90,11 @@ const Withdraw: React.FC = () => {
     return true;
   };
 
-  // Handle form submission
+  /**
+   * Handles the form submission for the withdrawal process.
+   * @param e - The form event.
+   * @returns 
+   */
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
@@ -150,7 +156,7 @@ const Withdraw: React.FC = () => {
   };
 
   /**
-   * Handle card selection.
+   * Handles the selection of a payment card.
    * @param cardId - The ID of the selected card.
    */
   const handleCardSelect = (cardId: string): void => {
@@ -159,17 +165,19 @@ const Withdraw: React.FC = () => {
     setSelectedCard(card || null);
   };
 
+  // Handle amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setAmount(e.target.value);
   };
 
+  // Handle back to step 1
   const handleBackToStep1 = (): void => {
     setStep(1);
   };
 
+  // Handle navigation to wallet page
   const handleNavigateToWallet = (): void => {
     navigate('/wallet');
-    console.log('Navigate to wallet');
   };
 
   /**

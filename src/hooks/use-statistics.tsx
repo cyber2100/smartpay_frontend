@@ -147,7 +147,7 @@ export const useStatistics = (): StatisticsData => {
     }
   }, []);
 
-  const result = useMemo(() => ({
+  const result = {
     financialData,
     getChartData,
     isFromAPI,
@@ -155,7 +155,7 @@ export const useStatistics = (): StatisticsData => {
     error,
     refreshStatistics,
     loadStatistics
-  }), [financialData, getChartData, isFromAPI, isLoading, error, refreshStatistics, loadStatistics]);
+  };
 
   return result;
 };

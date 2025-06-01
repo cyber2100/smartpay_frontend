@@ -24,7 +24,9 @@ export const useWebSocket = ({
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
 
-  // Function to connect to WebSocket
+  /**
+   * Function to connect to the WebSocket server.
+   */
   const connect = useCallback(() => {
     if (!isAuthenticated || !user || wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -80,7 +82,15 @@ export const useWebSocket = ({
     }
   }, [isAuthenticated, user, onNewNotification]);
 
-  // Function to disconnect WebSocket
+  /**
+   * Function to disconnect from the WebSocket server.
+   * Clears any existing reconnect timeout.
+   * Closes the WebSocket connection gracefully.
+   * If the WebSocket is already closed, it does nothing.
+   * This function can be called manually to stop receiving notifications.
+   * It also resets the reconnect attempts and clears the timeout.
+   * @returns {void}
+   */
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
@@ -93,7 +103,13 @@ export const useWebSocket = ({
     }
   }, []);
 
-  // Send message through WebSocket
+  /**
+   * Function to send a message through the WebSocket connection.
+   * It checks if the WebSocket is open before sending.
+   * If the WebSocket is not connected, it logs a warning.
+   * @param {any} message - The message to send, which will be stringified.
+   * @returns {void}
+   */
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));

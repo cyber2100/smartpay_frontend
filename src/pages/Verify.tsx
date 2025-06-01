@@ -17,7 +17,11 @@ import { useAuth } from "@/hooks/use-auth";
 
 type VerificationType = "email" | "phone";
 
-// Verify component for account verification via email or phone
+/**
+ * Verify component handles user account verification via email or phone.
+ * It allows users to enter a verification code and submit it for account activation.
+ * Users can also resend the verification code if needed.
+ */
 const Verify: React.FC = () => {
   const [code, setCode] = useState<string>("");
   const [verificationType, setVerificationType] =
@@ -50,8 +54,10 @@ const Verify: React.FC = () => {
     return () => clearTimeout(timer);
   }, [timeLeft]);
 
-  // Handle form submission
-  // Calls verifyAccount with the code and verification type
+  /**
+   * Handles the form submission for account verification.
+   * @param e - The form event.
+   */
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {

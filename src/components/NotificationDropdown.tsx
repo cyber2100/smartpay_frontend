@@ -14,41 +14,48 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useNavigate } from "react-router-dom";
 import { mockNotifications } from "@/mockData/notification";
 
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
+
 export function NotificationDropdown(): ReactElement {
   const { 
     notifications, 
     unreadCount, 
     loading, 
     isWebSocketConnected,
-    markAsRead, 
     markAllAsRead,
     deleteNotification
   } = useNotifications();
   const navigate = useNavigate();
   const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
 
+  /**
+   * Formats a date to a human-readable time ago format.
+   * @param date - The date to format.
+   * @returns A string representing the time ago.
+   */
   const formatTime = (date: Date): string => {
-    const now: Date = new Date();
-    const diffMs: number = now.getTime() - date.getTime();
-    const diffMins: number = Math.floor(diffMs / 60000);
-    
-    if (diffMins < 60) {
-      return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
-    } else if (diffMins < 24 * 60) {
-      const hours: number = Math.floor(diffMins / 60);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else {
-      const days: number = Math.floor(diffMins / (24 * 60));
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
-    }
+    const timeAgo = dayjs(date + "Z").fromNow();
+    return timeAgo;
   };
 
+  /**
+   * Handles the click event for a notification.
+   * @param notificationId - The ID of the notification to view.
+   */
   const handleNotificationClick = async (notificationId: string): Promise<void> => {
     navigate(`/notifications/?id=${notificationId}`);
   };
 
+  /**
+   * Handles the delete notification event.
+   * @param e - The mouse event.
+   * @param notificationId - The ID of the notification to delete.
+   */
   const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string): Promise<void> => {
-    e.stopPropagation(); // Prevent triggering the notification click
+    e.stopPropagation();
     
     setDeletingNotificationId(notificationId);
     
@@ -61,10 +68,16 @@ export function NotificationDropdown(): ReactElement {
     }
   };
 
+  /**
+   * Sorts notifications by timestamp in descending order.
+   * If no notifications are available, it uses mock notifications.
+   * @returns An array of sorted notifications.
+   */
   const sortedNotifications = [...(notifications.length ? notifications : mockNotifications)].sort((a, b) => 
     b.timestamp.getTime() - a.timestamp.getTime()
   );
-
+  
+  // Handles navigation to the notifications page.
   const handleToNotification = (): void => {
     navigate('/notifications');
   };

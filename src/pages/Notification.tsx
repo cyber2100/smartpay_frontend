@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, X, Clock, CheckCircle, AlertTriangle, Info, User, DollarSign, CreditCard, ArrowRight, Trash2 } from "lucide-react";
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bell, X, Clock, CheckCircle, AlertTriangle, Info, DollarSign, ArrowRight, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
 
 import { Notification } from '@/types/notification';
 import { mockNotifications } from '@/mockData/notification';
+
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 const Notifications: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -69,30 +74,21 @@ const Notifications: React.FC = () => {
     }
   }, [selectedNotificationId, notifications]);
 
-  // Format timestamp for display
+  /**
+   * Formats a date into a readable string.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted date string.
+   */
   const formatDate = (timestamp: Date): string => {
-    const now = new Date();
-    const diffInMs = now.getTime() - timestamp.getTime();
-    const diffInHours = diffInMs / (1000 * 60 * 60);
-    const diffInDays = diffInHours / 24;
-    
-    if (diffInHours < 1) {
-      const minutes = Math.floor(diffInMs / (1000 * 60));
-      return `${minutes}m ago`;
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`;
-    } else if (diffInDays < 7) {
-      return `${Math.floor(diffInDays)}d ago`;
-    } else {
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: timestamp.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-      }).format(timestamp);
-    }
+    const timeAgo = dayjs(timestamp + "Z").fromNow();
+    return timeAgo;
   };
 
-  // Get notification icon and colors based on type and priority
+  /**
+   * Gets the display information for a notification.
+   * @param notification - The notification to get the display information for.
+   * @returns The display information for the notification.
+   */
   const getNotificationDisplay = (notification: Notification) => {
     const baseDisplay = {
       transaction: {
@@ -123,7 +119,6 @@ const Notifications: React.FC = () => {
 
     const display = baseDisplay[notification.type];
     
-    // Adjust for priority
     if (!notification.read) {
       return {
         ...display,
@@ -135,6 +130,10 @@ const Notifications: React.FC = () => {
     return display;
   };
 
+  /**
+   * Handles the click event for a notification.
+   * @param notification - The notification that was clicked.
+   */
   const handleNotificationClick = async (notification: Notification) => {
     setSelectedNotification(notification);
     setIsModalOpen(true);
@@ -154,6 +153,11 @@ const Notifications: React.FC = () => {
     }
   };
 
+  /**
+   * Handles the delete notification event.
+   * @param e - The mouse event.
+   * @param notificationId - The ID of the notification to delete.
+   */
   const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string) => {
     e.stopPropagation();
 
@@ -173,11 +177,13 @@ const Notifications: React.FC = () => {
     }
   };
 
+  // Closes the notification modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedNotification(null);
   };
 
+  // Handles marking all notifications as read
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
     setNotifications(prev => 
@@ -197,7 +203,6 @@ const Notifications: React.FC = () => {
         <AnimatedBackground />
         
         <div className="container px-4 pt-8 max-w-4xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>

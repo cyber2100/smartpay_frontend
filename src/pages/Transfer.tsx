@@ -60,8 +60,11 @@ const Transfer: React.FC = () => {
   // Convert amount to a number for validation
   const amountValue: number = parseFloat(amount);
 
-  // Handle form submission
-  // This function handles both verification and transfer steps
+  /**
+   * Handles the form submission for the transfer process.
+   * @param e - The form event.
+   * @returns 
+   */
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
@@ -138,6 +141,7 @@ const Transfer: React.FC = () => {
     }
   };
 
+  // Reset the form and state for a new transfer
   const handleReset = (): void => {
     setStep(1);
     setRecipient("");
@@ -147,23 +151,28 @@ const Transfer: React.FC = () => {
     setVerifiedUser(null);
   };
 
+  // Handlers for input changes
   const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setRecipient(e.target.value);
   };
 
+  // Handler for amount input change
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setAmount(e.target.value);
   };
 
+  // Handler for description input change
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     setDescription(e.target.value);
   };
 
+  // Handler for going back to step 1
   const handleBackToStep1 = (): void => {
     setStep(1);
     setVerifiedUser(null);
   };
 
+  // Handler for navigating back to the wallet page
   const handleNavigateToWallet = (): void => {
     navigate('/wallet');
   };

@@ -46,7 +46,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [isAuthenticated]);
   
-  // Fetch all transactions and users if admin
+  /**
+   * Load wallet data including balance and transactions.
+   * This function fetches the user's balance and transactions from the wallet service.
+   * It also formats the transactions to match the expected structure.
+   * If an error occurs, it displays a toast notification.
+   */
   const loadWalletData = async () => {
     setIsLoading(true);
 
@@ -78,7 +83,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Helper function to refresh transactions
+  /**
+   * Refreshes the user's transaction history.
+   * @returns {Promise<void>}
+   */
   const refreshTransactions = async () => {
     if (!isAuthenticated || !user) return;
     setIsLoading(true);
@@ -101,7 +109,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  // Top up wallet
+  /**
+   * Withdraws money from the user's wallet.
+   * @param amount - The amount to withdraw.
+   * @param cardId - The ID of the card to withdraw from.
+   * @returns {Promise<boolean>} - Whether the withdrawal was successful.
+   */
   const withdraw = async (amount: number, cardId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
 
@@ -131,7 +144,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Deposit money with card
+  /**
+   * Deposits money into the user's wallet.
+   * @param cardId - The ID of the card to deposit from.
+   * @param amount - The amount to deposit.
+   * @returns {Promise<boolean>} - Whether the deposit was successful.
+   */
   const deposit = async (cardId: string, amount: number): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       toast({
@@ -204,7 +222,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  // Transfer money
+  /**
+   * Transfers money to another user.
+   * @param recipientIdentifier - The identifier of the recipient (email or user ID).
+   * @param amount - The amount to transfer.
+   * @param description - An optional description for the transfer.
+   * @returns {Promise<boolean>} - Whether the transfer was successful.
+   */
   const transfer = async (recipientIdentifier: string, amount: number, description?: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
     setIsLoading(true);
@@ -234,7 +258,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  // Get user's transactions
+  /**
+   * Fetches the user's transaction history.
+   * @returns {Promise<Transaction[]>} - A promise that resolves to the user's transactions.
+   */
   const getTransactions = async (): Promise<Transaction[]> => {
     if (!user) return [];
 
@@ -261,7 +288,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
   
   // Value to provide
-  const value: WalletContextType = useMemo(() => ({
+  const value: WalletContextType = {
     balance,
     isLoading,
     transactions,
@@ -271,7 +298,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     getTransactions,
     allTransactions,
     allUsers
-  }), [balance, isLoading, transactions, allTransactions, allUsers, withdraw, transfer, deposit, getTransactions]);
+  };
   
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

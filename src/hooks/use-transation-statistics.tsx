@@ -27,7 +27,10 @@ interface TransactionStatisticsData {
   isFromAPI: boolean;
 }
 
-// Mock data generator for fallback
+/**
+ * Generate mock transaction statistics data.
+ * @returns {TransactionStatisticsData} Mock transaction statistics data.
+ */
 const generateMockStatisticsData = (): TransactionStatisticsData => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
   
@@ -83,7 +86,10 @@ const generateMockStatisticsData = (): TransactionStatisticsData => {
   };
 };
 
-// Custom hook to fetch and manage transaction statistics
+/**
+ * Custom hook to fetch and manage transaction statistics.
+ * @returns {Object} Hook state and actions.
+ */
 export const useTransactionStatistics = () => {
   const { isAdmin, isAuthenticated } = useAuth();
   const [statisticsData, setStatisticsData] = useState<TransactionStatisticsData | null>(null);

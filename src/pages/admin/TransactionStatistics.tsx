@@ -15,8 +15,11 @@ const TransactionStatistics: React.FC = () => {
     refreshStatistics();
   };
 
-  // Helper functions for formatting
-  // Format currency and percentage values for display
+  /**
+   * Formats a currency amount for display.
+   * @param amount - The amount to format.
+   * @returns The formatted currency string.
+   */
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

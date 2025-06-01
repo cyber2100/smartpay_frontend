@@ -67,7 +67,6 @@ export const SettingPage: React.FC = () => {
   });
   const [passwordChangeStatus, setPasswordChangeStatus] = useState<StatusMessage | null>(null);
 
-  // Contact info state
   const [phoneFormData, setPhoneFormData] = useState<PhoneFormData>({
     phoneNumber: user?.phone || "",
   });
@@ -75,11 +74,12 @@ export const SettingPage: React.FC = () => {
     phoneNumber: "",
   });
   const [phoneChangeStatus, setPhoneChangeStatus] = useState<StatusMessage | null>(null);
-
-  // Notification save status
   const [notificationSaveStatus, setNotificationSaveStatus] = useState<StatusMessage | null>(null);
 
-  // Handle password form input changes
+  /**
+   * Handles password input changes.
+   * @param e - The change event.
+   */
   const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setPasswordFormData({
@@ -93,7 +93,10 @@ export const SettingPage: React.FC = () => {
     setPasswordChangeStatus(null);
   };
 
-  // Handle phone form input changes
+  /**
+   * Handles phone input changes.
+   * @param e - The change event.
+   */
   const handlePhoneInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setPhoneFormData({
@@ -107,7 +110,10 @@ export const SettingPage: React.FC = () => {
     setPhoneChangeStatus(null);
   };
 
-  // Validate password form
+  /**
+   * Validates the password form.
+   * @returns True if the form is valid, false otherwise.
+   */
   const validatePasswordForm = (): boolean => {
     let isValid = true;
     const errors: PasswordFormErrors = {
@@ -160,7 +166,10 @@ export const SettingPage: React.FC = () => {
     return isValid;
   };
 
-  // Handle password form submission
+  /**
+   * Handles the password form submission.
+   * @param e - The form event.
+   */
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
@@ -186,7 +195,10 @@ export const SettingPage: React.FC = () => {
     }
   };
 
-  // Handle phone form submission
+  /**
+   * Handles the phone form submission.
+   * @param e - The form event.
+   */
   const handlePhoneSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
@@ -207,7 +219,10 @@ export const SettingPage: React.FC = () => {
     }
   };
 
-  // Handle notification delivery channel change
+  /**
+   * Handles the change of the notification delivery channel.
+   * @param value - The new delivery channel.
+   */
   const handleDeliveryChannelChange = async (value: 'system' | 'email' | 'phone' | 'both'): Promise<void> => {
     const success = await updateDeliveryChannel(value);
     
@@ -234,7 +249,6 @@ export const SettingPage: React.FC = () => {
     setActiveTab(value);
   };
 
-  // Main settings view with Profile and Notification tabs
   if (currentView === 'main') {
     return (
       <div className="container max-w-4xl py-8">

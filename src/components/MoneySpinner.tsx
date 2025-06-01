@@ -122,7 +122,14 @@ export const MoneySpinner: React.FC<MoneySpinnerProps> = ({
   );
 };
 
-// Loading overlay component that centers the spinner
+/**
+ * Money loading overlay component.
+ * @param param0 - The props for the overlay component.
+ * @param size - The size of the spinner ('sm', 'md', 'lg', 'xl').
+ * @param message - The loading message to display.
+ * @param className - Additional CSS classes for styling.
+ * @returns The MoneyLoadingOverlay component.
+ */
 export const MoneyLoadingOverlay: React.FC<{
   size?: 'sm' | 'md' | 'lg' | 'xl';
   message?: string;

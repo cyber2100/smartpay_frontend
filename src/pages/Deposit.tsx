@@ -8,30 +8,23 @@ import { useNavigate } from "react-router-dom";
 import { PaymentCard } from "@/types/payment";
 import { useToast } from "@/hooks/use-toast";
 
-interface DepositFormData {
-  cardId: string;
-  amount: string;
-}
-
 const Deposit: React.FC = () => {
   const { deposit: walletDeposit } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const deposit = async (cardId: string, amount: number) => {
-    const response = await walletDeposit(cardId, amount);
-    return response;
-  };
-
-
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [step, setStep] = useState<number>(1);
   const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
+
+  const deposit = async (cardId: string, amount: number) => {
+    const response = await walletDeposit(cardId, amount);
+    return response;
+  };
 
   useEffect(() => {
     const defaultCard = paymentCards.find(card => card.isDefault);
@@ -45,6 +38,10 @@ const Deposit: React.FC = () => {
   const minDeposit = 10;
   const maxDeposit = 10000;
 
+  /**
+   * Validates the first step of the deposit process.
+   * @returns True if the step is valid, false otherwise.
+   */
   const validateStep1 = (): boolean => {
     if (!amount || isNaN(amountValue) || amountValue <= 0) {
       toast({
@@ -85,6 +82,11 @@ const Deposit: React.FC = () => {
     return true;
   };
 
+  /**
+   * Handles form submission.
+   * @param e - The form event.
+   * @returns A promise that resolves when the form is submitted.
+   */
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>): Promise<void> => {
     if (e) e.preventDefault();
 
@@ -125,6 +127,9 @@ const Deposit: React.FC = () => {
     }
   };
 
+  /**
+   * Resets the deposit form to the initial state.
+   */
   const handleReset = (): void => {
     setStep(1);
     setAmount("");
@@ -136,6 +141,10 @@ const Deposit: React.FC = () => {
     }
   };
 
+  /**
+   * Handles card selection.
+   * @param cardId - The ID of the selected card.
+   */
   const handleCardSelect = (cardId: string): void => {
     setSelectedCardId(cardId);
     const card = paymentCards.find(c => c.id === cardId);
@@ -152,7 +161,6 @@ const Deposit: React.FC = () => {
 
   const handleNavigateToWallet = (): void => {
     navigate('/wallet');
-    console.log('Navigate to wallet');
   };
 
   const getCardIcon = (type: string) => {
@@ -181,7 +189,10 @@ const Deposit: React.FC = () => {
     }
   };
 
-  // Step indicator component
+  /**
+   * Step indicator component.
+   * @returns The step indicator JSX element.
+   */
   const StepIndicator = () => (
     <div className="mb-8">
       <div className="flex items-center justify-center space-x-4">

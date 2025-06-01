@@ -18,7 +18,6 @@ const Index: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Create refs for scrolling
   const featuresRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
 

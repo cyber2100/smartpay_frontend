@@ -124,7 +124,9 @@ export const useBalanceStatistics = () => {
   const [isFromAPI, setIsFromAPI] = useState(false);
   const { toast } = useToast();
 
-  // Fetch statistics from API
+  /**
+   * Fetch balance statistics from the API
+   */
   const fetchStatistics = useCallback(async (): Promise<BalanceStatisticsData> => {
     if (!isAuthenticated) {
       throw new Error('User not authenticated');
@@ -142,7 +144,9 @@ export const useBalanceStatistics = () => {
     }
   }, [isAuthenticated]);
 
-  // Load statistics (with fallback to mock data)
+  /**
+   * Load balance statistics
+   */
   const loadStatistics = useCallback(async () => {
     setIsLoading(true);
     

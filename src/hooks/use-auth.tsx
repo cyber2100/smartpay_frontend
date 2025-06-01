@@ -33,7 +33,6 @@ type AuthContextType = {
   setIsAdminPanelView: React.Dispatch<React.SetStateAction<boolean>>
 };
 
-// Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -70,7 +69,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(false);
   };
 
-  // Signin function
+  /**
+   * Signs in the user.
+   * @param email - The email address of the user.
+   * @param password - The password of the user.
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const signin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
@@ -108,7 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // signup function
+  /**
+   * Signs up a new user.
+   * @param name - The name of the user.
+   * @param phone - The phone number of the user.
+   * @param email - The email address of the user.
+   * @param password - The password for the user account.
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const signup = async (
     name: string,
     phone: string,
@@ -151,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Signout function
+  // Signs out the user.
   const signout = () => {
     authService.signout();
     setUser(null);
@@ -162,18 +173,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  // Find user function - used for password reset or account recovery
   const findUser = async (emailOrPhone: string): Promise<object | null> => {
     try {
       const result = await authService.findUser(emailOrPhone);
       return result;
     } catch (error) {
       const error_res = error.response?.data?.error;
-      toast ({title: 'Warning', description: error_res.message});
+      toast({ title: 'Warning', description: error_res.message });
       return null;
     }
   }
 
-  // Verify account function
+  /**
+   * Verifies the user's account.
+   * @param code - The verification code sent to the user.
+   * @param verification_type - The type of verification (email or phone).
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const verifyAccount = async (
     code: string,
     verification_type: string
@@ -203,7 +220,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Resend verification function
+  /**
+   * Resends the verification code to the user.
+   * @param verification_type - The type of verification (email or phone).
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const resendVerification = async (
     verification_type: 'email' | 'phone'
   ): Promise<boolean> => {
@@ -241,7 +262,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Refresh user function - fetch updated user data from backend
+  /**
+   * Refreshes the user data.
+   * @returns A promise that resolves to void.
+   */
   const refreshUser = async (): Promise<void> => {
     if (!user) return; // Early return if no user is logged in
 
@@ -274,7 +298,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Determine admin status
   const isAdmin = !!user?.isAdmin;
 
   const value = {

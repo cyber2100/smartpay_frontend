@@ -61,7 +61,11 @@ const Dashboard: React.FC = () => {
       .slice(0, 5);
   }, [transactions]);
   
-  // Format date for display - handling both Date objects and ISO strings from backend
+  /**
+   * Formats the date for display.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted date string.
+   */
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     if (isNaN(date.getTime())) {
@@ -74,9 +78,12 @@ const Dashboard: React.FC = () => {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
-  };  
-  
-  // Handle navigation - Navigate to '/settings'
+  };
+
+  /**
+   * Handles navigation - Navigate to '/settings'
+   * @param path - The path to navigate to.
+   */
   const handleNavigation = (path: string): void => {
     if (path === '/setting') {
       navigate('/setting');
@@ -87,7 +94,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Get transaction title based on type and parties involved
+  /**
+   * Gets the title for a transaction based on its type and involved parties.
+   * @param transaction - The transaction to get the title for.
+   * @returns The title of the transaction.
+   */
   const getTransactionTitle = (transaction: Transaction): string => {
     if (!user?.id) return 'Transaction';
     
@@ -115,7 +126,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Get transaction icon and color
+  /**
+   * Gets the icon and color for a transaction based on its type and involved parties.
+   * @param transaction - The transaction to get the display information for.
+   * @returns An object containing the icon and color classes for the transaction.
+   */
   const getTransactionDisplay = (transaction: Transaction) => {
     if (!user?.id) {
       return {
@@ -177,7 +192,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Determine if a transaction amount should display as positive or negative
+  /**
+   * Gets the transaction amount for display.
+   * @param transaction - The transaction to get the amount for.
+   * @returns The amount to display.
+   */
   const getTransactionAmount = (transaction: Transaction): number => {
     if (!user?.id) return transaction.amount;
     
@@ -199,7 +218,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Get status badge color
+  /**
+   * Gets the status badge variant for a transaction.
+   * @param status - The status of the transaction.
+   * @returns The badge variant class.
+   */
   const getStatusBadgeVariant = (status: Transaction['status']) => {
     switch (status) {
       case 'completed':
@@ -213,7 +236,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Get transaction details for display
+  /**
+   * Gets the transaction details for display.
+   * @param transaction - The transaction to get the details for.
+   * @returns The transaction details for display.
+   */
   const getTransactionDetails = (transaction: Transaction) => {
     const currentUserId = user?.id || 'current_user';
     const isIncoming = transaction.recipientId === currentUserId;
@@ -275,7 +302,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Custom tooltip for the chart
+  /**
+   * Custom tooltip for the chart.
+   * @param param0 - The tooltip parameters.
+   * @returns The tooltip element.
+   */
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (

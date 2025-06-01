@@ -10,8 +10,6 @@ interface TimeLeft {
 }
 
 const Maintenance: React.FC = () => {
-  // Set your maintenance end time here (ISO format or timestamp)
-  // For example, maintenance ends in 2 hours from now:
   const maintenanceEndTime = new Date(Date.now() + 2 * 60 * 60 * 1000);
 
   const calculateTimeLeft = (): TimeLeft | null => {

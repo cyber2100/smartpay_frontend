@@ -19,7 +19,6 @@ const History: React.FC = () => {
   
   const navigate = useNavigate();
   
-  // State for search and filtering
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -33,7 +32,11 @@ const History: React.FC = () => {
     }
   }, []);
 
-  // Format timestamp for display - handling both Date objects and ISO strings from backend
+  /**
+   * Formats a timestamp into a readable date string.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted date string.
+   */
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
@@ -49,7 +52,11 @@ const History: React.FC = () => {
     }).format(date);
   };
 
-  // Format full date for detail dialog
+  /**
+   * Formats a timestamp into a full date string.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted full date string.
+   */
   const formatFullDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
@@ -68,7 +75,11 @@ const History: React.FC = () => {
     }).format(date);
   };
 
-  // Get transaction title based on type and parties involved
+  /**
+   * Gets the transaction title based on the type and parties involved.
+   * @param transaction - The transaction to get the title for.
+   * @returns The transaction title.
+   */
   const getTransactionTitle = (transaction: Transaction): string => {
     if (!user?.id) return 'Transaction';
     
@@ -96,7 +107,11 @@ const History: React.FC = () => {
     }
   };
 
-  // Get transaction icon and color
+  /**
+   * Gets the transaction display information.
+   * @param transaction - The transaction to get the display information for.
+   * @returns The transaction display information.
+   */
   const getTransactionDisplay = (transaction: Transaction) => {
     if (!user?.id) {
       return {
@@ -157,7 +172,11 @@ const History: React.FC = () => {
     }
   };
 
-  // Determine if a transaction amount should display as positive or negative
+  /**
+   * Gets the transaction amount for display.
+   * @param transaction - The transaction to get the amount for.
+   * @returns The transaction amount.
+   */
   const getTransactionAmount = (transaction: Transaction): number => {
     if (!user?.id) return transaction.amount;
     
@@ -179,20 +198,6 @@ const History: React.FC = () => {
     }
   };
 
-  // Get status color
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600';
-      case 'pending':
-        return 'text-yellow-600';
-      case 'failed':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-
   // Get status badge variant
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -207,7 +212,10 @@ const History: React.FC = () => {
     }
   };
 
-  // Filter and search transactions
+  /**
+   * Filters transactions based on search term and selected category.
+   * @returns The filtered transactions.
+   */
   const filteredTransactions = React.useMemo(() => {
     if (!transactions) return [];
 

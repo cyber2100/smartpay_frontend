@@ -88,6 +88,7 @@ const UserManagement: React.FC = () => {
   };
 
   // Handle user activation/deactivation
+  // This function toggles the user's activation status
   const handleActivateUser = async () => {
     if (!selectedUser) return;
     

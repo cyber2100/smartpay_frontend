@@ -27,6 +27,10 @@ const CardPage: React.FC = () => {
     deleteCard,
   } = useCard();
 
+  /**
+   * Sets the default card.
+   * @param cardId - The ID of the card to set as default.
+   */
   const handleSetDefault = async (cardId: string) => {
     try {
       await setDefaultCard(cardId);
@@ -35,6 +39,10 @@ const CardPage: React.FC = () => {
     }
   };
 
+  /**
+   * Deletes a payment card.
+   * @param cardId - The ID of the card to delete.
+   */
   const handleDeleteCard = async (cardId: string) => {
     try {
       await deleteCard(cardId);
@@ -43,6 +51,10 @@ const CardPage: React.FC = () => {
     }
   };
 
+  /**
+   * Handles the addition of a new payment card.
+   * @param newCard - The new card information.
+   */
   const handleAddCard = async (newCard: Omit<PaymentCard, 'id'>) => {
     try {
       await addCard(newCard);

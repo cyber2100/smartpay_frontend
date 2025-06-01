@@ -27,7 +27,11 @@ export const useUserManagement = (): UseUserManagementReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Transform API user data to match our User interface
+  /**
+   * Transforms API user data to match our User interface.
+   * @param userData - The user data from the API.
+   * @returns The transformed user data.
+   */
   const transformUser = (userData: any): User => ({
     id: userData.id,
     name: userData.fullname || userData.name,
@@ -38,7 +42,13 @@ export const useUserManagement = (): UseUserManagementReturn => {
     isAdmin: userData.is_admin,
   });
 
-  // Fetch all users
+  /**
+   * Fetches all users from the API.
+   * Only admins can fetch users.
+   * Sets loading state and handles errors.
+   * @returns A promise that resolves when the users are fetched.
+   * @throws An error if the fetch fails.
+   */
   const fetchUsers = useCallback(async () => {
     if (!isAdmin) {
       setLoading(false);
@@ -60,7 +70,11 @@ export const useUserManagement = (): UseUserManagementReturn => {
     }
   }, [isAdmin]);
 
-  // Update user activation status (NOT verification)
+  /**
+   * Updates the activation status of a user.
+   * @param userId - The ID of the user to update.
+   * @param isActive - The new activation status.
+   */
   const updateUserActivation = async (userId: string, isActive: boolean): Promise<void> => {
     try {
       await adminService.updateUserActivation(userId, isActive);
@@ -78,7 +92,10 @@ export const useUserManagement = (): UseUserManagementReturn => {
     }
   };
 
-  // Delete user
+  /**
+   * Deletes a user.
+   * @param userId - The ID of the user to delete.
+   */
   const deleteUser = async (userId: string): Promise<void> => {
     try {
       await adminService.deleteUser(userId);

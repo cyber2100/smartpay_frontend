@@ -16,12 +16,16 @@ import { NotificationDropdown } from "../components/NotificationDropdown";
 import { ModeToggle } from "../components/mode-toggle";
 
 export function Navbar(): ReactElement {
-  const { isAuthenticated, user, signout, isAdmin } = useAuth();
+  const { 
+    isAuthenticated, 
+    user, 
+    signout, 
+    isAdmin,
+    isAdminPanelView,
+    setIsAdminPanelView
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // State to track if admin is viewing admin panel
-  const { isAdminPanelView, setIsAdminPanelView } = useAuth();
 
   // Check if current page is admin panel on mount and location change
   useEffect(() => {

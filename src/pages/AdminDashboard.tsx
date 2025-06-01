@@ -31,6 +31,10 @@ const AdminDashboard: React.FC = () => {
     }
   ];
 
+  /**
+   * Handles the tab click event.
+   * @param path - The path to navigate to.
+   */
   const handleTabClick = (path: string) => {
     setCurrentPath(path);
     navigate(path);

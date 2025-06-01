@@ -141,15 +141,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // Memoize context value to avoid unnecessary re-renders
-  const value: SettingsContextType = useMemo(() => ({
+  const value: SettingsContextType = {
     notificationSettings,
     updateDeliveryChannel,
     verificationStatus,
     updatePhoneNumber,
     updatePassword,
     isLoading
-  }), [notificationSettings, verificationStatus, isLoading, updateDeliveryChannel, updatePhoneNumber, updatePassword]);
-  
+  };
+
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };
 

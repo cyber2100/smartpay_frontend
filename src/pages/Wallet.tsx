@@ -26,7 +26,11 @@ const Wallet: React.FC = () => {
     navigate(path);
   };
 
-  // Format timestamp for display - handling both Date objects and ISO strings from backend
+  /**
+   * Formats a date for display.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted date string.
+   */
   const formatDate = (timestamp: Date | string): string => {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
@@ -42,7 +46,11 @@ const Wallet: React.FC = () => {
     }).format(date);
   };
 
-  // Get transaction title based on type and parties involved
+  /**
+   * Gets the title for a transaction based on its type and involved parties.
+   * @param transaction - The transaction to get the title for.
+   * @returns The title for the transaction.
+   */
   const getTransactionTitle = (transaction: Transaction): string => {
     if (!user?.id) return 'Transaction';
     
@@ -70,7 +78,11 @@ const Wallet: React.FC = () => {
     }
   };
 
-  // Get transaction icon and color
+  /**
+   * Gets the display information for a transaction.
+   * @param transaction - The transaction to get the display information for.
+   * @returns The display information for the transaction.
+   */
   const getTransactionDisplay = (transaction: Transaction) => {
     if (!user?.id) {
       return {
@@ -131,7 +143,11 @@ const Wallet: React.FC = () => {
     }
   };
 
-  // Determine if a transaction amount should display as positive or negative
+  /**
+   * Gets the amount for a transaction, adjusting for the user's perspective.
+   * @param transaction - The transaction to get the amount for.
+   * @returns The adjusted transaction amount.
+   */
   const getTransactionAmount = (transaction: Transaction): number => {
     if (!user?.id) return transaction.amount;
     
