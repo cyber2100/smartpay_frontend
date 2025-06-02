@@ -9,16 +9,13 @@ import mainRoutes from "./mainRoutes"; // Adjust the path as needed
 import adminRoutes from "./adminRoutes"; // Adjust the path as needed
 import NotFound from "@/pages/NotFound"; // Adjust the path as needed
 
-const RoutesWrapper = ({ isAdmin, isAuthenticated }) => {
-  let routes = [...authRoutes];
+const RoutesWrapper = ({ isAdmin }) => {
+  let routes = [
+    ...authRoutes,
+    ...mainRoutes,
+    ...(isAdmin ? adminRoutes : []), // Include admin routes only if the user is an admin
+  ];
 
-  if (isAuthenticated) {
-    routes = [
-      ...routes,
-      ...(isAdmin ? adminRoutes : []),
-      ...mainRoutes,
-    ];
-  }
   routes.push({
     path: "*",
     element: <NotFound />
@@ -28,14 +25,11 @@ const RoutesWrapper = ({ isAdmin, isAuthenticated }) => {
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
 
   return (
     <>
-      <RoutesWrapper 
-        isAdmin={isAdmin}
-        isAuthenticated={isAuthenticated} 
-      />
+      <RoutesWrapper isAdmin={isAdmin} />
       <MobileButtonNavigation />
     </>
   );

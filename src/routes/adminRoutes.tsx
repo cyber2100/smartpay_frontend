@@ -7,10 +7,6 @@ import BalanceStatistics from "@/pages/admin/BalanceStatistics";
 
 const adminRoutes = [
   {
-    path: "/",
-    element: <MainLayout><Index /></MainLayout>,
-  },
-  {
     path: "/admin",
     element: <AdminDashboard />,
   },

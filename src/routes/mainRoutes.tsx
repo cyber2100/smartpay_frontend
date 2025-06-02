@@ -1,5 +1,4 @@
 import MainLayout from "@/layout/MainLayout";
-import Index from "@/pages/Index";
 import Verify from "@/pages/Verify";
 import Dashboard from "@/pages/Dashboard";
 import Wallet from "@/pages/Wallet";
@@ -8,9 +7,9 @@ import Transfer from "@/pages/Transfer";
 import Deposit from "@/pages/Deposit";
 import Withdraw from "@/pages/Withdraw";
 import History from "@/pages/History";
-import NotFound from "@/pages/NotFound"; // Adjust the path as needed
 import SettingPage from "@/pages/Setting";
 import NotificationsPage from "@/pages/Notification";          
+import { ProtectedRoute } from "./RouteGuide";
 
 const mainRoutes = [
   {
@@ -55,4 +54,16 @@ const mainRoutes = [
   }
 ];
 
-export default mainRoutes;
+const protectedRoutes = mainRoutes.map((route) => {
+  return {
+    ...route,
+    element: (
+      <ProtectedRoute>
+        {route.element}
+      </ProtectedRoute>
+    ),
+  };
+}
+);
+
+export default protectedRoutes;
