@@ -18,11 +18,17 @@ const Signin = () => {
   const [remainingTime, setRemainingTime] = useState(0);
   const [error, setError] = useState('');
   
-  const { signin } = useAuth();
+  const { isAuthenticated, signin } = useAuth();
   const navigate = useNavigate();
 
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION = 60; // 60 seconds
+
+  useEffect(() => {
+    if(isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated]);
 
   // Load attempt data from localStorage on component mount
   useEffect(() => {

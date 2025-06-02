@@ -93,13 +93,13 @@ const History: React.FC = () => {
           const recipientName = transaction.recipient?.fullname || 
                                transaction.recipient?.email || 
                                'Unknown User';
-          return `Transfer to ${recipientName}`;
+          return `Sent to ${recipientName}`;
         } 
         else if (transaction.recipientId === user.id) {
           const senderName = transaction.sender?.fullname || 
                             transaction.sender?.email || 
                             'Unknown User';
-          return `Transfer from ${senderName}`;
+          return `Received from ${senderName}`;
         }
         return 'Transfer';
       default:

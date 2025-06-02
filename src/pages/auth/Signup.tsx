@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AnimatedBackground } from "@/components/animated-background";
 import {
@@ -24,8 +24,14 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signup } = useAuth();
+  const { isAuthenticated, signup } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if(isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated]);
 
   // Validate form inputs before submission
   const validateForm = () => {

@@ -10,7 +10,6 @@ const authRoutes = [
   { path: "/signin", element: <Signin /> },
   { path: "/signup", element: <Signup /> },
   { path: "/forgot-password", element: <ForgotPassword /> },
-  { path: "*", element: <Index /> }
 ];
 
 export default authRoutes;

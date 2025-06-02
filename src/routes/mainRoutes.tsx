@@ -14,10 +14,6 @@ import NotificationsPage from "@/pages/Notification";
 
 const mainRoutes = [
   {
-    path: "/",
-    element: <Index />,
-  },
-  {
     path: "/verify",
     element: <Verify />,
   },
@@ -56,10 +52,6 @@ const mainRoutes = [
   {
     path: "/notifications",
     element: <MainLayout><NotificationsPage /></MainLayout>,
-  },
-  {
-    path: "*",
-    element: <NotFound />
   }
 ];
 

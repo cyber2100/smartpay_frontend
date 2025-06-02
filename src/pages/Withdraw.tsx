@@ -267,7 +267,7 @@ const Withdraw: React.FC = () => {
         <div className="max-w-lg mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl">
           <div className="text-center p-6 border-b border-gray-200/50 dark:border-gray-700/50">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {withdrawSuccess ? "Withdraw Complete" : "Remove Money"}
+              {withdrawSuccess ? "Withdraw Complete" : "Withdraw Money"}
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-2">
               {withdrawSuccess

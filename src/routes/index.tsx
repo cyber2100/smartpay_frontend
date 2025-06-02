@@ -7,36 +7,34 @@ import { useAuth } from "@/hooks/use-auth";
 import authRoutes from "./authRoutes"; // Adjust the path as needed
 import mainRoutes from "./mainRoutes"; // Adjust the path as needed
 import adminRoutes from "./adminRoutes"; // Adjust the path as needed
-import Maintenance from "@/pages/Maintenance ";
+import NotFound from "@/pages/NotFound"; // Adjust the path as needed
 
-const RoutesWrapper = ({ user, isAdmin, isAuthenticated, isMaintenanceMode }) => {
-  let routes = [];
+const RoutesWrapper = ({ isAdmin, isAuthenticated }) => {
+  let routes = [...authRoutes];
 
-  if (isMaintenanceMode) {
-    routes = [{ path: "*", element: <Maintenance /> }];
-  } else if (isAuthenticated) {
+  if (isAuthenticated) {
     routes = [
+      ...routes,
       ...(isAdmin ? adminRoutes : []),
       ...mainRoutes,
     ];
-  } else {
-    routes = authRoutes;
   }
+  routes.push({
+    path: "*",
+    element: <NotFound />
+  });
 
   return useRoutes(routes);
 };
 
 const AppRoutes = () => {
-  const isMaintenanceMode = false;
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
 
   return (
     <>
       <RoutesWrapper 
-        user={user}
         isAdmin={isAdmin}
         isAuthenticated={isAuthenticated} 
-        isMaintenanceMode={isMaintenanceMode} 
       />
       <MobileButtonNavigation />
     </>
