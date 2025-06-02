@@ -8,7 +8,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useNotifications } from '@/hooks/use-notifications';
 
 import { Notification } from '@/types/notification';
-import { mockNotifications } from '@/mockData/notification';
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -44,7 +43,7 @@ const Notifications: React.FC = () => {
     if (realNotifications.length) {
       setNotifications([...realNotifications]);
     } else {
-      setNotifications([...mockNotifications]);
+      setNotifications([]);
     }
   }, [realNotifications])
 
