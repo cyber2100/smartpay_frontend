@@ -343,52 +343,63 @@ const Deposit: React.FC = () => {
                     </div>
                     <div className="space-y-3">
                       <label className="text-sm font-medium leading-none">
-                        Select Payment Method
+                        Select Payment Card
                       </label>
                       <div className="space-y-2">
-                        {paymentCards.map((card) => (
-                          <div
-                            key={card.id}
-                            onClick={() => handleCardSelect(card.id)}
-                            className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                              selectedCardId === card.id
-                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                                : 'border-input hover:border-primary/50 hover:bg-accent/50'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-6 rounded bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                                  {getCardIcon(card.type)}
+                        {paymentCards?.length ? (
+                          paymentCards.map((card) => (
+                            <div
+                              key={card.id}
+                              onClick={() => handleCardSelect(card.id)}
+                              className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                                selectedCardId === card.id
+                                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                                  : 'border-input hover:border-primary/50 hover:bg-accent/50'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-6 rounded bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                    {getCardIcon(card.type)}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">
+                                      {getCardTypeName(card.type)} {card.cardNumber}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {card.name} • {card.expireDate}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-medium">
-                                    {getCardTypeName(card.type)} {card.cardNumber}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {card.name} • {card.expireDate}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {card.isDefault && (
-                                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                                    Default
-                                  </span>
-                                )}
-                                <div className={`w-4 h-4 rounded-full border-2 ${
-                                  selectedCardId === card.id
-                                    ? 'border-primary bg-primary'
-                                    : 'border-muted-foreground'
-                                }`}>
-                                  {selectedCardId === card.id && (
-                                    <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                                <div className="flex items-center gap-2">
+                                  {card.isDefault && (
+                                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                                      Default
+                                    </span>
                                   )}
+                                  <div className={`w-4 h-4 rounded-full border-2 ${
+                                    selectedCardId === card.id
+                                      ? 'border-primary bg-primary'
+                                      : 'border-muted-foreground'
+                                  }`}>
+                                    {selectedCardId === card.id && (
+                                      <div className="w-full h-full rounded-full bg-white scale-50"></div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
+                        ))) : (
+                          <div className="p-4 rounded-lg bg-muted/50 text-center hover:bg-primary/20 cursor-pointer" onClick={() => navigate('/card')}>
+                            <CreditCard className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                              No Cards Available
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              Please add a card to proceed.
+                            </p>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                     <button 

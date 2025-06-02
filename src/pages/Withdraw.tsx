@@ -370,10 +370,10 @@ const Withdraw: React.FC = () => {
 
                     <div className="space-y-3">
                       <label className="text-sm font-medium leading-none">
-                        Select Payment Method
+                        Select Payment Card
                       </label>
                       <div className="space-y-2">
-                        {paymentCards.map((card) => (
+                        {paymentCards?.length ? paymentCards.map((card) => (
                           <div
                             key={card.id}
                             onClick={() => handleCardSelect(card.id)}
@@ -415,7 +415,17 @@ const Withdraw: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        )) : (
+                          <div className="p-4 rounded-lg bg-muted/50 text-center hover:bg-primary/20 cursor-pointer" onClick={() => navigate('/card')}>
+                            <CreditCard className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+                            <h4 className="text-sm font-medium text-muted-foreground mb-1">
+                              No Cards Available
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              Please add a card to proceed.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
