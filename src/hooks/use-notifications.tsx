@@ -51,14 +51,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Load notifications when user changes
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log('notification page come');
+    if (isAuthenticated && user?.isVerified) {
       getNotifications();
     } else {
       setNotifications([]);
       setUnreadCount(0);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.isVerified]);
 
   // Transform API notifications to our app format
   const transformNotification = (apiNotification: any): Notification => ({

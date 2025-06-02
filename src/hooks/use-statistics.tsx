@@ -30,7 +30,7 @@ const mockCurrencyData: MonthlyData[] = [
 ];
 
 export const useStatistics = (): StatisticsData => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [statisticsData, setStatisticsData] = useState<MonthlyData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +39,8 @@ export const useStatistics = (): StatisticsData => {
 
   // Fetch statistics from API
   const fetchStatistics = useCallback(async (): Promise<MonthlyData[]> => {
-    if (!isAuthenticated) {
-      throw new Error('User not authenticated');
+    if (!isAuthenticated || !user?.isVerified) {
+      throw new Error('User not authenticated or not verified');
     }
     setIsLoading(true);
 
@@ -142,10 +142,10 @@ export const useStatistics = (): StatisticsData => {
   };
 
   useEffect(() => {
-    if(isAuthenticated) {
+    if(isAuthenticated && user?.isVerified) {
       fetchStatistics();
     }
-  }, []);
+  }, [isAuthenticated, user?.isVerified]);
 
   const result = {
     financialData,

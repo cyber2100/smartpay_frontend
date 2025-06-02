@@ -26,7 +26,7 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
  * @returns The WalletProvider component.
  */
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -36,7 +36,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   
   // Initialize balance and fetch transactions when user changes
   useEffect(() => {
-    if(isAuthenticated){
+    if(isAuthenticated && user?.isVerified) {
       loadWalletData();
     } else {
       setBalance(0);
@@ -44,8 +44,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setAllTransactions([]);
       setAllUsers([]);
     }
-  }, [isAuthenticated]);
-  
+  }, [isAuthenticated, user?.isVerified]);
+
   /**
    * Load wallet data including balance and transactions.
    * This function fetches the user's balance and transactions from the wallet service.
