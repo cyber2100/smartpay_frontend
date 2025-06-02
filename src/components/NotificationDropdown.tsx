@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useNavigate } from "react-router-dom";
-import { mockNotifications } from "@/mockData/notification";
 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -73,7 +72,7 @@ export function NotificationDropdown(): ReactElement {
    * If no notifications are available, it uses mock notifications.
    * @returns An array of sorted notifications.
    */
-  const sortedNotifications = [...(notifications.length ? notifications : mockNotifications)].sort((a, b) => 
+  const sortedNotifications = notifications.sort((a, b) => 
     b.timestamp.getTime() - a.timestamp.getTime()
   );
   

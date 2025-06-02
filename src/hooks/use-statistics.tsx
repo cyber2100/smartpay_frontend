@@ -14,21 +14,6 @@ interface StatisticsData {
   loadStatistics?: () => Promise<void>
 }
 
-const mockCurrencyData: MonthlyData[] = [
-  { name: 'Jan', received: 2000, sent: 1200 },
-  { name: 'Feb', received: 3200, sent: 1300 },
-  { name: 'Mar', received: 2800, sent: 1400 },
-  { name: 'Apr', received: 4500, sent: 2300 },
-  { name: 'May', received: 3800, sent: 1700 },
-  { name: 'Jun', received: 6200, sent: 2800 },
-  { name: 'Jul', received: 5800, sent: 2500 },
-  { name: 'Aug', received: 5200, sent: 2400 },
-  { name: 'Sep', received: 6100, sent: 2800 },
-  { name: 'Oct', received: 7200, sent: 3000 },
-  { name: 'Nov', received: 6800, sent: 3000 },
-  { name: 'Dec', received: 8500, sent: 3900 }
-];
-
 export const useStatistics = (): StatisticsData => {
   const { isAuthenticated, user } = useAuth();
   const [statisticsData, setStatisticsData] = useState<MonthlyData[]>([]);
@@ -54,8 +39,8 @@ export const useStatistics = (): StatisticsData => {
     } catch (error: any) {
       console.error('Error fetching transaction statistics:', error);
       setIsFromAPI(false);
-      setStatisticsData(mockCurrencyData);
-      
+      setStatisticsData(null);
+
       let errorMessage = 'Failed to load transaction statistics from backend';
       if (error.response?.status === 404) {
         errorMessage = 'Statistics endpoint not found';
@@ -74,7 +59,7 @@ export const useStatistics = (): StatisticsData => {
     }
   }, [isAuthenticated]);
 
-  // Load statistics (with fallback to mock data)
+  // Load statistics
   const loadStatistics = useCallback(async () => {
     setIsLoading(true);
     
@@ -89,21 +74,18 @@ export const useStatistics = (): StatisticsData => {
           description: "Successfully loaded latest transaction statistics from backend.",
         });
       } else {
-        // Use mock data if not authenticated
-        setStatisticsData(mockCurrencyData);
+        setStatisticsData(null);
         setIsFromAPI(false);
         setError(null);
       }
     } catch (error: any) {
-      // Fallback to mock data if API fails
-      console.warn('API failed, falling back to mock data:', error);
-      setStatisticsData(mockCurrencyData);
+      setStatisticsData(null);
       setIsFromAPI(false);
       
       // Show toast for API failure
       toast({
         title: "Using Demo Data",
-        description: "Backend connection failed. Showing mock transaction statistics.",
+        description: "Backend connection failed.",
         variant: "destructive",
       });
     } finally {

@@ -28,65 +28,6 @@ interface TransactionStatisticsData {
 }
 
 /**
- * Generate mock transaction statistics data.
- * @returns {TransactionStatisticsData} Mock transaction statistics data.
- */
-const generateMockStatisticsData = (): TransactionStatisticsData => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  
-  const monthlyStats: MonthlyStats[] = [];
-  let totalTransactions = 0;
-  let totalVolume = 0;
-
-  for (let i = 0; i < 6; i++) {
-    const transactionCount = Math.floor(Math.random() * 25) + 20;
-    const avgAmount = 75 + (Math.random() * 50);
-    const volume = transactionCount * avgAmount;
-    
-    let trend: 'up' | 'down' | 'stable' = 'stable';
-    let changePercentage = 0;
-    
-    if (i > 0) {
-      const prevAvg = monthlyStats[i - 1].averageAmount;
-      changePercentage = ((avgAmount - prevAvg) / prevAvg) * 100;
-      if (changePercentage > 5) trend = 'up';
-      else if (changePercentage < -5) trend = 'down';
-    }
-
-    monthlyStats.push({
-      month: months[i],
-      monthNumber: i + 1,
-      averageAmount: avgAmount,
-      totalTransactions: transactionCount,
-      totalVolume: volume,
-      trend,
-      changePercentage
-    });
-
-    totalTransactions += transactionCount;
-    totalVolume += volume;
-  }
-
-  const overallAverage = totalVolume / totalTransactions;
-  const lastTwoMonths = monthlyStats.slice(-2);
-  const monthOverMonthGrowth = lastTwoMonths.length === 2 
-    ? ((lastTwoMonths[1].averageAmount - lastTwoMonths[0].averageAmount) / lastTwoMonths[0].averageAmount) * 100
-    : 0;
-
-  return {
-    overallStats: {
-      totalTransactions,
-      totalVolume,
-      overallAverage,
-      monthOverMonthGrowth
-    },
-    monthlyStats,
-    lastUpdated: new Date().toISOString(),
-    isFromAPI: false
-  };
-};
-
-/**
  * Custom hook to fetch and manage transaction statistics.
  * @returns {Object} Hook state and actions.
  */
@@ -134,7 +75,7 @@ export const useTransactionStatistics = () => {
     }
   }, [isAuthenticated]);
 
-  // Load statistics (with fallback to mock data)
+  // Load statistics
   const loadStatistics = useCallback(async () => {
     setIsLoading(true);
     
@@ -149,23 +90,18 @@ export const useTransactionStatistics = () => {
           description: "Successfully loaded latest transaction statistics from backend.",
         });
       } else {
-        // Use mock data if not authenticated
-        const mockData = generateMockStatisticsData();
-        setStatisticsData(mockData);
+        setStatisticsData(null);
         setIsFromAPI(false);
         setError(null);
       }
     } catch (error: any) {
-      // Fallback to mock data if API fails
-      console.warn('API failed, falling back to mock data:', error);
-      const mockData = generateMockStatisticsData();
-      setStatisticsData(mockData);
+      setStatisticsData(null);
       setIsFromAPI(false);
-      
+
       // Show toast for API failure
       toast({
         title: "Using Demo Data",
-        description: "Backend connection failed. Showing mock transaction statistics.",
+        description: "Backend connection failed.",
         variant: "destructive",
       });
     } finally {

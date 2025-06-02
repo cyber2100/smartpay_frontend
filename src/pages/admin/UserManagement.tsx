@@ -33,7 +33,6 @@ import { useUserManagement } from '@/hooks/use-user-management';
 import { useAuth } from '@/hooks/use-auth';
 
 import { User } from '@/types/users';
-import { mockUsers } from '@/mockData/users';
 
 const UserManagement: React.FC = () => {
   const { isAdmin } = useAuth();
@@ -53,9 +52,9 @@ const UserManagement: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   // Filter users based on search term and status
-  const filteredUsers: User[] = (users?.length ? [...users] : mockUsers).filter((user: User) => {
-    
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers: User[] = users.filter((user: User) => {
+
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.phone?.includes(searchTerm);
     
