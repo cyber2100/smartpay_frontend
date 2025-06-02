@@ -31,7 +31,7 @@ const Register = () => {
     if(isAuthenticated) {
       navigate('/dashboard');
     }
-  }, [isAuthenticated]);
+  }, []);
 
   // Validate form inputs before submission
   const validateForm = () => {

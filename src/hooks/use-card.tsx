@@ -29,16 +29,16 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Load cards on mount
   useEffect(() => {
-    if(isAuthenticated && user){
+    if(isAuthenticated && user?.isVerified){
       refreshCards();
     } else {
       setCards([]);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.isVerified]);
 
   // Refresh cards from API
   const refreshCards = async (): Promise<void> => {
-    if(!isAuthenticated) return;
+    if(!isAuthenticated || !user?.isVerified) return;
     setIsLoading(true);
     try {
       const fetchedCards = await cardService.getCards();

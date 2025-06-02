@@ -90,6 +90,7 @@ export const authService = {
     const response = await axios.post(`${API_URL}/auth/login`, formData);
     localStorage.setItem("auth_token", response.data.access_token);
     localStorage.setItem("refresh_token", response.data.refresh_token);
+
     return response.data;
   },
 
@@ -582,7 +583,9 @@ export const cardService = {
 // Notification Settings Service
 export const notificationService = {
   // Get user's notification preferences
+  
   getNotificationSettings: async () => {
+    console.log('api.headers.authorization', api.defaults.headers.common['Authorization']);
     const response = await api.get('/auth/notif-setting');
     return response.data;
   },

@@ -131,6 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.signup(name, phone, email, password);
 
+      await authService.signin(email, password);
+
       const appUser: User = {
         id: userData.id,
         name: userData.fullname,
@@ -141,9 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       setUser(appUser);
-
-      await authService.signin(email, password);
-
+      
       toast({
         title: "Registration successful",
         description: "Please verify your account to continue.",
