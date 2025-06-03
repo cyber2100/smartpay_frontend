@@ -3,8 +3,6 @@ import { PaymentCard } from '@/types/payment';
 
 // Base API configuration
 const API_URL = import.meta.env.VITE_API_URL; // Default to local API if not set
-console.log('API URL:', API_URL);
-
 
 const api = axios.create({
   baseURL: API_URL, 
@@ -518,7 +516,7 @@ export const cardService = {
   // Get all cards
   getCards: async (): Promise<PaymentCard[]> => {
     try {
-      const response = await api.get('/payment-cards');
+      const response = await api.get('/payment-cards/');
       return response.data;
     } catch (error) {
       console.error('Error fetching cards:', error);
@@ -529,7 +527,7 @@ export const cardService = {
   // Add new card
   addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<string> => {
     try {
-      const response = await api.post('/payment-cards', cardData);
+      const response = await api.post('/payment-cards/', cardData);
       return response.data.id;
     } catch (error) {
       console.error('Error adding card:', error);
@@ -606,7 +604,7 @@ export const notificationService = {
 
   // NEW: Get all notifications for the current user
   getNotifications: async () => {
-    const response = await api.get('/notification');
+    const response = await api.get('/notification/');
     return response.data;
   },
 

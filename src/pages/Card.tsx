@@ -9,11 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { AddCardDialog } from '@/components/AddCardDialog';
 import { useCard } from "@/hooks/use-card";
-import { useAuth } from "@/hooks/use-auth";
 import { CardDetailModal } from '@/components/CardDetailModal';
 import { CardListItem } from '@/components/CardListItem';
 import { PaymentCard } from '@/types/payment';
-import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
 const CardPage: React.FC = () => {
