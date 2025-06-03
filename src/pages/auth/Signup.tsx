@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AnimatedBackground } from "@/components/animated-background";
 import {
@@ -24,9 +24,16 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signup } = useAuth();
+  const { isAuthenticated, signup } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if(isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, []);
+
+  // Validate form inputs before submission
   const validateForm = () => {
     if (password !== confirmPassword) {
       setPasswordError("Passwords don't match");
@@ -42,6 +49,7 @@ const Register = () => {
     return true;
   };
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,7 +74,6 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <AnimatedBackground />
-
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">

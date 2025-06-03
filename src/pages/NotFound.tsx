@@ -1,5 +1,8 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
+import { AnimatedBackground } from "@/components/animated-background";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -12,14 +15,37 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <AnimatedBackground />
+      <Card className="max-w-md w-full relative z-10">
+        <CardHeader className="text-center">
+          <CardTitle className="text-4xl font-bold">404</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-xl text-gray-600">
+            Oops! The page <code className="bg-gray-100 px-1 rounded">{location.pathname}</code> was not found.
+          </p>
+          <p className="text-gray-500">
+            This might be because:
+          </p>
+          <ul className="list-disc list-inside text-gray-500 text-left max-w-xs mx-auto mb-4">
+            <li>The URL was typed incorrectly.</li>
+            <li>The page has been moved or deleted.</li>
+            <li>You followed an outdated or broken link.</li>
+          </ul>
+          <p className="text-gray-600 p-6">
+            Try going back to the homepage or explore other sections of our site.
+          </p>
+          <Link to="/">
+            <Button className="w-full" variant="default">
+              Return to Home
+            </Button>
+          </Link>
+          <div className="mt-4 text-sm text-gray-400">
+            If you think this is an error, please contact support.
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -18,7 +18,6 @@ const Index: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Create refs for scrolling
   const featuresRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
 
@@ -34,8 +33,6 @@ const Index: React.FC = () => {
   return (
     <div className="relative">
       <AnimatedBackground />
-
-      {/* Hero Section */}
       <div id="hero" className="container px-4 md:px-6 flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-10">
         <div className="flex flex-col items-center space-y-4 text-center">
           <div className="space-y-2">
@@ -79,8 +76,6 @@ const Index: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 w-full max-w-5xl">
           <div className="flex flex-col items-center p-6 bg-card shadow-sm rounded-lg border">
             <div className="p-2 bg-primary/10 rounded-full mb-4">
@@ -154,8 +149,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Full Features Section */}
       <div id="features" ref={featuresRef} className="py-20 bg-muted/50">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
@@ -259,8 +252,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* About Section */}
       <div id="about" ref={aboutRef} className="py-20">
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row gap-12 items-center">
@@ -277,13 +268,15 @@ const Index: React.FC = () => {
                 <p>
                   We believe that financial services should be accessible to
                   everyone, regardless of location or background. Our platform
-                  leverages cutting-edge blockchain technology to provide a
-                  seamless, secure, and transparent payment experience.
+                  integrates seamlessly with trusted payment networks including
+                  PayPal, Mastercard, and American Express to provide a
+                  reliable, secure, and transparent payment experience.
                 </p>
                 <p>
                   Our team consists of experienced professionals from the
-                  fintech and blockchain industries, united by the passion to
-                  revolutionize how people transfer and manage their money.
+                  fintech and traditional banking industries, united by the
+                  passion to revolutionize how people transfer and manage their
+                  money through established, trusted payment methods.
                 </p>
               </div>
 
@@ -292,7 +285,8 @@ const Index: React.FC = () => {
                 <p className="text-muted-foreground">
                   To create a world where sending money is as simple and secure
                   as sending a message, empowering individuals and businesses to
-                  thrive in the digital economy.
+                  thrive in the digital economy through trusted payment
+                  networks.
                 </p>
 
                 <h3 className="text-xl font-bold">Our Values</h3>
@@ -312,10 +306,10 @@ const Index: React.FC = () => {
                   </li>
                   <li>
                     <span className="font-medium text-foreground">
-                      Innovation:
+                      Reliability:
                     </span>{" "}
-                    We continuously improve our technology to provide the best
-                    experience.
+                    We partner with established payment providers to ensure
+                    consistent, dependable service.
                   </li>
                   <li>
                     <span className="font-medium text-foreground">
@@ -341,9 +335,9 @@ const Index: React.FC = () => {
                         <Shield className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">Uncompromised Security</p>
+                        <p className="font-medium">Trusted Partners</p>
                         <p className="text-sm text-muted-foreground">
-                          End-to-end encryption for all transactions
+                          Powered by PayPal, Mastercard & American Express
                         </p>
                       </div>
                     </div>

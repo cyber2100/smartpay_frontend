@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/api";
 
@@ -9,7 +9,6 @@ export type User = {
   email: string;
   phone?: string;
   isAdmin?: boolean;
-  balance: number;
   isVerified: boolean;
 };
 
@@ -25,11 +24,15 @@ type AuthContextType = {
     password: string
   ) => Promise<boolean>;
   signout: () => void;
-  verifyAccount: (code: string) => Promise<boolean>;
+  findUser: (emailOrPhone: string) => Promise<object | null>;
+  verifyAccount: (code: string, verification_type: string) => Promise<boolean>;
+  resendVerification: (verification_type: 'email' | 'phone') => Promise<boolean>;
+  refreshUser: () => Promise<void>
   isAdmin: boolean;
+  isAdminPanelView: boolean;
+  setIsAdminPanelView: React.Dispatch<React.SetStateAction<boolean>>
 };
 
-// Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -38,36 +41,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [isAdminPanelView, setIsAdminPanelView] = useState(false);
 
-  // Load user on mount if token exists
   useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
-        try {
-          const userData = await authService.getCurrentUser();
-          // Transform API format to our app format
-          setUser({
-            id: userData.id,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone,
-            isAdmin: userData.is_admin,
-            balance: userData.balance,
-            isVerified: userData.is_verified,
-          });
-        } catch (error) {
-          localStorage.removeItem("auth_token");
-          console.error("Failed to load user:", error);
-        }
-      }
-      setIsLoading(false);
-    };
-
     loadUser();
   }, []);
 
-  // Signin function
+  const loadUser = async () => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      try {
+        const userData = await authService.getCurrentUser();
+
+        setUser({
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          isAdmin: userData.is_admin,
+          isVerified: userData.is_verified,
+        });
+      } catch (error) {
+        localStorage.removeItem("auth_token");
+        console.error("Failed to load user:", error);
+      }
+    }
+    setIsLoading(false);
+  };
+
+  /**
+   * Signs in the user.
+   * @param email - The email address of the user.
+   * @param password - The password of the user.
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const signin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
@@ -75,14 +82,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       await authService.signin(email, password);
       const userData = await authService.getCurrentUser();
 
-      // Transform API format to our app format
       const appUser: User = {
         id: userData.id,
         name: userData.name,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
-        balance: userData.balance,
         isVerified: userData.is_verified,
       };
 
@@ -94,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Signin failed",
         description:
@@ -107,7 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // signup function
+  /**
+   * Signs up a new user.
+   * @param name - The name of the user.
+   * @param phone - The phone number of the user.
+   * @param email - The email address of the user.
+   * @param password - The password for the user account.
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
   const signup = async (
     name: string,
     phone: string,
@@ -119,29 +131,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.signup(name, phone, email, password);
 
-      // Transform API format to our app format
+      await authService.signin(email, password);
+
       const appUser: User = {
         id: userData.id,
-        name: userData.name,
+        name: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin || false,
-        balance: userData.balance,
         isVerified: userData.is_verified,
       };
 
       setUser(appUser);
-
-      // After registration, signin to get the token
-      await authService.signin(email, password);
-
+      
       toast({
         title: "Registration successful",
         description: "Please verify your account to continue.",
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Registration failed",
         description: error.response?.data?.detail || "Email already in use.",
@@ -153,24 +162,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Signout function
+  // Signs out the user.
   const signout = () => {
     authService.signout();
     setUser(null);
+    
     toast({
-      title: "Signged out",
+      title: "Signed out",
       description: "You have been logged out successfully.",
     });
   };
 
-  // Verify account function
-  const verifyAccount = async (code: string): Promise<boolean> => {
+  // Find user function - used for password reset or account recovery
+  const findUser = async (emailOrPhone: string): Promise<object | null> => {
+    try {
+      const result = await authService.findUser(emailOrPhone);
+      return result;
+    } catch (error) {
+      const error_res = error.response?.data?.error;
+      toast({ title: 'Warning', description: error_res.message });
+      return null;
+    }
+  }
+
+  /**
+   * Verifies the user's account.
+   * @param code - The verification code sent to the user.
+   * @param verification_type - The type of verification (email or phone).
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
+  const verifyAccount = async (
+    code: string,
+    verification_type: string
+  ): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      await authService.verifyAccount(code);
+      await authService.verifyAccount(code, verification_type);
 
-      // Update local user state
       const updatedUser = { ...user, isVerified: true };
       setUser(updatedUser);
 
@@ -180,7 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Verification failed",
         description:
@@ -191,20 +220,100 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Determine admin status
+  /**
+   * Resends the verification code to the user.
+   * @param verification_type - The type of verification (email or phone).
+   * @returns A promise that resolves to a boolean indicating success or failure.
+   */
+  const resendVerification = async (
+    verification_type: 'email' | 'phone'
+  ): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to resend verification.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      await authService.resendVerification(verification_type);
+      
+      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
+      
+      toast({
+        title: "Verification code sent",
+        description: `A new verification code has been sent to your ${verificationMethod}.`,
+      });
+
+      return true;
+    } catch (error: any) {
+      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
+      
+      toast({
+        title: "Failed to resend verification",
+        description:
+          error.response?.data?.detail || 
+          `Could not send verification code to your ${verificationMethod}. Please try again.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  /**
+   * Refreshes the user data.
+   * @returns A promise that resolves to void.
+   */
+  const refreshUser = async (): Promise<void> => {
+    if (!user) return; // Early return if no user is logged in
+
+    try {
+      const userData = await authService.getCurrentUser();
+      
+      const updatedUser: User = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        isAdmin: userData.is_admin,
+        isVerified: userData.is_verified,
+      };
+
+      setUser(updatedUser);
+    } catch (error: any) {
+      console.error("Failed to refresh user:", error);
+      
+      // If the token is invalid, sign out the user
+      if (error.response?.status === 401) {
+        signout();
+      } else {
+        toast({
+          title: "Failed to refresh user data",
+          description: "Could not update your profile information.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const isAdmin = !!user?.isAdmin;
 
   const value = {
     user,
-    isAuthenticated: 
-      // true, 
-      !!user,
+    isAuthenticated: !!user,
     isLoading,
     signin,
     signup,
     signout,
     verifyAccount,
+    resendVerification,
+    findUser,
+    refreshUser,
     isAdmin,
+    isAdminPanelView,
+    setIsAdminPanelView,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,5 +1,5 @@
-import React, { useState, ReactElement } from "react";
-import { Bell } from "lucide-react";
+import React, { ReactElement, useState } from "react";
+import { Bell, Wifi, WifiOff, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,92 +10,75 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/use-auth";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useNavigate } from "react-router-dom";
 
-interface Transaction {
-  id: string;
-  type: 'received' | 'system';
-  amount: number;
-  from: string;
-  timestamp: Date;
-  read: boolean;
-}
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
+dayjs.extend(relativeTime);
 
 export function NotificationDropdown(): ReactElement {
-  const { user } = useAuth();
-  
-  // This would typically come from an API call or context
-  const [notifications, setNotifications] = useState<Transaction[]>([
-    {
-      id: "1",
-      type: "received",
-      amount: 50.0,
-      from: "Sarah Johnson",
-      timestamp: new Date(Date.now() - 30 * 60000), // 30 mins ago
-      read: false,
-    },
-    {
-      id: "2",
-      type: "system",
-      amount: 0,
-      from: "System",
-      timestamp: new Date(Date.now() - 2 * 3600000), // 2 hours ago
-      read: false,
-    },
-    {
-      id: "3",
-      type: "received",
-      amount: 25.75,
-      from: "Michael Chen",
-      timestamp: new Date(Date.now() - 24 * 3600000), // 1 day ago
-      read: true,
-    }
-  ]);
+  const { 
+    notifications, 
+    unreadCount, 
+    loading, 
+    isWebSocketConnected,
+    markAllAsRead,
+    deleteNotification
+  } = useNotifications();
+  const navigate = useNavigate();
+  const [deletingNotificationId, setDeletingNotificationId] = useState<string | null>(null);
 
-  const unreadCount: number = notifications.filter((notif: Transaction) => !notif.read).length;
-
-  const markAsRead = (id: string): void => {
-    setNotifications(
-      notifications.map((notif: Transaction) =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const markAllAsRead = (): void => {
-    setNotifications(
-      notifications.map((notif: Transaction) => ({ ...notif, read: true }))
-    );
-  };
-
+  /**
+   * Formats a date to a human-readable time ago format.
+   * @param date - The date to format.
+   * @returns A string representing the time ago.
+   */
   const formatTime = (date: Date): string => {
-    const now: Date = new Date();
-    const diffMs: number = now.getTime() - date.getTime();
-    const diffMins: number = Math.floor(diffMs / 60000);
+    const timeAgo = dayjs(date + "Z").fromNow();
+    return timeAgo;
+  };
+
+  /**
+   * Handles the click event for a notification.
+   * @param notificationId - The ID of the notification to view.
+   */
+  const handleNotificationClick = async (notificationId: string): Promise<void> => {
+    navigate(`/notifications/?id=${notificationId}`);
+  };
+
+  /**
+   * Handles the delete notification event.
+   * @param e - The mouse event.
+   * @param notificationId - The ID of the notification to delete.
+   */
+  const handleDeleteNotification = async (e: React.MouseEvent, notificationId: string): Promise<void> => {
+    e.stopPropagation();
     
-    if (diffMins < 60) {
-      return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
-    } else if (diffMins < 24 * 60) {
-      const hours: number = Math.floor(diffMins / 60);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else {
-      const days: number = Math.floor(diffMins / (24 * 60));
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
+    setDeletingNotificationId(notificationId);
+    
+    try {
+      await deleteNotification(notificationId);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    } finally {
+      setDeletingNotificationId(null);
     }
   };
 
-  const handleNotificationClick = (id: string): void => {
-    markAsRead(id);
-  };
-
-  const getNotificationTitle = (notification: Transaction): string => {
-    return notification.type === 'received' ? 'Payment Received' : 'System Notification';
-  };
-
-  const getNotificationMessage = (notification: Transaction): string => {
-    return notification.type === 'received' 
-      ? `${notification.from} sent you $${notification.amount.toFixed(2)}` 
-      : 'Your account has been verified successfully.';
+  /**
+   * Sorts notifications by timestamp in descending order.
+   * If no notifications are available, it uses mock notifications.
+   * @returns An array of sorted notifications.
+   */
+  const sortedNotifications = notifications.sort((a, b) => 
+    b.timestamp.getTime() - a.timestamp.getTime()
+  );
+  
+  // Handles navigation to the notifications page.
+  const handleToNotification = (): void => {
+    navigate('/notifications');
   };
 
   return (
@@ -109,19 +92,39 @@ export function NotificationDropdown(): ReactElement {
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full"></span>
+            <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
           )}
+          <span 
+            className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full ${
+              isWebSocketConnected ? 'bg-green-500' : 'bg-red-500'
+            }`}
+            title={isWebSocketConnected ? 'Real-time connected' : 'Real-time disconnected'}
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notifications</span>
+          <div className="flex items-center gap-2">
+            <span>Notifications</span>
+            {isWebSocketConnected ? (
+              <span title="Real-time connected">
+                <Wifi className="h-4 w-4 text-green-500" />
+              </span>
+            ) : (
+              <span title="Real-time disconnected">
+                <WifiOff className="h-4 w-4 text-red-500" />
+              </span>
+            )}
+          </div>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-xs h-7" 
               onClick={markAllAsRead}
+              disabled={loading}
             >
               Mark all as read
             </Button>
@@ -129,39 +132,82 @@ export function NotificationDropdown(): ReactElement {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <div className="max-h-80 overflow-y-auto">
-          {notifications.length > 0 ? (
+          {loading ? (
+            <div className="p-4 text-center text-muted-foreground">
+              Loading notifications...
+            </div>
+          ) : sortedNotifications.length > 0 ? (
             <DropdownMenuGroup>
-              {notifications.map((notification: Transaction) => (
-                <DropdownMenuItem 
-                  key={notification.id}
-                  className={`p-3 cursor-pointer ${!notification.read ? 'bg-muted/50' : ''}`}
-                  onClick={() => handleNotificationClick(notification.id)}
-                >
-                  <div className="flex flex-col space-y-1 w-full">
-                    <div className="flex justify-between items-start">
-                      <span className="font-medium">
-                        {getNotificationTitle(notification)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(notification.timestamp)}
-                      </span>
+              {sortedNotifications.slice(0, 10).map((notification) => {
+                const isDeleting = deletingNotificationId === notification.id;
+                
+                return (
+                  <DropdownMenuItem 
+                    key={notification.id}
+                    className={`
+                      p-0 cursor-pointer group relative
+                      ${!notification.read ? 'bg-muted/50' : ''}
+                      ${isDeleting ? 'opacity-50 pointer-events-none' : ''}
+                    `}
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
+                    <div className="flex w-full">
+                      {/* Main notification content */}
+                      <div className="flex flex-col space-y-1 w-full p-3 pr-10">
+                        <div className="flex justify-between items-start">
+                          <span className="font-medium">
+                            {notification.title}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              {formatTime(notification.timestamp)}
+                            </span>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        {notification.metadata?.amount && (
+                          <p className="text-xs font-medium text-green-600">
+                            ${notification.metadata?.amount.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Delete button - positioned absolutely to overlay on hover */}
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                          onClick={(e) => handleDeleteNotification(e, notification.id)}
+                          disabled={isDeleting}
+                          title="Delete notification"
+                        >
+                          {isDeleting ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {getNotificationMessage(notification)}
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-              ))}
+                  </DropdownMenuItem>
+                );
+              })}
             </DropdownMenuGroup>
           ) : (
             <div className="p-4 text-center text-muted-foreground">
-              You have no new notifications
+              You have no notifications
             </div>
           )}
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="justify-center" asChild>
-          <a href="/history" className="w-full text-center">View all transactions</a>
+          <a href="#" onClick={handleToNotification} className="w-full text-center">View all notifications</a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

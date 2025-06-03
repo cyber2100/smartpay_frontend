@@ -1,144 +1,130 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useAuth, User } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
-import { walletService, transactionService, adminService } from '@/services/api';
+import { walletService } from '@/services/api';
 
-// Types
-export type Transaction = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  recipientId: string;
-  recipientName: string;
-  amount: number;
-  status: 'completed' | 'pending' | 'failed';
-  description?: string;
-  timestamp: Date;
-};
+import { Transaction } from '@/types/payment';
 
-export type WalletContextType = {
+type WalletContextType = {
   balance: number;
+  isLoading: boolean;
   transactions: Transaction[];
-  topUp: (amount: number) => Promise<boolean>;
+  withdraw: (amount: number, cardId: string) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
+  deposit: (cardId: string, amount: number) => Promise<boolean>;
   getTransactions: () => Promise<Transaction[]>;
   allTransactions: Transaction[];
   allUsers: User[];
 };
 
-// Context
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
+/**
+ * WalletProvider component to provide wallet-related context to the application.
+ *
+ * @param param0 - The props for the provider component.
+ * @returns The WalletProvider component.
+ */
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(true);
   
   // Initialize balance and fetch transactions when user changes
   useEffect(() => {
-    const loadWalletData = async () => {
-      if (isAuthenticated && user) {
-        try {
-          // Get user balance
-          const userBalance = await walletService.getBalance();
-          setBalance(userBalance);
-          
-          // Get user transactions
-          const userTransactionData = await transactionService.getUserTransactions();
-          
-          // Transform API transactions to our app format
-          const formattedTransactions = userTransactionData.map((tx: any) => ({
-            id: tx.id,
-            senderId: tx.sender_id,
-            senderName: tx.sender_name,
-            recipientId: tx.recipient_id,
-            recipientName: tx.recipient_name,
-            amount: tx.amount,
-            status: tx.status as 'completed' | 'pending' | 'failed',
-            description: tx.description,
-            timestamp: new Date(tx.timestamp)
-          }));
-          
-          setTransactions(formattedTransactions);
-          
-          // If admin, fetch all transactions and users
-          if (isAdmin) {
-            try {
-              const allTxData = await transactionService.getAllTransactions();
-              const formattedAllTx = allTxData.map((tx: any) => ({
-                id: tx.id,
-                senderId: tx.sender_id,
-                senderName: tx.sender_name,
-                recipientId: tx.recipient_id,
-                recipientName: tx.recipient_name,
-                amount: tx.amount,
-                status: tx.status as 'completed' | 'pending' | 'failed',
-                description: tx.description,
-                timestamp: new Date(tx.timestamp)
-              }));
-              setAllTransactions(formattedAllTx);
-              
-              const allUsersData = await adminService.getAllUsers();
-              const formattedUsers = allUsersData.map((u: any) => ({
-                id: u.id,
-                name: u.name,
-                email: u.email,
-                phone: u.phone,
-                isAdmin: u.is_admin,
-                balance: u.balance,
-                isVerified: u.is_verified
-              }));
-              setAllUsers(formattedUsers);
-            } catch (error) {
-              console.error('Error fetching admin data:', error);
-            }
-          }
-        } catch (error) {
-          console.error('Error loading wallet data:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load wallet data",
-            variant: "destructive"
-          });
-        }
-      } else {
-        setBalance(0);
-        setTransactions([]);
-        setAllTransactions([]);
-        setAllUsers([]);
-      }
-    };
-    
-    loadWalletData();
-  }, [isAuthenticated, user, isAdmin, toast]);
-  
-  // Top up wallet
-  const topUp = async (amount: number): Promise<boolean> => {
-    if (!isAuthenticated || !user) return false;
+    if(isAuthenticated && user?.isVerified) {
+      loadWalletData();
+    } else {
+      setBalance(0);
+      setTransactions([]);
+      setAllTransactions([]);
+      setAllUsers([]);
+    }
+  }, [isAuthenticated, user?.isVerified]);
+
+  /**
+   * Load wallet data including balance and transactions.
+   * This function fetches the user's balance and transactions from the wallet service.
+   * It also formats the transactions to match the expected structure.
+   * If an error occurs, it displays a toast notification.
+   */
+  const loadWalletData = async () => {
+    setIsLoading(true);
+
+    try {
+      const userBalance = await walletService.getBalance();
+      setBalance(userBalance);
+      
+      const userTransactionData = await walletService.getTransactions();
+      
+      const formattedTransactions = userTransactionData.map((tx: any) => ({
+        ...tx,
+        senderId: tx.sender_id,
+        recipientId: tx.recipient_id,
+        cardId: tx.card_id,
+        status: tx.status as 'completed' | 'pending' | 'failed',
+        timestamp: tx.created_at
+      }));
+      
+      setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error loading wallet data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load wallet data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Refreshes the user's transaction history.
+   * @returns {Promise<void>}
+   */
+  const refreshTransactions = async () => {
+    if (!isAuthenticated || !user) return;
+    setIsLoading(true);
     
     try {
-      const result = await walletService.topUp(amount);
-      
-      // Update local balance
-      setBalance(result.new_balance);
-      
-      // Refresh transactions
-      const userTransactionData = await transactionService.getUserTransactions();
+      const userTransactionData = await walletService.getTransactions();
       const formattedTransactions = userTransactionData.map((tx: any) => ({
-        id: tx.id,
+        ...tx,
         senderId: tx.sender_id,
-        senderName: tx.sender_name,
         recipientId: tx.recipient_id,
-        recipientName: tx.recipient_name,
-        amount: tx.amount,
+        cardId: tx.card_id,
         status: tx.status as 'completed' | 'pending' | 'failed',
-        description: tx.description,
-        timestamp: new Date(tx.timestamp)
+        timestamp: tx.created_at
       }));
       setTransactions(formattedTransactions);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  /**
+   * Withdraws money from the user's wallet.
+   * @param amount - The amount to withdraw.
+   * @param cardId - The ID of the card to withdraw from.
+   * @returns {Promise<boolean>} - Whether the withdrawal was successful.
+   */
+  const withdraw = async (amount: number, cardId: string): Promise<boolean> => {
+    if (!isAuthenticated || !user) return false;
+
+    setIsLoading(true);    
+    try {
+      const result = await walletService.withdraw(amount, cardId);
+      
+      setBalance(result.balance);
+      
+      await refreshTransactions();
       
       toast({
         title: "Top up successful",
@@ -153,39 +139,112 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Deposits money into the user's wallet.
+   * @param cardId - The ID of the card to deposit from.
+   * @param amount - The amount to deposit.
+   * @returns {Promise<boolean>} - Whether the deposit was successful.
+   */
+  const deposit = async (cardId: string, amount: number): Promise<boolean> => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to make a deposit.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Deposit amount must be greater than zero.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!cardId) {
+      toast({
+        title: "Payment method required",
+        description: "Please select a payment card.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const result = await walletService.deposit(cardId, amount);
+      
+      if (result.balance !== undefined) {
+        setBalance(result.balance);
+      } else {
+        setBalance(prevBalance => prevBalance + amount);
+      }
+      
+      await refreshTransactions();
+      
+      toast({
+        title: "Deposit successful",
+        description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been added to your wallet.`
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error('Deposit error:', error);
+      
+      let errorMessage = "Failed to process deposit.";
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Deposit failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  // Transfer money
+  /**
+   * Transfers money to another user.
+   * @param recipientIdentifier - The identifier of the recipient (email or user ID).
+   * @param amount - The amount to transfer.
+   * @param description - An optional description for the transfer.
+   * @returns {Promise<boolean>} - Whether the transfer was successful.
+   */
   const transfer = async (recipientIdentifier: string, amount: number, description?: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
+    setIsLoading(true);
     
     try {
-      const result = await walletService.transfer(recipientIdentifier, amount, description);
+      await walletService.transfer(recipientIdentifier, amount, description);
       
-      // Update local balance
-      setBalance(result.new_balance);
-      
-      // Refresh transactions
-      const userTransactionData = await transactionService.getUserTransactions();
-      const formattedTransactions = userTransactionData.map((tx: any) => ({
-        id: tx.id,
-        senderId: tx.sender_id,
-        senderName: tx.sender_name,
-        recipientId: tx.recipient_id,
-        recipientName: tx.recipient_name,
-        amount: tx.amount,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        description: tx.description,
-        timestamp: new Date(tx.timestamp)
-      }));
-      setTransactions(formattedTransactions);
+      await refreshTransactions();
       
       toast({
         title: "Transfer successful",
         description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been sent.`
       });
       
+      setBalance(balance - amount);
+
       return true;
     } catch (error: any) {
       toast({
@@ -194,39 +253,48 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  // Get user's transactions
-  const getTransactions = () => {
-    if (!user) return Promise.resolve([]);
-    
-    return transactionService.getUserTransactions()
-      .then((userTransactionData: any) => {
-        return userTransactionData.map((tx: any) => ({
-          id: tx.id,
-          senderId: tx.sender_id,
-          senderName: tx.sender_name,
-          recipientId: tx.recipient_id,
-          recipientName: tx.recipient_name,
-          amount: tx.amount,
-          status: tx.status as 'completed' | 'pending' | 'failed',
-          description: tx.description,
-          timestamp: new Date(tx.timestamp)
-        }));
-      })
-      .catch((error) => {
-        console.error('Error fetching transactions:', error);
-        return [];
-      });
+  /**
+   * Fetches the user's transaction history.
+   * @returns {Promise<Transaction[]>} - A promise that resolves to the user's transactions.
+   */
+  const getTransactions = async (): Promise<Transaction[]> => {
+    if (!user) return [];
+
+    setIsLoading(true);
+
+    try {
+      const userTransactionData = await walletService.getTransactions();
+      const result = userTransactionData.map((tx: any) => ({
+        ...tx,
+        senderId: tx.sender_id,
+        recipientId: tx.recipient_id,
+        cardId: tx.card_id,
+        status: tx.status as 'completed' | 'pending' | 'failed',
+        timestamp: tx.created_at
+      }));
+      setTransactions(result);
+      return result;
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      return [];
+    } finally { 
+      setIsLoading(false);
+    }
   };
   
   // Value to provide
   const value: WalletContextType = {
     balance,
+    isLoading,
     transactions,
-    topUp,
+    withdraw,
     transfer,
+    deposit,
     getTransactions,
     allTransactions,
     allUsers

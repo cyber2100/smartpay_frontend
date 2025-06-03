@@ -1,68 +1,50 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowUp, Calendar, Search } from "lucide-react";
-import { AnimatedBackground } from '@/components/animated-background';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, ArrowUp, ArrowDown, Clock, CreditCard, DollarSign, Plus, Minus, PlusIcon, MinusIcon, Search, Filter, X, User, Calendar, Hash, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { useNavigate } from 'react-router-dom';
+import { AnimatedBackground } from '@/components/animated-background';
 import { useAuth } from '@/hooks/use-auth';
-import { useWallet, Transaction } from '@/hooks/use-wallet';
+import { useWallet } from '@/hooks/use-wallet';
+import { Transaction } from '@/types/payment';
+import { MoneyLoadingOverlay } from '@/components/MoneySpinner'; // Import the spinner
 
-const History = () => {
+const History: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { getTransactions } = useWallet();
+  const { transactions, isLoading } = useWallet();
+  
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
-  // Redirect if not authenticated
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/signin');
-    }
-  }, [isAuthenticated, navigate]);
-  
-  // Get all transactions
   useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const transactions = await getTransactions();
-        setAllTransactions(transactions);
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-        setAllTransactions([]);
-      }
-    };
+    if (!isAuthenticated) {
+      return navigate('/signin');
+    } else if (!user?.isVerified) {
+      return navigate('/verify');
+    }
+  }, []);
+
+  /**
+   * Formats a timestamp into a readable date string.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted date string.
+   */
+  const formatDate = (timestamp: Date | string): string => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
-    fetchTransactions();
-  }, [getTransactions]);
-  
-  // Apply filters
-  const filteredTransactions = allTransactions.filter((tx) => {
-    // Text search
-    const searchMatch = 
-      tx.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.senderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (tx.description && tx.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    // Type filter
-    let typeMatch = true;
-    if (filterType === 'sent' && tx.senderId !== user?.id) {
-      typeMatch = false;
-    } else if (filterType === 'received' && tx.recipientId !== user?.id) {
-      typeMatch = false;
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
     }
     
-    return searchMatch && typeMatch;
-  });
-
-  // Format date for display
-  const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -70,163 +52,525 @@ const History = () => {
     }).format(date);
   };
 
-  // Group transactions by date (for day headers)
-  const groupByDate = (transactions: Transaction[]) => {
-    const groups: { [key: string]: Transaction[] } = {};
+  /**
+   * Formats a timestamp into a full date string.
+   * @param timestamp - The timestamp to format.
+   * @returns The formatted full date string.
+   */
+  const formatFullDate = (timestamp: Date | string): string => {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
     
-    transactions.forEach((tx) => {
-      const date = new Date(tx.timestamp);
-      const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      
-      groups[dateKey].push(tx);
-    });
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
     
-    // Convert to array of [date, transactions]
-    return Object.entries(groups).sort((a, b) => {
-      // Sort by date (newest first)
-      return new Date(b[0]).getTime() - new Date(a[0]).getTime();
-    });
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(date);
   };
-  
-  const groupedTransactions = groupByDate(filteredTransactions);
-  
-  // Format date for group headers
-  const formatGroupDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+
+  /**
+   * Gets the transaction title based on the type and parties involved.
+   * @param transaction - The transaction to get the title for.
+   * @returns The transaction title.
+   */
+  const getTransactionTitle = (transaction: Transaction): string => {
+    if (!user?.id) return 'Transaction';
     
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    
-    if (date.toISOString().split('T')[0] === today.toISOString().split('T')[0]) {
-      return 'Today';
-    } else if (date.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]) {
-      return 'Yesterday';
-    } else {
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
+    switch (transaction.type) {
+      case 'deposit':
+        return 'Deposit to Account';
+      case 'withdraw':
+        return 'Withdrawal from Account';
+      case 'transfer':
+        if (transaction.senderId === user.id) {
+          const recipientName = transaction.recipient?.fullname || 
+                               transaction.recipient?.email || 
+                               'Unknown User';
+          return `Sent to ${recipientName}`;
+        } 
+        else if (transaction.recipientId === user.id) {
+          const senderName = transaction.sender?.fullname || 
+                            transaction.sender?.email || 
+                            'Unknown User';
+          return `Received from ${senderName}`;
+        }
+        return 'Transfer';
+      default:
+        return `${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)} Transaction`;
     }
   };
 
-  return (
-    <div className="min-h-screen pb-16">
-      <AnimatedBackground />
-      
-      <div className="container px-4 pt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Transaction History</CardTitle>
-            <CardDescription>View all your past transactions</CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+  /**
+   * Gets the transaction display information.
+   * @param transaction - The transaction to get the display information for.
+   * @returns The transaction display information.
+   */
+  const getTransactionDisplay = (transaction: Transaction) => {
+    if (!user?.id) {
+      return {
+        icon: <DollarSign className="h-4 w-4" />,
+        bgColor: 'bg-gray-500/10',
+        textColor: 'text-gray-600',
+        amountColor: 'text-gray-600'
+      };
+    }
+
+    const isIncoming = transaction.recipientId === user.id;
+    const isOutgoing = transaction.senderId === user.id;
+    
+    switch (transaction.type) {
+      case 'deposit':
+        return {
+          icon: <PlusIcon className="h-4 w-4" />,
+          bgColor: 'bg-green-500/10',
+          textColor: 'text-green-600',
+          amountColor: 'text-green-600'
+        };
+      case 'withdraw':
+        return {
+          icon: <MinusIcon className="h-4 w-4" />,
+          bgColor: 'bg-red-500/10',
+          textColor: 'text-red-600',
+          amountColor: 'text-red-600'
+        };
+      case 'transfer':
+        if (isIncoming && !isOutgoing) {
+          return {
+            icon: <ArrowDown className="h-4 w-4" />,
+            bgColor: 'bg-blue-500/10',
+            textColor: 'text-blue-600',
+            amountColor: 'text-green-600'
+          };
+        } else if (isOutgoing) {
+          return {
+            icon: <ArrowUp className="h-4 w-4" />,
+            bgColor: 'bg-orange-500/10',
+            textColor: 'text-orange-600',
+            amountColor: 'text-red-600'
+          };
+        }
+        return {
+          icon: <ArrowRight className="h-4 w-4" />,
+          bgColor: 'bg-purple-500/10',
+          textColor: 'text-purple-600',
+          amountColor: 'text-purple-600'
+        };
+      default:
+        return {
+          icon: <DollarSign className="h-4 w-4" />,
+          bgColor: 'bg-gray-500/10',
+          textColor: 'text-gray-600',
+          amountColor: 'text-gray-600'
+        };
+    }
+  };
+
+  /**
+   * Gets the transaction amount for display.
+   * @param transaction - The transaction to get the amount for.
+   * @returns The transaction amount.
+   */
+  const getTransactionAmount = (transaction: Transaction): number => {
+    if (!user?.id) return transaction.amount;
+    
+    switch (transaction.type) {
+      case 'deposit':
+        return transaction.amount;
+      case 'withdraw':
+        return -transaction.amount;
+      case 'transfer':
+        if (transaction.recipientId === user.id && transaction.senderId !== user.id) {
+          return transaction.amount;
+        } 
+        else if (transaction.senderId === user.id) {
+          return -transaction.amount;
+        }
+        return transaction.amount;
+      default:
+        return transaction.amount;
+    }
+  };
+
+  // Get status badge variant
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  /**
+   * Filters transactions based on search term and selected category.
+   * @returns The filtered transactions.
+   */
+  const filteredTransactions = React.useMemo(() => {
+    if (!transactions) return [];
+
+    let filtered = [...transactions];
+
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(transaction => transaction.type === selectedCategory);
+    }
+
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(transaction => {
+        const title = getTransactionTitle(transaction).toLowerCase();
+        const description = transaction.description?.toLowerCase() || '';
+        const amount = transaction.amount.toString();
+        const senderName = transaction.sender?.fullname?.toLowerCase() || transaction.sender?.email?.toLowerCase() || '';
+        const recipientName = transaction.recipient?.fullname?.toLowerCase() || transaction.recipient?.email?.toLowerCase() || '';
+        const cardName = transaction.card?.name?.toLowerCase() || '';
+        
+        return title.includes(searchLower) ||
+               description.includes(searchLower) ||
+               amount.includes(searchLower) ||
+               senderName.includes(searchLower) ||
+               recipientName.includes(searchLower) ||
+               cardName.includes(searchLower);
+      });
+    }
+
+    return filtered.sort((a, b) => {
+      const dateA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+      const dateB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [transactions, selectedCategory, searchTerm, user?.id]);
+
+  // Get unique transaction types for filter dropdown
+  const transactionTypes = React.useMemo(() => {
+    if (!transactions) return [];
+    const types = [...new Set(transactions.map(t => t.type))];
+    return types.map(type => ({
+      value: type,
+      label: type.charAt(0).toUpperCase() + type.slice(1)
+    }));
+  }, [transactions]);
+
+  // Handle transaction row click
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDetailDialogOpen(true);
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+  };
+
+  // Show loading spinner during initial load
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto pb-16">
+          <AnimatedBackground />
+          <div className="container px-4 pt-8 max-w-4ml mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">Transaction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MoneyLoadingOverlay 
+                  size="lg" 
+                  message="Loading your transactions..." 
+                  className="py-8"
                 />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto pb-16">
+        <AnimatedBackground />
+        
+        <div className="container px-4 pt-8 max-w-4ml mx-auto">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <CardTitle className="text-2xl font-bold ">Transaction History</CardTitle>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search transactions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full sm:w-64"
+                    />
+                  </div>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {transactionTypes.map(type => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(searchTerm || selectedCategory !== 'all') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
               </div>
-              
-              <div className="w-full md:w-48">
-                <Select
-                  value={filterType}
-                  onValueChange={setFilterType}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Filter by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Transactions</SelectItem>
-                    <SelectItem value="sent">Sent</SelectItem>
-                    <SelectItem value="received">Received</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              {(searchTerm || selectedCategory !== 'all') && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Showing {filteredTransactions.length} of {transactions?.length || 0} transactions</span>
+                  {searchTerm && (
+                    <Badge variant="secondary" className="text-xs">
+                      Search: "{searchTerm}"
+                    </Badge>
+                  )}
+                  {selectedCategory !== 'all' && (
+                    <Badge variant="secondary" className="text-xs">
+                      Type: {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </CardHeader>
             
-            {/* Transactions list */}
-            <div className="space-y-6">
-              {groupedTransactions.length > 0 ? (
-                groupedTransactions.map(([dateKey, txs]) => (
-                  <div key={dateKey}>
-                    {/* Date header */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <h4 className="text-sm font-medium">{formatGroupDate(dateKey)}</h4>
-                    </div>
-                    
-                    {/* Transactions for this date */}
-                    <div className="space-y-2">
-                      {txs.map((tx) => (
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <MoneyLoadingOverlay size="md" message="Updating..." />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredTransactions && filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction: Transaction) => {
+                      const display = getTransactionDisplay(transaction);
+                      const amount = getTransactionAmount(transaction);
+                      const title = getTransactionTitle(transaction);
+                      
+                      return (
                         <div 
-                          key={tx.id} 
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card"
+                          key={transaction.id} 
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleTransactionClick(transaction)}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full 
-                              ${tx.senderId === user?.id ? 'bg-destructive/10' : 'bg-primary/10'}`
-                            }>
-                              {tx.senderId === user?.id ? (
-                                <ArrowRight className="h-4 w-4" />
-                              ) : (
-                                <ArrowUp className="h-4 w-4" />
-                              )}
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2 rounded-full ${display.bgColor}`}>
+                              <div className={display.textColor}>
+                                {display.icon}
+                              </div>
                             </div>
                             
                             <div>
                               <p className="font-medium">
-                                {tx.senderId === user?.id ? `To ${tx.recipientName}` : `From ${tx.senderName}`}
+                                {title}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {tx.description || 'Money transfer'}
-                              </p>
+                              {transaction.description && (
+                                <p className="text-sm text-muted-foreground">
+                                  {transaction.description}
+                                </p>
+                              )}
+                              {transaction.card && (
+                                <p className="text-xs text-muted-foreground">
+                                  Card: {transaction.card.name}
+                                </p>
+                              )}
+                              {transaction.status && transaction.status !== 'completed' && (
+                                <Badge 
+                                  variant={getStatusBadgeVariant(transaction.status)}
+                                  className="text-xs mt-1"
+                                >
+                                  {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                                </Badge>
+                              )}
                             </div>
                           </div>
                           
                           <div className="text-right">
-                            <p className={`font-medium 
-                              ${tx.senderId === user?.id ? 'text-destructive' : 'text-primary'}`
-                            }>
-                              {tx.senderId === user?.id ? '-' : '+'}
-                              ${tx.amount.toLocaleString('en-US', {
+                            <p className={`font-semibold ${amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {amount < 0 ? '-' : '+'}
+                              ${Math.abs(amount).toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                               })}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(tx.timestamp)}
+                            <p className="text-xs flex items-center justify-end gap-1 text-muted-foreground mt-1">
+                              <Clock className="h-3 w-3" />
+                              {formatDate(transaction.timestamp)}
                             </p>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })
+                  ) : searchTerm || selectedCategory !== 'all' ? (
+                    <div className="text-center p-8 border rounded-lg">
+                      <Search className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No transactions match your search</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try adjusting your search terms or filters
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={clearFilters}
+                        className="mt-3"
+                      >
+                        Clear filters
+                      </Button>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground">No matching transactions found</p>
+                  ) : (
+                    <div className="text-center p-8 border rounded-lg">
+                      <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">No transactions yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Start by making a deposit or transfer
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Transaction Details
+            </DialogTitle>
+            <DialogDescription>
+              Complete information about this transaction
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTransaction && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full ${getTransactionDisplay(selectedTransaction).bgColor}`}>
+                  <div className={getTransactionDisplay(selectedTransaction).textColor}>
+                    {getTransactionDisplay(selectedTransaction).icon}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {getTransactionTitle(selectedTransaction)}
+                  </h3>
+                  <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>
+                    {selectedTransaction.status.charAt(0).toUpperCase() + selectedTransaction.status.slice(1)}
+                  </Badge>
+                </div>
+              </div>
+              <div className="text-center p-4 bg-muted/30 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Amount</p>
+                <p className={`text-3xl font-bold ${getTransactionAmount(selectedTransaction) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {getTransactionAmount(selectedTransaction) < 0 ? '-' : '+'}
+                  ${Math.abs(getTransactionAmount(selectedTransaction)).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  })}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Hash className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Transaction ID</p>
+                    <p className="font-mono text-sm">{selectedTransaction.id}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date & Time</p>
+                    <p className="text-sm">{formatFullDate(selectedTransaction.timestamp)}</p>
+                  </div>
+                </div>
+
+                {selectedTransaction.description && (
+                  <div className="flex items-start gap-3">
+                    <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Description</p>
+                      <p className="text-sm">{selectedTransaction.description}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedTransaction.sender && (
+                  <div className="flex items-start gap-3">
+                    <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">From</p>
+                      <p className="text-sm font-medium">{selectedTransaction.sender.fullname}</p>
+                      <p className="text-xs text-muted-foreground">{selectedTransaction.sender.email}</p>
+                      {selectedTransaction.sender.phone && (
+                        <p className="text-xs text-muted-foreground">{selectedTransaction.sender.phone}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTransaction.recipient && (
+                  <div className="flex items-start gap-3">
+                    <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">To</p>
+                      <p className="text-sm font-medium">{selectedTransaction.recipient.fullname}</p>
+                      <p className="text-xs text-muted-foreground">{selectedTransaction.recipient.email}</p>
+                      {selectedTransaction.recipient.phone && (
+                        <p className="text-xs text-muted-foreground">{selectedTransaction.recipient.phone}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTransaction.card && (
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Payment Method</p>
+                      <p className="text-sm">{selectedTransaction.card.name}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default History;
-
