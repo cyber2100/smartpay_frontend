@@ -67,7 +67,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Error fetching cards:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to load your cards.",
+        description: error.response?.data?.detail?.msg || "Failed to load your cards.",
         variant: "destructive",
       });
       throw error;
@@ -79,7 +79,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add new card
   const addCard = async (cardData: Omit<PaymentCard, 'id'>): Promise<boolean> => {
     try {
-      const newCardId: string = await cardService.addCard(cardData);
+      await cardService.addCard(cardData);
 
       await getCards();
 
@@ -93,7 +93,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Error adding card:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to add card. Please check your information and try again.",
+        description: error.response?.data?.detail?.msg || "Failed to add card. Please check your information and try again.",
         variant: "destructive",
       });
       throw error;
@@ -121,7 +121,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Error updating card:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to update card. Please try again.",
+        description: error.response?.data?.detail?.msg || "Failed to update card. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -148,7 +148,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Error setting default card:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to set default card. Please try again.",
+        description: error.response?.data?.detail?.msg || "Failed to set default card. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -176,7 +176,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Error deleting card:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.detail || "Failed to delete card. Please try again.",
+        description: error.response?.data?.detail?.msg || "Failed to delete card. Please try again.",
         variant: "destructive",
       });
       throw error;

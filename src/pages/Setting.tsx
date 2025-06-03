@@ -341,7 +341,7 @@ export const SettingPage: React.FC = () => {
                       <Input 
                         id="fullName" 
                         className="pl-10" 
-                        value={user?.name || ""} 
+                        value={user?.fullname || ""} 
                         disabled 
                         readOnly
                       />

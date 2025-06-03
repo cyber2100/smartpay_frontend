@@ -5,7 +5,7 @@ import { authService } from "@/services/api";
 // Types
 export type User = {
   id: string;
-  name: string;
+  fullname: string;
   email: string;
   phone?: string;
   isAdmin?: boolean;
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         setUser({
           id: userData.id,
-          name: userData.name,
+          fullname: userData.name,
           email: userData.email,
           phone: userData.phone,
           isAdmin: userData.is_admin,
@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const appUser: User = {
         id: userData.id,
-        name: userData.name,
+        fullname: userData.name,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast({
         title: "Signin successful",
-        description: `Welcome back, ${appUser.name}!`,
+        description: `Welcome back, ${appUser.fullname}!`,
       });
 
       return true;
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Signin failed",
         description:
-          error.response?.data?.detail || "Invalid email or password.",
+          error.response?.data?.detail?.msg || "Failed to sign in.",
         variant: "destructive",
       });
       return false;
@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * @returns A promise that resolves to a boolean indicating success or failure.
    */
   const signup = async (
-    name: string,
+    fullname: string,
     phone: string,
     email: string,
     password: string
@@ -129,13 +129,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
-      const userData = await authService.signup(name, phone, email, password);
+      const userData = await authService.signup(fullname, phone, email, password);
 
       await authService.signin(email, password);
 
       const appUser: User = {
         id: userData.id,
-        name: userData.fullname,
+        fullname: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin || false,
@@ -145,15 +145,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(appUser);
       
       toast({
-        title: "Registration successful",
+        title: "Signup successful",
         description: "Please verify your account to continue.",
       });
 
       return true;
     } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error.response?.data?.detail || "Email already in use.",
+        title: "Signup failed",
+        description: error.response?.data?.detail?.msg || "Failed to signup.",
         variant: "destructive",
       });
       return false;
@@ -179,8 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await authService.findUser(emailOrPhone);
       return result;
     } catch (error) {
-      const error_res = error.response?.data?.error;
-      toast({ title: 'Warning', description: error_res.message });
+      const error_res = error.response?.data?.detail;
+      toast({ title: 'Warning', description: error_res.msg });
       return null;
     }
   }
@@ -213,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Verification failed",
         description:
-          error.response?.data?.detail || "Invalid verification code.",
+          error.response?.data?.detail?.msg || "Invalid verification code.",
         variant: "destructive",
       });
       return false;
@@ -254,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Failed to resend verification",
         description:
-          error.response?.data?.detail || 
+          error.response?.data?.detail?.msg || 
           `Could not send verification code to your ${verificationMethod}. Please try again.`,
         variant: "destructive",
       });
@@ -274,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       const updatedUser: User = {
         id: userData.id,
-        name: userData.name,
+        fullname: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,

@@ -101,13 +101,13 @@ export const authService = {
    * @returns A promise that resolves to the response data.
    */
   signup: async (
-    name: string,
+    fullname: string,
     phone: string,
     email: string,
     password: string
   ) => {
     const response = await api.post("/auth/register", {
-      name,
+      fullname,
       phone,
       email,
       password,

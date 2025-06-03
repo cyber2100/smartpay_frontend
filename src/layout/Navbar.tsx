@@ -96,7 +96,7 @@ export function Navbar(): ReactElement {
                       <DropdownMenuLabel>
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">
-                            {user?.name}
+                            {user?.fullname}
                             {isAdmin && <span className="ml-2 text-xs bg-primary text-primary-foreground px-1 rounded">Admin</span>}
                           </p>
                           <p className="text-xs leading-none text-muted-foreground">
