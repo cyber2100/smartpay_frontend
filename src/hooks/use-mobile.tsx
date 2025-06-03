@@ -9,7 +9,7 @@ const MOBILE_BREAKPOINT = 768
  * @returns {boolean} - Returns true if the device is mobile, false otherwise.
  */
 
-export function useIsMobile() {
+export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
 
   React.useEffect(() => {

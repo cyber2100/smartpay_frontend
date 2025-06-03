@@ -91,12 +91,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       await profileService.updatePhoneNumber(phoneNumber);
 
-      // When phone number is updated, verification status changes to false
       setVerificationStatus({
         isVerified: false
       });
 
-      // Refresh user data to get updated phone number
       if (refreshUser) {
         await refreshUser();
       }

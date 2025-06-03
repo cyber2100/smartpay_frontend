@@ -81,7 +81,6 @@ export const useTransactionStatistics = () => {
     
     try {
       if (isAuthenticated) {
-        // Try to fetch from API first
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
         
@@ -98,7 +97,6 @@ export const useTransactionStatistics = () => {
       setStatisticsData(null);
       setIsFromAPI(false);
 
-      // Show toast for API failure
       toast({
         title: "loadStatistics Error",
         description: "Backend connection failed.",

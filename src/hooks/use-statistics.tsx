@@ -65,7 +65,6 @@ export const useStatistics = (): StatisticsData => {
     
     try {
       if (isAuthenticated) {
-        // Try to fetch from API first
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
         
@@ -82,7 +81,6 @@ export const useStatistics = (): StatisticsData => {
       setStatisticsData(null);
       setIsFromAPI(false);
       
-      // Show toast for API failure
       toast({
         title: "loadStatistics Error",
         description: "Backend connection failed.",
@@ -98,6 +96,7 @@ export const useStatistics = (): StatisticsData => {
     await loadStatistics();
   }, [loadStatistics]);
 
+  // Filter and correct currency data
   const getFilteredCurrencyData = (): MonthlyData[] => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
