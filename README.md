@@ -49,7 +49,7 @@ npm run dev
 yarn dev
 ```
 
-5. Open your browser and visit: `http://localhost:8080`
+5. Open your browser and visit: `http://localhost:5000`
 
 ## Available Scripts
 
