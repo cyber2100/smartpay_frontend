@@ -431,6 +431,7 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="h-64 sm:h-80 lg:h-96">
+                {getChartData().some(item => item.revenue > 0 || item.received > 0 || item.sent > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={getChartData()}
@@ -507,7 +508,31 @@ const Dashboard: React.FC = () => {
                       />
                     )}
                   </LineChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer>): (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-12 w-12 text-muted-foreground">
+                        <svg
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          className="h-12 w-12"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Activity Data</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Your account activity chart will appear here once you start making transactions.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
