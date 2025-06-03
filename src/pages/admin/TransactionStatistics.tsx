@@ -107,7 +107,7 @@ const TransactionStatistics: React.FC = () => {
           <AlertDescription className="text-orange-800">
             <div className="flex items-center justify-between">
               <div>
-                <strong>Using Demo Data:</strong> API connection failed. Showing mock statistics for demonstration.
+                API connection failed.
                 {error && <div className="text-xs mt-1 opacity-75">Error: {error}</div>}
               </div>
               <Button

@@ -100,7 +100,7 @@ export const useTransactionStatistics = () => {
 
       // Show toast for API failure
       toast({
-        title: "Using Demo Data",
+        title: "loadStatistics Error",
         description: "Backend connection failed.",
         variant: "destructive",
       });

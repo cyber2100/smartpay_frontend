@@ -69,7 +69,6 @@ export function NotificationDropdown(): ReactElement {
 
   /**
    * Sorts notifications by timestamp in descending order.
-   * If no notifications are available, it uses mock notifications.
    * @returns An array of sorted notifications.
    */
   const sortedNotifications = notifications.sort((a, b) => 

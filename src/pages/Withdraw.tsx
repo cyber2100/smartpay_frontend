@@ -27,7 +27,7 @@ const Withdraw: React.FC = () => {
   const [withdrawSuccess, setWithdrawSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
 
-  // Remove navigation logic for demo
+  // Remove navigation logic
   useEffect(() => {
     if(paymentCards.length){
       const defaultCard = paymentCards.find(card => card.isDefault);

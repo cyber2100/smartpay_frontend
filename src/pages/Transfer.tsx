@@ -321,9 +321,6 @@ const Transfer: React.FC = () => {
                         required
                         disabled={isVerifying}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Demo recipients: jane@example.com or john@example.com
-                      </p>
                     </div>
 
                     <div className="space-y-2">
