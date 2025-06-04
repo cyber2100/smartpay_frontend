@@ -55,7 +55,7 @@ export const useWebSocket = ({
           console.log(":bell: Received notification:", newData);
           if (newData && onNewNotification) {
             onNewNotification(newData);
-            await loadWalletData();
+            loadWalletData();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

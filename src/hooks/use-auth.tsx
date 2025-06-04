@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Signin failed",
         description:
-          error.response?.data?.detail?.msg || "Failed to sign in.",
+          error.response?.data?.detail || "Failed to sign in.",
         variant: "destructive",
       });
       return false;
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       toast({
         title: "Signup failed",
-        description: error.response?.data?.detail?.msg || "Failed to signup.",
+        description: error.response?.data?.detail || "Failed to signup.",
         variant: "destructive",
       });
       return false;
@@ -179,8 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await authService.findUser(emailOrPhone);
       return result;
     } catch (error) {
-      const error_res = error.response?.data?.detail;
-      toast({ title: 'Warning', description: error_res.msg });
+      const error_res = error.response?.data;
+      toast({ title: 'Warning', description: error_res?.detail || 'User not found', variant: 'destructive' });
       return null;
     }
   }
@@ -213,7 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Verification failed",
         description:
-          error.response?.data?.detail?.msg || "Invalid verification code.",
+          error.response?.data?.detail || "Invalid verification code.",
         variant: "destructive",
       });
       return false;
@@ -254,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast({
         title: "Failed to resend verification",
         description:
-          error.response?.data?.detail?.msg || 
+          error.response?.data?.detail || 
           `Could not send verification code to your ${verificationMethod}. Please try again.`,
         variant: "destructive",
       });

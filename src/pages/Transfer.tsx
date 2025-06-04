@@ -16,7 +16,7 @@ interface UserSuggestion {
 }
 
 const Transfer: React.FC = () => {
-  const { user, isAuthenticated, findUser } = useAuth();
+  const { user, findUser } = useAuth();
   const { transfer: moneyTransfer, balance } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
