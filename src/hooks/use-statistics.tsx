@@ -67,11 +67,6 @@ export const useStatistics = (): StatisticsData => {
       if (isAuthenticated) {
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
-        
-        toast({
-          title: "Statistics Loaded",
-          description: "Successfully loaded latest transaction statistics from backend.",
-        });
       } else {
         setStatisticsData(null);
         setIsFromAPI(false);

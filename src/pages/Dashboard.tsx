@@ -36,11 +36,11 @@ import { useStatistics } from '@/hooks/use-statistics';
 
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { transactions, balance, loadWalletData } = useWallet();
+  const { transactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading } = useCard();
+  const { getChartData, financialData, refreshStatistics } = useStatistics();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
-  const { getChartData, financialData, refreshStatistics } = useStatistics();
   
   // Fetch transactions and cards from backend
   useEffect(() => {

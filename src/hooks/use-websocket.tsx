@@ -4,8 +4,7 @@ import { useWallet } from './use-wallet';
 
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
-  refreshTransactions?: () => void;
-  loadStatistics?: () => void;
+  loadWalletData?: () => void;
 }
 
 /**
@@ -16,7 +15,8 @@ interface UseWebSocketProps {
  * @returns {Object} - An object containing WebSocket connection status and methods to send messages, reconnect, and disconnect.
  */
 export const useWebSocket = ({
-  onNewNotification
+  onNewNotification,
+  loadWalletData,
 }: UseWebSocketProps = {}) => {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
@@ -24,7 +24,6 @@ export const useWebSocket = ({
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
-  const { loadWalletData } = useWallet();
   
 
   /**

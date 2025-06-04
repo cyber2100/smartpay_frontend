@@ -7,6 +7,7 @@ import { useTransactionStatistics } from './use-transation-statistics';
 
 import { Notification, NotificationContextType } from '@/types/notification';
 import { useStatistics } from './use-statistics';
+import { useWallet } from './use-wallet';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -18,6 +19,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
  */
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const { loadWalletData } = useWallet();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const unreadCountRef = useRef(unreadCount);
@@ -45,7 +47,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Initialize WebSocket
   const { isConnected: isWebSocketConnected } = useWebSocket({
-    onNewNotification: handleNewNotification
+    onNewNotification: handleNewNotification,
+    loadWalletData,
   });
 
   // Load notifications when user changes

@@ -82,11 +82,6 @@ export const useBalanceStatistics = () => {
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
         setIsFromAPI(true);
-        
-        toast({
-          title: "Statistics Loaded",
-          description: "Successfully loaded latest balance statistics from backend.",
-        });
       } else {
         setStatisticsData(null);
         setIsFromAPI(false);
