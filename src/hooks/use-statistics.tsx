@@ -65,14 +65,8 @@ export const useStatistics = (): StatisticsData => {
     
     try {
       if (isAuthenticated) {
-        // Try to fetch from API first
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
-        
-        toast({
-          title: "Statistics Loaded",
-          description: "Successfully loaded latest transaction statistics from backend.",
-        });
       } else {
         setStatisticsData(null);
         setIsFromAPI(false);
@@ -82,9 +76,8 @@ export const useStatistics = (): StatisticsData => {
       setStatisticsData(null);
       setIsFromAPI(false);
       
-      // Show toast for API failure
       toast({
-        title: "Using Demo Data",
+        title: "loadStatistics Error",
         description: "Backend connection failed.",
         variant: "destructive",
       });
@@ -98,6 +91,7 @@ export const useStatistics = (): StatisticsData => {
     await loadStatistics();
   }, [loadStatistics]);
 
+  // Filter and correct currency data
   const getFilteredCurrencyData = (): MonthlyData[] => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth();
@@ -122,12 +116,6 @@ export const useStatistics = (): StatisticsData => {
   const getChartData = () => {
     return correctedCurrencyData;
   };
-
-  useEffect(() => {
-    if(isAuthenticated && user?.isVerified) {
-      fetchStatistics();
-    }
-  }, [isAuthenticated, user?.isVerified]);
 
   const result = {
     financialData,

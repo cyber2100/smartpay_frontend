@@ -81,14 +81,8 @@ export const useTransactionStatistics = () => {
     
     try {
       if (isAuthenticated) {
-        // Try to fetch from API first
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
-        
-        toast({
-          title: "Statistics Loaded",
-          description: "Successfully loaded latest transaction statistics from backend.",
-        });
       } else {
         setStatisticsData(null);
         setIsFromAPI(false);
@@ -98,9 +92,8 @@ export const useTransactionStatistics = () => {
       setStatisticsData(null);
       setIsFromAPI(false);
 
-      // Show toast for API failure
       toast({
-        title: "Using Demo Data",
+        title: "loadStatistics Error",
         description: "Backend connection failed.",
         variant: "destructive",
       });
@@ -113,12 +106,6 @@ export const useTransactionStatistics = () => {
   const refreshStatistics = useCallback(async () => {
     await loadStatistics();
   }, [loadStatistics]);
-
-  useEffect(() => {
-    if(isAdmin && isAuthenticated){
-      fetchStatistics();
-    }
-  }, [isAdmin, isAuthenticated])
 
   return {
     statisticsData,

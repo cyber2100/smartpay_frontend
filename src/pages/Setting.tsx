@@ -205,12 +205,12 @@ export const SettingPage: React.FC = () => {
     if (validatePhoneForm()) {
       const success = await updatePhoneNumber(phoneFormData.phoneNumber);
       
-      if (success) {
+      if (success && !user.isVerified) {
         setPhoneChangeStatus({
           success: true,
           message: "Phone number updated successfully. Please verify your new phone number.",
         });
-      } else {
+      } else if(!success) {
         setPhoneChangeStatus({
           success: false,
           message: "Failed to update phone number. Please try again.",
@@ -341,7 +341,7 @@ export const SettingPage: React.FC = () => {
                       <Input 
                         id="fullName" 
                         className="pl-10" 
-                        value={user?.name || ""} 
+                        value={user?.fullname || ""} 
                         disabled 
                         readOnly
                       />
@@ -533,7 +533,7 @@ export const SettingPage: React.FC = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                {!verificationStatus.isVerified && phoneFormData.phoneNumber && (
+                {!verificationStatus.isVerified && (
                   <Button variant="outline" onClick={handleVerifyPhone} disabled={isLoading}>
                     Complete Verification
                   </Button>

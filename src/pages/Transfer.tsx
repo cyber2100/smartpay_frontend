@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 // Type definitions
 interface UserSuggestion {
   id: string;
-  name: string;
+  fullname: string;
   email: string;
   avatar?: string;
   isverified?: boolean;
@@ -16,7 +16,7 @@ interface UserSuggestion {
 }
 
 const Transfer: React.FC = () => {
-  const { user , findUser } = useAuth();
+  const { user, findUser } = useAuth();
   const { transfer: moneyTransfer, balance } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -31,8 +31,8 @@ const Transfer: React.FC = () => {
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
 
   useEffect(() => {
-    if(!user?.isVerified){
-      navigate('/verify', {replace: false});
+    if (!user?.isVerified) {
+      return navigate('/verify');
     }
   }, []);
 
@@ -98,7 +98,7 @@ const Transfer: React.FC = () => {
           setStep(2);
           toast({
             title: "User verified",
-            description: `Transfer recipient: ${user.name}`,
+            description: `Transfer recipient: ${user.fullname}`,
           });
         } else {
           toast({
@@ -278,7 +278,7 @@ const Transfer: React.FC = () => {
                   </div>
                   <div className="flex justify-between mb-2">
                     <span className="text-muted-foreground">To</span>
-                    <span className="font-semibold">{verifiedUser?.name || recipient}</span>
+                    <span className="font-semibold">{verifiedUser?.fullname || recipient}</span>
                   </div>
                   {description && (
                     <div className="flex justify-between">
@@ -321,9 +321,6 @@ const Transfer: React.FC = () => {
                         required
                         disabled={isVerifying}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Demo recipients: jane@example.com or john@example.com
-                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -385,7 +382,7 @@ const Transfer: React.FC = () => {
                             <User className="h-4 w-4 text-green-600 dark:text-green-400" />
                           </div>
                           <div>
-                            <p className="font-medium text-green-800 dark:text-green-200">{verifiedUser.name}</p>
+                            <p className="font-medium text-green-800 dark:text-green-200">{verifiedUser.fullname}</p>
                             <p className="text-sm text-green-600 dark:text-green-400">{verifiedUser.email}</p>
                           </div>
                         </div>
@@ -393,7 +390,7 @@ const Transfer: React.FC = () => {
 
                       <div className="flex justify-between mb-2">
                         <span className="text-muted-foreground">Recipient</span>
-                        <span className="font-semibold">{verifiedUser?.name || recipient}</span>
+                        <span className="font-semibold">{verifiedUser?.fullname || recipient}</span>
                       </div>
 
                       <div className="flex justify-between mb-2">

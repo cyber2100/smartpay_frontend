@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/use-auth";
 
 const Register = () => {
-  const [name, setName] = useState("");
+  const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [showPhoneField, setShowPhoneField] = useState(false);
   const [phone, setPhone] = useState("");
@@ -40,8 +40,8 @@ const Register = () => {
       return false;
     }
 
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters");
       return false;
     }
 
@@ -60,7 +60,7 @@ const Register = () => {
     try {
       // Only pass phone if the checkbox is checked and there's a value
       const phoneToSubmit = showPhoneField ? phone : "";
-      const success = await signup(name, phoneToSubmit, email, password);
+      const success = await signup(fullname, phoneToSubmit, email, password);
       if (success) {
         navigate("/verify");
       }
@@ -90,8 +90,8 @@ const Register = () => {
               <Input
                 id="name"
                 placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
                 required
               />
             </div>

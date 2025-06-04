@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
 import { TrendingUp, TrendingDown, Activity, DollarSign, Info, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -6,9 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTransactionStatistics } from '@/hooks/use-transation-statistics';
+import { useAuth } from '@/hooks/use-auth';
 
 const TransactionStatistics: React.FC = () => {
   const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useTransactionStatistics();
+  const { isAdmin, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if(isAdmin && isAuthenticated){
+      refreshStatistics();
+    }
+  }, [isAdmin, isAuthenticated])
 
   // Handler to refresh statistics
   const handleRefresh = () => {
@@ -100,14 +108,14 @@ const TransactionStatistics: React.FC = () => {
   const { overallStats, monthlyStats } = statisticsData;
 
   return (
-    <div className="space-y-6 m-6">
+    <div className="m-6 min-[980px]:pb-2 pb-16">
       {!isFromAPI ? (
         <Alert className="border-orange-200 bg-orange-50">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
             <div className="flex items-center justify-between">
               <div>
-                <strong>Using Demo Data:</strong> API connection failed. Showing mock statistics for demonstration.
+                API connection failed.
                 {error && <div className="text-xs mt-1 opacity-75">Error: {error}</div>}
               </div>
               <Button

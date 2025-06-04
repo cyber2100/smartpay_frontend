@@ -25,9 +25,7 @@ const History: React.FC = () => {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   
   useEffect(() => {
-    if (!isAuthenticated) {
-      return navigate('/signin');
-    } else if (!user?.isVerified) {
+    if (!user?.isVerified) {
       return navigate('/verify');
     }
   }, []);

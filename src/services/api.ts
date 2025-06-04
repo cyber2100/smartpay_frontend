@@ -101,13 +101,13 @@ export const authService = {
    * @returns A promise that resolves to the response data.
    */
   signup: async (
-    name: string,
+    fullname: string,
     phone: string,
     email: string,
     password: string
   ) => {
     const response = await api.post("/auth/register", {
-      name,
+      fullname,
       phone,
       email,
       password,
@@ -189,7 +189,7 @@ export const authService = {
       console.error("Verify password reset code error:", error);
       return {
         success: false,
-        message: error.response?.data?.detail || error.response?.data?.message || "Invalid or expired verification code"
+        message: error.response?.data?.detail || "Invalid or expired verification code"
       };
     }
   },
@@ -393,9 +393,7 @@ export const adminService = {
 
   // Update user activation status
   updateUserActivation: async (userId: string, isActive: boolean) => {
-    const response = await api.patch(`/admin/users/${userId}/activate`, {
-      is_active: isActive
-    });
+    const response = await api.patch(`/admin/users/${userId}/activate`);
     return response.data;
   },
 
@@ -515,75 +513,43 @@ export const adminService = {
 export const cardService = {
   // Get all cards
   getCards: async (): Promise<PaymentCard[]> => {
-    try {
-      const response = await api.get('/payment-cards/');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching cards:', error);
-      throw error;
-    }
+    const response = await api.get('/payment-cards/');
+    return response.data;
   },
 
   // Add new card
   addCard: async (cardData: Omit<PaymentCard, 'id'>): Promise<string> => {
-    try {
-      const response = await api.post('/payment-cards/', cardData);
-      return response.data.id;
-    } catch (error) {
-      console.error('Error adding card:', error);
-      throw error;
-    }
+    const response = await api.post('/payment-cards/', cardData);
+    return response.data.id;
   },
 
   // Update card (set as default)
   updateCard: async (cardId: string, updateData: Partial<PaymentCard>): Promise<PaymentCard> => {
-    try {
-      const response = await api.put(`/payment-cards/${cardId}`, updateData);
-      return response.data;
-    } catch (error) {
-      console.error('Error updating card:', error);
-      throw error;
-    }
+    const response = await api.put(`/payment-cards/${cardId}`, updateData);
+    return response.data;
   },
 
   // Set card as default
   setDefaultCard: async (cardId: string): Promise<void> => {
-    try {
-      await api.patch(`/payment-cards/${cardId}/default`);
-    } catch (error) {
-      console.error('Error setting default card:', error);
-      throw error;
-    }
+    await api.patch(`/payment-cards/${cardId}/default`);
   },
 
   // Delete card
   deleteCard: async (cardId: string): Promise<void> => {
-    try {
-      await api.delete(`/payment-cards/${cardId}`);
-    } catch (error) {
-      console.error('Error deleting card:', error);
-      throw error;
-    }
+    await api.delete(`/payment-cards/${cardId}`);
   },
 
   // Get card details (including sensitive info)
   getCardDetails: async (cardId: string): Promise<PaymentCard> => {
-    try {
-      const response = await api.get(`/payment-cards/${cardId}/details`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching card details:', error);
-      throw error;
-    }
+    const response = await api.get(`/payment-cards/${cardId}/details`);
+    return response.data;
   },
 };
 
 // Notification Settings Service
 export const notificationService = {
   // Get user's notification preferences
-  
   getNotificationSettings: async () => {
-    console.log('api.headers.authorization', api.defaults.headers.common['Authorization']);
     const response = await api.get('/auth/notif-setting');
     return response.data;
   },

@@ -79,30 +79,21 @@ export const useBalanceStatistics = () => {
     
     try {
       if (isAuthenticated) {
-        // Try to fetch from API first
         const apiData = await fetchStatistics();
         setStatisticsData(apiData);
         setIsFromAPI(true);
-        
-        toast({
-          title: "Statistics Loaded",
-          description: "Successfully loaded latest balance statistics from backend.",
-        });
       } else {
-        // Use mock data if not authenticated
         setStatisticsData(null);
         setIsFromAPI(false);
         setError(null);
       }
     } catch (error: any) {
-      // Fallback to mock data if API fails
       setStatisticsData(null);
       setIsFromAPI(false);
       
-      // Show toast for API failure
       toast({
-        title: "Using Demo Data",
-        description: "Backend connection failed. Showing mock balance statistics.",
+        title: "loadStatistics Error",
+        description: "Backend connection failed.",
         variant: "destructive",
       });
     } finally {
@@ -113,11 +104,6 @@ export const useBalanceStatistics = () => {
   // Refresh statistics
   const refreshStatistics = useCallback(async () => {
     await loadStatistics();
-  }, [loadStatistics]);
-
-  // Initial load
-  useEffect(() => {
-    loadStatistics();
   }, [loadStatistics]);
 
   return {

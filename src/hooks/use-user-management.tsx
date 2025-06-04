@@ -1,16 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminService } from '@/services/api';
 import { useAuth } from '@/hooks/use-auth';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string | null;
-  isVerified: boolean;
-  isActive: boolean;
-  isAdmin: boolean;
-}
+import { User } from '@/types/users';
 
 interface UseUserManagementReturn {
   users: User[];
@@ -34,7 +25,7 @@ export const useUserManagement = (): UseUserManagementReturn => {
    */
   const transformUser = (userData: any): User => ({
     id: userData.id,
-    name: userData.fullname || userData.name,
+    fullname: userData.fullname,
     email: userData.email,
     phone: userData.phone,
     isVerified: userData.is_verified,

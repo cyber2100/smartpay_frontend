@@ -38,16 +38,21 @@ const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { transactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading } = useCard();
+  const { getChartData, financialData, refreshStatistics, isLoading } = useStatistics();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
-  const { getChartData, financialData } = useStatistics();
   
   // Fetch transactions and cards from backend
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/signin');
-    }
-  }, []);
+    const fetchData = async () => {
+      if(isAuthenticated && user?.isVerified) {
+        await refreshStatistics();
+      } else if (!user?.isVerified) {
+        navigate('/verify', { replace: false });
+      }
+    };
+    fetchData();
+  }, [isAuthenticated, user?.isVerified]);
   
   // Get recent transactions (latest 5) from backend data
   const recentTransactions = React.useMemo(() => {
@@ -344,7 +349,7 @@ const Dashboard: React.FC = () => {
         
         <div className="container px-4 pt-8 max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold">Welcome back, {user?.name || 'User'}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Welcome back, {user?.fullname || 'User'}</h1>
             <p className="text-muted-foreground">Here's an overview of your account</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
@@ -431,6 +436,18 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="h-64 sm:h-80 lg:h-96">
+                {/* Show loading state when statistics are loading */}
+                {isLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">Loading Chart Data</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Please wait while we fetch your activity statistics...
+                      </p>
+                    </div>
+                  </div>
+                ) : getChartData().some(item => item.revenue > 0 || item.received > 0 || item.sent > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={getChartData()}
@@ -507,7 +524,31 @@ const Dashboard: React.FC = () => {
                       />
                     )}
                   </LineChart>
-                </ResponsiveContainer>
+                </ResponsiveContainer>): (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto mb-4 h-12 w-12 text-muted-foreground">
+                        <svg
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          className="h-12 w-12"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Activity Data</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Your account activity chart will appear here once you start making transactions.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -575,21 +616,17 @@ const Dashboard: React.FC = () => {
                             </div>
                           </div>
                         );
-                      })
-                    ) : (
+                      })): (
                       <div className="text-center p-8 border rounded-lg">
-                        <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-muted-foreground">No recent transactions</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Start by making a deposit or transfer
-                        </p>
+                        <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No recent activity</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
             </div>
-            <div>
+            <div className='xl:col-span-1'>
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -644,9 +681,9 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Add a payment card to get started
                       </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="mt-3"
                         onClick={() => handleNavigation('/card')}
                       >
@@ -665,3 +702,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+              

@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { walletService } from '@/services/api';
 
 import { Transaction } from '@/types/payment';
+import { errorProcess } from '@/lib/utils';
 
 type WalletContextType = {
   balance: number;
@@ -12,9 +13,9 @@ type WalletContextType = {
   withdraw: (amount: number, cardId: string) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
   deposit: (cardId: string, amount: number) => Promise<boolean>;
-  getTransactions: () => Promise<Transaction[]>;
   allTransactions: Transaction[];
   allUsers: User[];
+  loadWalletData: () => Promise<void>;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -72,12 +73,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error loading wallet data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load wallet data",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to load wallet data", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +99,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error refreshing transactions:', error);
+      errorProcess(error, toast, "Failed to refresh transaction data", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -133,11 +129,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       return true;
     } catch (error: any) {
-      toast({
-        title: "Top up failed",
-        description: error.response?.data?.detail || "Failed to top up wallet.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to top up wallet.", "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -198,24 +190,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       return true;
     } catch (error: any) {
-      console.error('Deposit error:', error);
-      
       let errorMessage = "Failed to process deposit.";
-      
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Deposit failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      
+      errorProcess(error, toast, errorMessage, "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -247,42 +223,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Transfer failed",
-        description: error.response?.data?.detail || "Failed to send money.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to send money.", "destructive");
       return false;
     } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  /**
-   * Fetches the user's transaction history.
-   * @returns {Promise<Transaction[]>} - A promise that resolves to the user's transactions.
-   */
-  const getTransactions = async (): Promise<Transaction[]> => {
-    if (!user) return [];
-
-    setIsLoading(true);
-
-    try {
-      const userTransactionData = await walletService.getTransactions();
-      const result = userTransactionData.map((tx: any) => ({
-        ...tx,
-        senderId: tx.sender_id,
-        recipientId: tx.recipient_id,
-        cardId: tx.card_id,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        timestamp: tx.created_at
-      }));
-      setTransactions(result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      return [];
-    } finally { 
       setIsLoading(false);
     }
   };
@@ -295,9 +238,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     withdraw,
     transfer,
     deposit,
-    getTransactions,
     allTransactions,
-    allUsers
+    allUsers,
+    loadWalletData,
   };
   
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

@@ -3,6 +3,7 @@ import { useAuth } from './use-auth';
 import { useToast } from "@/hooks/use-toast";
 import { notificationService, profileService } from '@/services/api';
 import { NotificationSettings, VerificationStatus, DeliveryChannel, SettingsContextType } from '@/types/settings';
+import { errorProcess } from '@/lib/utils';
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
@@ -45,12 +46,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       
     } catch (error) {
-      console.error('Error loading settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load settings",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to load settings", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -75,11 +71,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return true;
     } catch (error: any) {
-      toast({
-        title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update notification settings.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to update notification settings.", "destructive");
       return false;
     }
   };
@@ -90,29 +82,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     try {
       await profileService.updatePhoneNumber(phoneNumber);
-
-      // When phone number is updated, verification status changes to false
-      setVerificationStatus({
-        isVerified: false
-      });
-
-      // Refresh user data to get updated phone number
-      if (refreshUser) {
-        await refreshUser();
-      }
-
       toast({
         title: "Phone updated",
-        description: "Phone number updated successfully. Please verify your new phone number."
+        description: "Phone number updated successfully."
       });
-      
       return true;
     } catch (error: any) {
-      toast({
-        title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update phone number.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to update phone number.", "destructive");
       return false;
     }
   };
@@ -131,11 +107,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return true;
     } catch (error: any) {
-      toast({
-        title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update password.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to update password.", "destructive");
       return false;
     }
   };

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './use-auth';
+import { useWallet } from './use-wallet';
 
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
-  refreshTransactions?: () => void;
+  loadWalletData?: () => Promise<void>;
+  refreshStatistics?: () => Promise<void>;
 }
 
 /**
@@ -15,14 +17,16 @@ interface UseWebSocketProps {
  */
 export const useWebSocket = ({
   onNewNotification,
-  refreshTransactions
+  loadWalletData,
+  refreshStatistics,
 }: UseWebSocketProps = {}) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
+  
 
   /**
    * Function to connect to the WebSocket server.
@@ -45,7 +49,7 @@ export const useWebSocket = ({
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
       };
 
-      wsRef.current.onmessage = (event) => {
+      wsRef.current.onmessage = async (event) => {
         const notification = JSON.parse(event.data);
         
         try {
@@ -53,7 +57,8 @@ export const useWebSocket = ({
           console.log(":bell: Received notification:", newData);
           if (newData && onNewNotification) {
             onNewNotification(newData);
-            refreshTransactions();
+            await loadWalletData();
+            await refreshStatistics();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

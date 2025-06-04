@@ -69,7 +69,7 @@ export function Navbar(): ReactElement {
               <Wallet className="h-5 w-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary-foreground" />
             </div>
             <span className="font-bold text-lg tracking-tight">
-              SmartPay {isAdminPanelView && <span className="text-sm font-normal text-muted-foreground">- Admin Panel</span>}
+              SmartPay
             </span>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function Navbar(): ReactElement {
                       <DropdownMenuLabel>
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">
-                            {user?.name}
+                            {user?.fullname}
                             {isAdmin && <span className="ml-2 text-xs bg-primary text-primary-foreground px-1 rounded">Admin</span>}
                           </p>
                           <p className="text-xs leading-none text-muted-foreground">
@@ -155,7 +155,7 @@ export function Navbar(): ReactElement {
                       className="flex items-center gap-2"
                     >
                       <Users className="h-4 w-4" />
-                      User View
+                      User Panel
                     </Button>
                   )}
                 </>

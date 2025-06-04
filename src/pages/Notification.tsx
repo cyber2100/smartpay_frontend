@@ -38,7 +38,7 @@ const Notifications: React.FC = () => {
     }
   }, [])
 
-  // Load notifications from the hook or mock data
+  // Load notifications from the hook
   useEffect(() => {
     if (realNotifications.length) {
       setNotifications([...realNotifications]);

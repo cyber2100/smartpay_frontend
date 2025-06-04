@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cardService } from "@/services/api";
 import { PaymentCard } from '@/types/payment';
 import { useAuth } from "./use-auth";
+import { errorProcess } from "@/lib/utils";
 
 // Types
 type CardContextType = {
@@ -44,12 +45,12 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       const fetchedCards = await cardService.getCards();
       setCards(fetchedCards);
     } catch (error: any) {
-      console.error('Error fetching cards:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load your cards. Please refresh the page.",
-        variant: "destructive",
-      });
+      errorProcess(
+        error, 
+        toast, 
+        "Failed to load your cards. Please refresh the page.", 
+        "destructive"
+      );
       throw error;
     } finally {
       setIsLoading(false);
@@ -64,12 +65,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
       setCards(fetchedCards);
       return fetchedCards;
     } catch (error: any) {
-      console.error('Error fetching cards:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to load your cards.",
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "Failed to load your cards", "destructive");
       throw error;
     } finally {
       setIsLoading(false);
@@ -79,7 +75,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add new card
   const addCard = async (cardData: Omit<PaymentCard, 'id'>): Promise<boolean> => {
     try {
-      const newCardId: string = await cardService.addCard(cardData);
+      await cardService.addCard(cardData);
 
       await getCards();
 
@@ -90,12 +86,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      console.error('Error adding card:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to add card. Please check your information and try again.",
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "Failed to add card. Please check your information and try again.", "destructvie");
       throw error;
     }
   };
@@ -118,12 +109,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return updatedCard;
     } catch (error: any) {
-      console.error('Error updating card:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to update card. Please try again.",
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "Failed to update card. Please try again.", "destructvie");
       throw error;
     }
   };
@@ -145,12 +131,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
         description: "Default card updated successfully.",
       });
     } catch (error: any) {
-      console.error('Error setting default card:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to set default card. Please try again.",
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "Failed to set default card. Please try again.", "destructvie");
       throw error;
     }
   };
@@ -173,12 +154,7 @@ export const CardProvider: React.FC<{ children: React.ReactNode }> = ({
         description: "Card deleted successfully.",
       });
     } catch (error: any) {
-      console.error('Error deleting card:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.detail || "Failed to delete card. Please try again.",
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "Failed to delete card. Please try again.", "destructvie");
       throw error;
     }
   };

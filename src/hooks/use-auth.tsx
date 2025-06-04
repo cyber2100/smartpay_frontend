@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/api";
+import { errorProcess } from "@/lib/utils";
 
 // Types
 export type User = {
   id: string;
-  name: string;
+  fullname: string;
   email: string;
   phone?: string;
   isAdmin?: boolean;
@@ -55,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         setUser({
           id: userData.id,
-          name: userData.name,
+          fullname: userData.name,
           email: userData.email,
           phone: userData.phone,
           isAdmin: userData.is_admin,
@@ -63,7 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       } catch (error) {
         localStorage.removeItem("auth_token");
-        console.error("Failed to load user:", error);
+        errorProcess(
+          error,
+          toast,
+          "Failed to load user data. Please sign in again.",
+          "destructive"
+        );
       }
     }
     setIsLoading(false);
@@ -84,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const appUser: User = {
         id: userData.id,
-        name: userData.name,
+        fullname: userData.name,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
@@ -95,17 +101,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast({
         title: "Signin successful",
-        description: `Welcome back, ${appUser.name}!`,
+        description: `Welcome back, ${appUser.fullname}!`,
       });
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Signin failed",
-        description:
-          error.response?.data?.detail || "Invalid email or password.",
-        variant: "destructive",
-      });
+      const defaultDescription = "Failed to sign in.";
+      errorProcess(error, toast, defaultDescription, "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -121,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * @returns A promise that resolves to a boolean indicating success or failure.
    */
   const signup = async (
-    name: string,
+    fullname: string,
     phone: string,
     email: string,
     password: string
@@ -129,13 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
-      const userData = await authService.signup(name, phone, email, password);
+      const userData = await authService.signup(fullname, phone, email, password);
 
       await authService.signin(email, password);
 
       const appUser: User = {
         id: userData.id,
-        name: userData.fullname,
+        fullname: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin || false,
@@ -145,17 +147,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(appUser);
       
       toast({
-        title: "Registration successful",
+        title: "Signup successful",
         description: "Please verify your account to continue.",
       });
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: error.response?.data?.detail || "Email already in use.",
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        "Failed to create an account. Please try again.",
+        "destructive"
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -179,8 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await authService.findUser(emailOrPhone);
       return result;
     } catch (error) {
-      const error_res = error.response?.data?.error;
-      toast({ title: 'Warning', description: error_res.message });
+      const error_res = error.response?.data;
+      toast({ title: 'Warning', description: error_res?.detail || 'User not found', variant: 'destructive' });
       return null;
     }
   }
@@ -210,12 +213,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Verification failed",
-        description:
-          error.response?.data?.detail || "Invalid verification code.",
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        "Invalid verification code. Please try again.",
+        "destructive"
+      );
       return false;
     }
   };
@@ -251,13 +254,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
       
-      toast({
-        title: "Failed to resend verification",
-        description:
-          error.response?.data?.detail || 
-          `Could not send verification code to your ${verificationMethod}. Please try again.`,
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        `Failed to resend verification code to your ${verificationMethod}. Please try again.`,
+        "destructive"
+      );
       return false;
     }
   };
@@ -274,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       const updatedUser: User = {
         id: userData.id,
-        name: userData.name,
+        fullname: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
