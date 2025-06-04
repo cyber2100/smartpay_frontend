@@ -111,11 +111,6 @@ export const useBalanceStatistics = () => {
     await loadStatistics();
   }, [loadStatistics]);
 
-  // Initial load
-  useEffect(() => {
-    loadStatistics();
-  }, [loadStatistics]);
-
   return {
     statisticsData,
     isLoading,

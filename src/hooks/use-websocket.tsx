@@ -1,8 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './use-auth';
-import { useStatistics } from './use-statistics';
-import { useTransactionStatistics } from './use-transation-statistics';
-import { useBalanceStatistics } from './use-balance-statistics';
+import { useWallet } from './use-wallet';
 
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
@@ -26,9 +24,8 @@ export const useWebSocket = ({
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
-  const { refreshStatistics } = useStatistics();
-  const { refreshStatistics: loadTransactionStatistics } = useTransactionStatistics();
-  const { refreshStatistics: loadBalanceStatistics } = useBalanceStatistics();
+  const { loadWalletData } = useWallet();
+  
 
   /**
    * Function to connect to the WebSocket server.
@@ -59,11 +56,7 @@ export const useWebSocket = ({
           console.log(":bell: Received notification:", newData);
           if (newData && onNewNotification) {
             onNewNotification(newData);
-            if(isAdmin) {
-              await loadTransactionStatistics();
-              await loadBalanceStatistics();
-            }
-            await refreshStatistics();
+            await loadWalletData();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

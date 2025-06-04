@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
 import { TrendingUp, TrendingDown, Activity, DollarSign, Users, Wallet, UserPlus, Info, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -9,6 +9,10 @@ import { useBalanceStatistics } from '@/hooks/use-balance-statistics';
 
 const BalanceStatistics: React.FC = () => {
   const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useBalanceStatistics();
+
+  useEffect(() => {
+    handleRefresh();
+  }, []);
 
   // Handle refresh button click
   const handleRefresh = () => {

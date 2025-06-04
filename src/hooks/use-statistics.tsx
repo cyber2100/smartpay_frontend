@@ -122,12 +122,6 @@ export const useStatistics = (): StatisticsData => {
     return correctedCurrencyData;
   };
 
-  useEffect(() => {
-    if(isAuthenticated && user?.isVerified) {
-      fetchStatistics();
-    }
-  }, [isAuthenticated, user?.isVerified]);
-
   const result = {
     financialData,
     getChartData,

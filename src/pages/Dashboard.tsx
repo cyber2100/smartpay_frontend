@@ -36,18 +36,23 @@ import { useStatistics } from '@/hooks/use-statistics';
 
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
-  const { transactions, balance } = useWallet();
+  const { transactions, balance, loadWalletData } = useWallet();
   const { cards, isLoading: cardsLoading } = useCard();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
-  const { getChartData, financialData } = useStatistics();
+  const { getChartData, financialData, refreshStatistics } = useStatistics();
   
   // Fetch transactions and cards from backend
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/signin');
-    }
-  }, []);
+    const fetchData = async () => {
+      if (!isAuthenticated) {
+        navigate('/signin');
+      } else if(isAuthenticated && user?.isVerified) {
+        await refreshStatistics();
+      }
+    };
+    fetchData();
+  }, [isAuthenticated, user?.isVerified]);
   
   // Get recent transactions (latest 5) from backend data
   const recentTransactions = React.useMemo(() => {

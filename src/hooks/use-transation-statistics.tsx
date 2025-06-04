@@ -112,12 +112,6 @@ export const useTransactionStatistics = () => {
     await loadStatistics();
   }, [loadStatistics]);
 
-  useEffect(() => {
-    if(isAdmin && isAuthenticated){
-      fetchStatistics();
-    }
-  }, [isAdmin, isAuthenticated])
-
   return {
     statisticsData,
     isLoading,

@@ -14,6 +14,7 @@ type WalletContextType = {
   deposit: (cardId: string, amount: number) => Promise<boolean>;
   allTransactions: Transaction[];
   allUsers: User[];
+  loadWalletData: () => Promise<void>;
 };
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -266,7 +267,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     transfer,
     deposit,
     allTransactions,
-    allUsers
+    allUsers,
+    loadWalletData,
   };
   
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart } from 'recharts';
 import { TrendingUp, TrendingDown, Activity, DollarSign, Info, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -6,9 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTransactionStatistics } from '@/hooks/use-transation-statistics';
+import { useAuth } from '@/hooks/use-auth';
 
 const TransactionStatistics: React.FC = () => {
   const { error, isLoading, statisticsData, isFromAPI, refreshStatistics } = useTransactionStatistics();
+  const { isAdmin, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if(isAdmin && isAuthenticated){
+      refreshStatistics();
+    }
+  }, [isAdmin, isAuthenticated])
 
   // Handler to refresh statistics
   const handleRefresh = () => {

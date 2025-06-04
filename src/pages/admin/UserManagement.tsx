@@ -67,6 +67,11 @@ const UserManagement: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  useEffect(() => {
+    // Refresh users when component mounts
+    refreshUsers();
+  }, []);
+
   // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSearchTerm(e.target.value);
