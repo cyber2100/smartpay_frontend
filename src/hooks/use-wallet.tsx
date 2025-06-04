@@ -249,7 +249,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } catch (error: any) {
       toast({
         title: "Transfer failed",
-        description: error.response?.data?.detail || "Failed to send money.",
+        description: error.response?.data?.detail?.msg || "Failed to send money.",
         variant: "destructive"
       });
       return false;

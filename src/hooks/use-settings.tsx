@@ -77,7 +77,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error: any) {
       toast({
         title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update notification settings.",
+        description: error.response?.data?.detail?.msg || "Failed to update notification settings.",
         variant: "destructive"
       });
       return false;
@@ -108,7 +108,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error: any) {
       toast({
         title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update phone number.",
+        description: error.response?.data?.detail?.msg || "Failed to update phone number.",
         variant: "destructive"
       });
       return false;
@@ -131,7 +131,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error: any) {
       toast({
         title: "Update failed",
-        description: error.response?.data?.detail || "Failed to update password.",
+        description: error.response?.data?.detail?.msg || "Failed to update password.",
         variant: "destructive"
       });
       return false;

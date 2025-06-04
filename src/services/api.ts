@@ -214,7 +214,7 @@ export const authService = {
       console.error("Reset password error:", error);
       return {
         success: false,
-        message: error.response?.data?.detail || error.response?.data?.message || "Failed to reset password"
+        message: error.response?.data?.detail?.msg || error.response?.data?.message || "Failed to reset password"
       };
     }
   },
@@ -242,7 +242,7 @@ export const authService = {
       console.error("Reset password direct error:", error);
       return {
         success: false,
-        message: error.response?.data?.detail || error.response?.data?.message || "Failed to reset password"
+        message: error.response?.data?.detail?.msg || error.response?.data?.message || "Failed to reset password"
       };
     }
   },
@@ -265,7 +265,7 @@ export const authService = {
       console.error("Check email exists error:", error);
       return {
         exists: false,
-        message: error.response?.data?.detail || "Could not verify email"
+        message: error.response?.data?.detail?.msg || "Could not verify email"
       };
     }
   },
@@ -287,7 +287,7 @@ export const authService = {
       console.error("Validate reset token error:", error);
       return {
         valid: false,
-        message: error.response?.data?.detail || "Invalid or expired reset token"
+        message: error.response?.data?.detail?.msg || "Invalid or expired reset token"
       };
     }
   },
