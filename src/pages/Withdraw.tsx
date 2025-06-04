@@ -9,6 +9,7 @@ import { PaymentCard } from "@/types/payment";
 import { useToast } from "@/hooks/use-toast";
 
 const Withdraw: React.FC = () => {
+  const { isAuthenticated, user } = useAuth();
   const { withdraw: walletWithdraw } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
@@ -26,6 +27,12 @@ const Withdraw: React.FC = () => {
   const [step, setStep] = useState<number>(1);
   const [withdrawSuccess, setWithdrawSuccess] = useState<boolean>(false);
   const [selectedCard, setSelectedCard] = useState<PaymentCard | null>(null);
+
+  useEffect(() => {
+    if (!user?.isVerified) {
+      navigate('/verify');
+    }
+  }, []);
 
   // Remove navigation logic
   useEffect(() => {

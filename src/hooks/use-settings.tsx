@@ -90,20 +90,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     try {
       await profileService.updatePhoneNumber(phoneNumber);
-
-      setVerificationStatus({
-        isVerified: false
-      });
-
-      if (refreshUser) {
-        await refreshUser();
-      }
-
       toast({
         title: "Phone updated",
-        description: "Phone number updated successfully. Please verify your new phone number."
+        description: "Phone number updated successfully."
       });
-      
       return true;
     } catch (error: any) {
       toast({

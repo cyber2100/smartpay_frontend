@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Users, BarChart3, Wallet } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card'; 
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'node_modules/react-resizable-panels/dist/declarations/src/vendor/react';
+import { useAuth } from '@/hooks/use-auth';
 
 const AdminDashboard: React.FC = () => {
-  const [currentPath, setCurrentPath] = useState('/admin');
   const navigate = useNavigate();
+  const [currentPath, setCurrentPath] = useState('/admin');
   
   const tabs = [
     {

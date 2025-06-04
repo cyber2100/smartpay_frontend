@@ -9,11 +9,12 @@ import { PaymentCard } from "@/types/payment";
 import { useToast } from "@/hooks/use-toast";
 
 const Deposit: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
   const { deposit: walletDeposit } = useWallet();
   const { balance } = useWallet();
   const { cards: paymentCards } = useCard();
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -27,12 +28,18 @@ const Deposit: React.FC = () => {
   };
 
   useEffect(() => {
+    if(!user?.isVerified) {
+      navigate('/verify')
+    }
+  }, []);
+
+  useEffect(() => {
     const defaultCard = paymentCards.find(card => card.isDefault);
     if (defaultCard) {
       setSelectedCardId(defaultCard.id);
       setSelectedCard(defaultCard);
     }
-  }, []);
+  }, [paymentCards]);
 
   const amountValue: number = parseFloat(amount);
   const minDeposit = 10;

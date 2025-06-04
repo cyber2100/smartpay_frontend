@@ -16,7 +16,7 @@ interface UserSuggestion {
 }
 
 const Transfer: React.FC = () => {
-  const { user , findUser } = useAuth();
+  const { user, isAuthenticated, findUser } = useAuth();
   const { transfer: moneyTransfer, balance } = useWallet();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -31,8 +31,8 @@ const Transfer: React.FC = () => {
   const [verifiedUser, setVerifiedUser] = useState<UserSuggestion | null>(null);
 
   useEffect(() => {
-    if(!user?.isVerified){
-      navigate('/verify', {replace: false});
+    if (!user?.isVerified) {
+      return navigate('/verify');
     }
   }, []);
 

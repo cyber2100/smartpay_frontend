@@ -45,10 +45,10 @@ const Dashboard: React.FC = () => {
   // Fetch transactions and cards from backend
   useEffect(() => {
     const fetchData = async () => {
-      if (!isAuthenticated) {
-        navigate('/signin');
-      } else if(isAuthenticated && user?.isVerified) {
+      if(isAuthenticated && user?.isVerified) {
         await refreshStatistics();
+      } else if (!user?.isVerified) {
+        navigate('/verify', { replace: false });
       }
     };
     fetchData();

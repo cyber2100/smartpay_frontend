@@ -10,14 +10,14 @@ import { useWallet } from '@/hooks/use-wallet';
 import { Transaction } from '@/types/payment';
 
 const Wallet: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { transactions, balance } = useWallet();
   
   const navigate = useNavigate();
   
   useEffect(() => {
-    if (!isAuthenticated) {
-      return navigate('/signin');
+    if (!user?.isVerified) {
+      handleDirectToPath('/verify');
     }
   }, []);
 

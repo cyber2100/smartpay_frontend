@@ -13,6 +13,8 @@ import { CardDetailModal } from '@/components/CardDetailModal';
 import { CardListItem } from '@/components/CardListItem';
 import { PaymentCard } from '@/types/payment';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/use-auth';
 
 const CardPage: React.FC = () => {
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
@@ -24,6 +26,14 @@ const CardPage: React.FC = () => {
     setDefaultCard, 
     deleteCard,
   } = useCard();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if(!user?.isVerified){
+      navigate('/verify', {replace: false});
+    }
+  }, []);
 
   /**
    * Sets the default card.
