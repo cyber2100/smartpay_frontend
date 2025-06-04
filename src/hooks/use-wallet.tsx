@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { walletService } from '@/services/api';
 
 import { Transaction } from '@/types/payment';
+import { errorProcess } from '@/lib/utils';
 
 type WalletContextType = {
   balance: number;
@@ -72,12 +73,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error loading wallet data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load wallet data",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to load wallet data", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +99,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }));
       setTransactions(formattedTransactions);
     } catch (error) {
-      console.error('Error refreshing transactions:', error);
+      errorProcess(error, toast, "Failed to refresh transaction data", "destructive");
     } finally {
       setIsLoading(false);
     }
@@ -133,11 +129,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       return true;
     } catch (error: any) {
-      toast({
-        title: "Top up failed",
-        description: error.response?.data?.detail || "Failed to top up wallet.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to top up wallet.", "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -198,24 +190,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       return true;
     } catch (error: any) {
-      console.error('Deposit error:', error);
-      
       let errorMessage = "Failed to process deposit.";
-      
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Deposit failed",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      
+      errorProcess(error, toast, errorMessage, "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -247,11 +223,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Transfer failed",
-        description: error.response?.data?.detail || "Failed to send money.",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to send money.", "destructive");
       return false;
     } finally {
       setIsLoading(false);

@@ -54,7 +54,7 @@ const UserManagement: React.FC = () => {
   // Filter users based on search term and status
   const filteredUsers: User[] = users.filter((user: User) => {
 
-    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = user.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.phone?.includes(searchTerm);
     
@@ -102,7 +102,7 @@ const UserManagement: React.FC = () => {
 
       toast({
         title: "Success",
-        description: `User ${selectedUser.name} ${selectedUser.isActive ? 'deactivated' : 'activated'} successfully.`,
+        description: `User ${selectedUser.fullname} ${selectedUser.isActive ? 'deactivated' : 'activated'} successfully.`,
         variant: "default"
       });
       
@@ -239,7 +239,7 @@ const UserManagement: React.FC = () => {
                     <TableCell>
                       <div>
                         <div className="font-medium flex items-center gap-2">
-                          {user.name}
+                          {user.fullname}
                           {user.isAdmin && (
                             <Badge variant="outline" className="text-xs">Admin</Badge>
                           )}
@@ -295,8 +295,8 @@ const UserManagement: React.FC = () => {
                   {actionType === 'activate' && (selectedUser?.isActive ? 'Deactivate User' : 'Activate User')}
                 </DialogTitle>
                 <DialogDescription>
-                  {actionType === 'activate' && selectedUser?.isActive && `Deactivate ${selectedUser?.name}? They will lose access to the platform but their account data will remain intact.`}
-                  {actionType === 'activate' && !selectedUser?.isActive && `Activate ${selectedUser?.name}? This will restore their access to the platform.`}
+                  {actionType === 'activate' && selectedUser?.isActive && `Deactivate ${selectedUser?.fullname}? They will lose access to the platform but their account data will remain intact.`}
+                  {actionType === 'activate' && !selectedUser?.isActive && `Activate ${selectedUser?.fullname}? This will restore their access to the platform.`}
                 </DialogDescription>
               </DialogHeader>
 

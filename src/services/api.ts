@@ -393,9 +393,7 @@ export const adminService = {
 
   // Update user activation status
   updateUserActivation: async (userId: string, isActive: boolean) => {
-    const response = await api.patch(`/admin/users/${userId}/activate`, {
-      is_active: isActive
-    });
+    const response = await api.patch(`/admin/users/${userId}/activate`);
     return response.data;
   },
 

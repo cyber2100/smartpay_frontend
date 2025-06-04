@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/api";
+import { errorProcess } from "@/lib/utils";
 
 // Types
 export type User = {
@@ -63,7 +64,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       } catch (error) {
         localStorage.removeItem("auth_token");
-        console.error("Failed to load user:", error);
+        errorProcess(
+          error,
+          toast,
+          "Failed to load user data. Please sign in again.",
+          "destructive"
+        );
       }
     }
     setIsLoading(false);
@@ -100,12 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Signin failed",
-        description:
-          error.response?.data?.detail || "Failed to sign in.",
-        variant: "destructive",
-      });
+      const defaultDescription = "Failed to sign in.";
+      errorProcess(error, toast, defaultDescription, "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -151,11 +153,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Signup failed",
-        description: error.response?.data?.detail || "Failed to signup.",
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        "Failed to create an account. Please try again.",
+        "destructive"
+      );
       return false;
     } finally {
       setIsLoading(false);
@@ -210,12 +213,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      toast({
-        title: "Verification failed",
-        description:
-          error.response?.data?.detail || "Invalid verification code.",
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        "Invalid verification code. Please try again.",
+        "destructive"
+      );
       return false;
     }
   };
@@ -251,13 +254,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error: any) {
       const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
       
-      toast({
-        title: "Failed to resend verification",
-        description:
-          error.response?.data?.detail || 
-          `Could not send verification code to your ${verificationMethod}. Please try again.`,
-        variant: "destructive",
-      });
+      errorProcess(
+        error,
+        toast,
+        `Failed to resend verification code to your ${verificationMethod}. Please try again.`,
+        "destructive"
+      );
       return false;
     }
   };

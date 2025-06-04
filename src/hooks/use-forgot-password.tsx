@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { authService } from '@/services/api';
+import { errorProcess } from '@/lib/utils';
 
 interface UseForgotPasswordReturn {
   getVerificationCode: (email: string) => Promise<boolean>;
@@ -92,17 +93,7 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
         return false;
       }
     } catch (error: any) {
-      console.error("Send verification code error:", error);
-      
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          "There was an error sending the verification email. Please try again.";
-      
-      toast({
-        title: "Failed to send email",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "There was an error sending the verification email. Please try again.", "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -160,17 +151,7 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
         return false;
       }
     } catch (error: any) {
-      console.error("Verify code error:", error);
-      
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          "There was an error verifying your code. Please try again.";
-      
-      toast({
-        title: "Verification failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "There was an error verifying your code. Please try again.", "destructive");
       return false;
     } finally {
       setIsLoading(false);
@@ -224,17 +205,7 @@ export const useForgotPassword = (): UseForgotPasswordReturn => {
         return false;
       }
     } catch (error: any) {
-      console.error("Reset password error:", error);
-      
-      const errorMessage = error.response?.data?.detail || 
-                          error.response?.data?.message || 
-                          "There was an error resetting your password. Please try again.";
-      
-      toast({
-        title: "Password reset failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      errorProcess(error, toast, "There was an error resetting your password. Please try again.", "destructive");
       return false;
     } finally {
       setIsLoading(false);

@@ -4,7 +4,8 @@ import { useWallet } from './use-wallet';
 
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
-  loadWalletData?: () => void;
+  loadWalletData?: () => Promise<void>;
+  refreshStatistics?: () => Promise<void>;
 }
 
 /**
@@ -17,6 +18,7 @@ interface UseWebSocketProps {
 export const useWebSocket = ({
   onNewNotification,
   loadWalletData,
+  refreshStatistics,
 }: UseWebSocketProps = {}) => {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
@@ -55,7 +57,8 @@ export const useWebSocket = ({
           console.log(":bell: Received notification:", newData);
           if (newData && onNewNotification) {
             onNewNotification(newData);
-            loadWalletData();
+            await loadWalletData();
+            await refreshStatistics();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

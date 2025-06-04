@@ -8,6 +8,7 @@ import { useTransactionStatistics } from './use-transation-statistics';
 import { Notification, NotificationContextType } from '@/types/notification';
 import { useStatistics } from './use-statistics';
 import { useWallet } from './use-wallet';
+import { errorProcess } from '@/lib/utils';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -20,6 +21,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const { loadWalletData } = useWallet();
+  const { refreshStatistics } = useStatistics();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const unreadCountRef = useRef(unreadCount);
@@ -49,6 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { isConnected: isWebSocketConnected } = useWebSocket({
     onNewNotification: handleNewNotification,
     loadWalletData,
+    refreshStatistics,
   });
 
   // Load notifications when user changes
@@ -90,12 +93,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setUnreadCount(unreadFromAPI);
       
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load notifications",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to load notifications", "destructive");
     } finally {
       setLoading(false);
     }
@@ -118,12 +116,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       return true;
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark notification as read",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to mark notification as read", "destructive");
       return false;
     }
   };
@@ -148,12 +141,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       return true;
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-      toast({
-        title: "Error",
-        description: "Failed to mark all notifications as read",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to mark all notifications as read", "destructive");
       return false;
     }
   };
@@ -183,12 +171,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       
       return true;
     } catch (error) {
-      console.error('Error deleting notification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete notification",
-        variant: "destructive"
-      });
+      errorProcess(error, toast, "Failed to delete notification", "destructive");
       return false;
     }
   };
