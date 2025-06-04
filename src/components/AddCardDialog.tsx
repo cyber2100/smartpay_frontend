@@ -18,7 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 import { CreditCard, X, Loader2 } from "lucide-react";
+import valid from 'card-validator';
 
 export interface PaymentCard {
   id: string;
@@ -49,12 +51,28 @@ const cardColors = [
   { value: 'bg-teal-500', label: 'Teal' },
 ];
 
+// Map card-validator types to our card types
+const mapCardType = (cardType: string): 'visa' | 'mastercard' | 'amex' | '' => {
+  switch (cardType) {
+    case 'visa':
+      return 'visa';
+    case 'mastercard':
+      return 'mastercard';
+    case 'american-express':
+      return 'amex';
+    default:
+      return '';
+  }
+};
+
 export const AddCardDialog: React.FC<AddCardDialogProps> = ({
   isOpen,
   onClose,
   onAddCard,
   isLoading,
 }) => {
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     name: '',
     cardNumber: '',
@@ -116,12 +134,39 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
 
   /**
    * Handles changes to the card number input.
-   * Formats the input and updates the form data.
+   * Formats the input, detects card type, and updates the form data.
    * @param value - The raw card number input.
    */
   const handleCardNumberChange = (value: string) => {
     const formatted = formatCardNumber(value);
-    handleInputChange('cardNumber', formatted);
+    const cleanedNumber = formatted.replace(/\s/g, '');
+    
+    // Detect card type using card-validator
+    const cardValidation = valid.number(cleanedNumber);
+    const detectedType = cardValidation.card ? mapCardType(cardValidation.card.type) : '';
+    
+    // Update form data with formatted number and detected type
+    setFormData(prev => ({
+      ...prev,
+      cardNumber: formatted,
+      type: detectedType
+    }));
+    
+    // Clear card number error if it exists
+    if (errors.cardNumber) {
+      setErrors(prev => ({
+        ...prev,
+        cardNumber: ''
+      }));
+    }
+    
+    // Clear type error if card type was detected
+    if (detectedType && errors.type) {
+      setErrors(prev => ({
+        ...prev,
+        type: ''
+      }));
+    }
   };
 
   /**
@@ -147,20 +192,36 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
 
     if (!formData.cardNumber.trim()) {
       newErrors.cardNumber = 'Card number is required';
-    } else if (formData.cardNumber.replace(/\s/g, '').length < 15) {
-      newErrors.cardNumber = 'Card number must be at least 15 digits';
+    } else {
+      // Validate card number using card-validator
+      const cleanedNumber = formData.cardNumber.replace(/\s/g, '');
+      const cardValidation = valid.number(cleanedNumber);
+      
+      if (!cardValidation.isValid) {
+        newErrors.cardNumber = 'Please enter a valid card number';
+      }
     }
 
     if (!formData.expireDate.trim()) {
       newErrors.expireDate = 'Expiry date is required';
     } else if (!/^\d{2}\/\d{2}$/.test(formData.expireDate)) {
       newErrors.expireDate = 'Expiry date must be in MM/YY format';
+    } else {
+      // Validate expiry date using card-validator
+      const expirationValidation = valid.expirationDate(formData.expireDate);
+      if (!expirationValidation.isValid) {
+        newErrors.expireDate = 'Please enter a valid expiry date';
+      }
     }
 
     if (!formData.cvc.trim()) {
       newErrors.cvc = 'CVC is required';
-    } else if (formData.cvc.length < 3) {
-      newErrors.cvc = 'CVC must be at least 3 digits';
+    } else {
+      // Validate CVC using card-validator
+      const cvcValidation = valid.cvv(formData.cvc);
+      if (!cvcValidation.isValid) {
+        newErrors.cvc = 'Please enter a valid CVC';
+      }
     }
 
     if (!formData.type) {
@@ -180,6 +241,14 @@ export const AddCardDialog: React.FC<AddCardDialogProps> = ({
     e.preventDefault();
     
     if (!validateForm()) {
+      // Show toast for invalid card number if that's the specific error
+      if (errors.cardNumber && errors.cardNumber.includes('valid card number')) {
+        toast({
+          title: "Invalid Card Number",
+          description: "The card number you entered is not valid. Please check and try again.",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
