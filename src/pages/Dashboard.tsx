@@ -38,7 +38,7 @@ const Dashboard: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const { transactions, balance } = useWallet();
   const { cards, isLoading: cardsLoading } = useCard();
-  const { getChartData, financialData, refreshStatistics } = useStatistics();
+  const { getChartData, financialData, refreshStatistics, isLoading } = useStatistics();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'revenue' | 'received' | 'sent'>('all');
   
@@ -436,7 +436,18 @@ const Dashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="h-64 sm:h-80 lg:h-96">
-                {getChartData().some(item => item.revenue > 0 || item.received > 0 || item.sent > 0) ? (
+                {/* Show loading state when statistics are loading */}
+                {isLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-muted-foreground" />
+                      <h3 className="text-lg font-medium text-foreground mb-2">Loading Chart Data</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Please wait while we fetch your activity statistics...
+                      </p>
+                    </div>
+                  </div>
+                ) : getChartData().some(item => item.revenue > 0 || item.received > 0 || item.sent > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={getChartData()}
@@ -605,21 +616,17 @@ const Dashboard: React.FC = () => {
                             </div>
                           </div>
                         );
-                      })
-                    ) : (
+                      })): (
                       <div className="text-center p-8 border rounded-lg">
-                        <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-muted-foreground">No recent transactions</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Start by making a deposit or transfer
-                        </p>
+                        <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-muted-foreground">No recent activity</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
             </div>
-            <div>
+            <div className='xl:col-span-1'>
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -674,9 +681,9 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Add a payment card to get started
                       </p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="mt-3"
                         onClick={() => handleNavigation('/card')}
                       >
@@ -695,3 +702,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+              
