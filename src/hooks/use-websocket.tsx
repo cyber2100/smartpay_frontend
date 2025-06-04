@@ -1,9 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './use-auth';
+import { useStatistics } from './use-statistics';
+import { useTransactionStatistics } from './use-transation-statistics';
+import { useBalanceStatistics } from './use-balance-statistics';
 
 interface UseWebSocketProps {
   onNewNotification?: (notification: any) => void;
   refreshTransactions?: () => void;
+  loadStatistics?: () => void;
 }
 
 /**
@@ -14,15 +18,17 @@ interface UseWebSocketProps {
  * @returns {Object} - An object containing WebSocket connection status and methods to send messages, reconnect, and disconnect.
  */
 export const useWebSocket = ({
-  onNewNotification,
-  refreshTransactions
+  onNewNotification
 }: UseWebSocketProps = {}) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000; // 3 seconds
+  const { refreshStatistics } = useStatistics();
+  const { refreshStatistics: loadTransactionStatistics } = useTransactionStatistics();
+  const { refreshStatistics: loadBalanceStatistics } = useBalanceStatistics();
 
   /**
    * Function to connect to the WebSocket server.
@@ -45,7 +51,7 @@ export const useWebSocket = ({
         reconnectAttemptsRef.current = 0; // Reset reconnect attempts on successful connection
       };
 
-      wsRef.current.onmessage = (event) => {
+      wsRef.current.onmessage = async (event) => {
         const notification = JSON.parse(event.data);
         
         try {
@@ -53,7 +59,11 @@ export const useWebSocket = ({
           console.log(":bell: Received notification:", newData);
           if (newData && onNewNotification) {
             onNewNotification(newData);
-            refreshTransactions();
+            if(isAdmin) {
+              await loadTransactionStatistics();
+              await loadBalanceStatistics();
+            }
+            await refreshStatistics();
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);

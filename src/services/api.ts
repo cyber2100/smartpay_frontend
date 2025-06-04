@@ -551,9 +551,7 @@ export const cardService = {
 // Notification Settings Service
 export const notificationService = {
   // Get user's notification preferences
-  
   getNotificationSettings: async () => {
-    console.log('api.headers.authorization', api.defaults.headers.common['Authorization']);
     const response = await api.get('/auth/notif-setting');
     return response.data;
   },

@@ -12,7 +12,6 @@ type WalletContextType = {
   withdraw: (amount: number, cardId: string) => Promise<boolean>;
   transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
   deposit: (cardId: string, amount: number) => Promise<boolean>;
-  getTransactions: () => Promise<Transaction[]>;
   allTransactions: Transaction[];
   allUsers: User[];
 };
@@ -258,35 +257,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
   
-  /**
-   * Fetches the user's transaction history.
-   * @returns {Promise<Transaction[]>} - A promise that resolves to the user's transactions.
-   */
-  const getTransactions = async (): Promise<Transaction[]> => {
-    if (!user) return [];
-
-    setIsLoading(true);
-
-    try {
-      const userTransactionData = await walletService.getTransactions();
-      const result = userTransactionData.map((tx: any) => ({
-        ...tx,
-        senderId: tx.sender_id,
-        recipientId: tx.recipient_id,
-        cardId: tx.card_id,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        timestamp: tx.created_at
-      }));
-      setTransactions(result);
-      return result;
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      return [];
-    } finally { 
-      setIsLoading(false);
-    }
-  };
-  
   // Value to provide
   const value: WalletContextType = {
     balance,
@@ -295,7 +265,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     withdraw,
     transfer,
     deposit,
-    getTransactions,
     allTransactions,
     allUsers
   };

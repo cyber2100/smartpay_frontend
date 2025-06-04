@@ -6,6 +6,7 @@ import { notificationService } from '@/services/api';
 import { useTransactionStatistics } from './use-transation-statistics';
 
 import { Notification, NotificationContextType } from '@/types/notification';
+import { useStatistics } from './use-statistics';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
@@ -22,7 +23,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const unreadCountRef = useRef(unreadCount);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const { refreshStatistics: refreshTransactions } = useTransactionStatistics();
 
   useEffect(()=>{
     unreadCountRef.current=unreadCount;
@@ -45,8 +45,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Initialize WebSocket
   const { isConnected: isWebSocketConnected } = useWebSocket({
-    onNewNotification: handleNewNotification,
-    refreshTransactions
+    onNewNotification: handleNewNotification
   });
 
   // Load notifications when user changes
