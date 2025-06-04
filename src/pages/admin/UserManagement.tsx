@@ -19,52 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useUserManagement } from '@/hooks/use-user-management'; // Custom hook for user management
 
 // Mock hooks for demonstration
 const useToast = () => ({
   toast: ({ title, description, variant }) => {
     console.log(`Toast: ${title} - ${description} (${variant})`);
-  }
-});
-
-const useUserManagement = () => ({
-  users: [
-    {
-      id: 1,
-      fullname: "John Doe",
-      email: "john@example.com",
-      phone: "+1234567890",
-      isVerified: true,
-      isActive: true,
-      isAdmin: false
-    },
-    {
-      id: 2,
-      fullname: "Jane Smith",
-      email: "jane@example.com",
-      phone: "+0987654321",
-      isVerified: false,
-      isActive: false,
-      isAdmin: false
-    },
-    {
-      id: 3,
-      fullname: "Admin User",
-      email: "admin@example.com",
-      phone: "+1122334455",
-      isVerified: true,
-      isActive: true,
-      isAdmin: true
-    }
-  ],
-  loading: false,
-  updateUserActivation: async (id, status) => {
-    console.log(`Updating user ${id} activation to ${status}`);
-    return Promise.resolve();
-  },
-  refreshUsers: async () => {
-    console.log('Refreshing users');
-    return Promise.resolve();
   }
 });
 
