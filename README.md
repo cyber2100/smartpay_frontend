@@ -16,7 +16,7 @@ This project is built with:
 
 ### Prerequisites
 
-- Node.js (Latest LTS version recommended)
+- Node.js (22.x)
 - npm or yarn
 
 ### Installation
@@ -24,13 +24,13 @@ This project is built with:
 1. Clone the repository
 
 ```sh
-git clone <your-repository-url>
+git clone https://github.com/cyber2100/smartpay_frontend.git
 ```
 
 2. Navigate to the project directory
 
 ```sh
-cd <project-directory>
+cd smartpay_frontend
 ```
 
 3. Install dependencies
@@ -57,7 +57,6 @@ yarn dev
 - `npm run build` - Build the project for production
 - `npm run preview` - Preview the production build locally
 - `npm run lint` - Run ESLint to check code quality
-- `npm run type-check` - Check TypeScript types
 
 ## Deployment
 
@@ -70,9 +69,3 @@ yarn build
 ```
 
 This will generate a `dist` directory with your compiled code that's ready to be deployed.
-
-### Deployment Options
-
-- **Static Hosting** - Deploy the `dist` directory to any static hosting service (Netlify, Vercel, GitHub Pages, etc.)
-- **Docker** - Use the included Dockerfile to containerize the application
-- **Traditional Hosting** - Upload the `dist` directory to any web server
