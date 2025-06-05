@@ -27,11 +27,13 @@ type AuthContextType = {
   signout: () => void;
   findUser: (emailOrPhone: string) => Promise<object | null>;
   verifyAccount: (code: string, verification_type: string) => Promise<boolean>;
-  resendVerification: (verification_type: 'email' | 'phone') => Promise<boolean>;
-  refreshUser: () => Promise<void>
+  resendVerification: (
+    verification_type: "email" | "phone"
+  ) => Promise<boolean>;
+  refreshUser: () => Promise<void>;
   isAdmin: boolean;
   isAdminPanelView: boolean;
-  setIsAdminPanelView: React.Dispatch<React.SetStateAction<boolean>>
+  setIsAdminPanelView: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         setUser({
           id: userData.id,
-          fullname: userData.name,
+          fullname: userData.fullname,
           email: userData.email,
           phone: userData.phone,
           isAdmin: userData.is_admin,
@@ -90,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const appUser: User = {
         id: userData.id,
-        fullname: userData.name,
+        fullname: userData.fullname,
         email: userData.email,
         phone: userData.phone,
         isAdmin: userData.is_admin,
@@ -131,7 +133,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
-      const userData = await authService.signup(fullname, phone, email, password);
+      const userData = await authService.signup(
+        fullname,
+        phone,
+        email,
+        password
+      );
 
       await authService.signin(email, password);
 
@@ -145,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       setUser(appUser);
-      
+
       toast({
         title: "Signup successful",
         description: "Please verify your account to continue.",
@@ -169,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signout = () => {
     authService.signout();
     setUser(null);
-    
+
     toast({
       title: "Signed out",
       description: "You have been logged out successfully.",
@@ -183,10 +190,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return result;
     } catch (error) {
       const error_res = error.response?.data;
-      toast({ title: 'Warning', description: error_res?.detail || 'User not found', variant: 'destructive' });
+      toast({
+        title: "Warning",
+        description: error_res?.detail || "User not found",
+        variant: "destructive",
+      });
       return null;
     }
-  }
+  };
 
   /**
    * Verifies the user's account.
@@ -229,7 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
    * @returns A promise that resolves to a boolean indicating success or failure.
    */
   const resendVerification = async (
-    verification_type: 'email' | 'phone'
+    verification_type: "email" | "phone"
   ): Promise<boolean> => {
     if (!user) {
       toast({
@@ -242,9 +253,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       await authService.resendVerification(verification_type);
-      
-      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
-      
+
+      const verificationMethod =
+        verification_type === "email" ? "email" : "phone number";
+
       toast({
         title: "Verification code sent",
         description: `A new verification code has been sent to your ${verificationMethod}.`,
@@ -252,8 +264,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return true;
     } catch (error: any) {
-      const verificationMethod = verification_type === 'email' ? 'email' : 'phone number';
-      
+      const verificationMethod =
+        verification_type === "email" ? "email" : "phone number";
+
       errorProcess(
         error,
         toast,
@@ -273,7 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const userData = await authService.getCurrentUser();
-      
+
       const updatedUser: User = {
         id: userData.id,
         fullname: userData.fullname,
@@ -286,7 +299,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(updatedUser);
     } catch (error: any) {
       console.error("Failed to refresh user:", error);
-      
+
       // If the token is invalid, sign out the user
       if (error.response?.status === 401) {
         signout();
