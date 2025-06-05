@@ -28,7 +28,8 @@ const Verify: React.FC = () => {
     useState<VerificationType>("email");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(60);
-  const { verifyAccount, user, isAuthenticated, resendVerification } = useAuth();
+  const { verifyAccount, user, isAuthenticated, resendVerification } =
+    useAuth();
   const navigate = useNavigate();
 
   // Redirect if user is not authenticated or already verified
@@ -38,8 +39,6 @@ const Verify: React.FC = () => {
       navigate("/signin");
     } else if (user?.isVerified) {
       navigate("/dashboard");
-    } else {
-      resendCode();
     }
   }, []);
 
