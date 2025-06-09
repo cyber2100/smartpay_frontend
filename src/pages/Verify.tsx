@@ -28,11 +28,12 @@ const Verify: React.FC = () => {
   const [verificationType, setVerificationType] =
     useState<VerificationType>("email");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(60);
   const {
     verifyAccount,
     user,
     isNowSigned,
+    setIsNowSigned,
     isAuthenticated,
     resendVerification,
   } = useAuth();
@@ -45,14 +46,17 @@ const Verify: React.FC = () => {
       navigate("/signin");
     } else if (user?.isVerified) {
       navigate("/dashboard");
-    } else if (isNowSigned) {
-      setTimeLeft(60);
+    } else if (!isNowSigned) {
+      setTimeLeft(0);
     }
   }, []);
 
   // Countdown timer
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) {
+      setIsNowSigned(false);
+      return;
+    }
 
     const timer = setTimeout(() => {
       setTimeLeft(timeLeft - 1);

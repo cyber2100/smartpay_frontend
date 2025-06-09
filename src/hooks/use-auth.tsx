@@ -18,6 +18,7 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   isNowSigned: boolean;
+  setIsNowSigned: React.Dispatch<React.SetStateAction<boolean>>;
   isLoading: boolean;
   signin: (email: string, password: string) => Promise<boolean>;
   signup: (
@@ -181,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signout = () => {
     authService.signout();
     setUser(null);
-    setIsNowSigned(false);
 
     toast({
       title: "Signed out",
@@ -325,6 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     user,
     isAuthenticated: !!user,
     isNowSigned,
+    setIsNowSigned,
     isLoading,
     signin,
     signup,

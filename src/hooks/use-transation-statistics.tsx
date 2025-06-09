@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { adminService } from '@/services/api';
-import { useAuth } from '@/hooks/use-auth';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { adminService } from "@/services/api";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MonthlyStats {
   month: string;
@@ -9,7 +10,7 @@ interface MonthlyStats {
   averageAmount: number;
   totalTransactions: number;
   totalVolume: number;
-  trend: 'up' | 'down' | 'stable';
+  trend: "up" | "down" | "stable";
   changePercentage: number;
 }
 
@@ -33,52 +34,54 @@ interface TransactionStatisticsData {
  */
 export const useTransactionStatistics = () => {
   const { isAdmin, isAuthenticated } = useAuth();
-  const [statisticsData, setStatisticsData] = useState<TransactionStatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] =
+    useState<TransactionStatisticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFromAPI, setIsFromAPI] = useState(false);
   const { toast } = useToast();
 
   // Fetch statistics from API
-  const fetchStatistics = useCallback(async (): Promise<TransactionStatisticsData> => {
-    if (!isAuthenticated) {
-      throw new Error('User not authenticated');
-    }
-    setIsLoading(true);
-
-    try {
-      setError(null);
-      const response = await adminService.getTransactionStatistics();
-
-      setStatisticsData(response);
-      setIsFromAPI(true);
-      return response;
-    } catch (error: any) {
-      console.error('Error fetching transaction statistics:', error);
-      setIsFromAPI(false);
-      
-      let errorMessage = 'Failed to load transaction statistics from backend';
-      if (error.response?.status === 404) {
-        errorMessage = 'Statistics endpoint not found';
-      } else if (error.response?.status === 403) {
-        errorMessage = 'Insufficient permissions to access statistics';
-      } else if (error.response?.status >= 500) {
-        errorMessage = 'Server error occurred while fetching statistics';
-      } else if (!error.response) {
-        errorMessage = 'Network error - unable to connect to backend';
+  const fetchStatistics =
+    useCallback(async (): Promise<TransactionStatisticsData> => {
+      if (!isAuthenticated) {
+        throw new Error("User not authenticated");
       }
-      
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
+      setIsLoading(true);
+
+      try {
+        setError(null);
+        const response = await adminService.getTransactionStatistics();
+
+        setStatisticsData(response);
+        setIsFromAPI(true);
+        return response;
+      } catch (error: any) {
+        console.error("Error fetching transaction statistics:", error);
+        setIsFromAPI(false);
+
+        let errorMessage = "Failed to load transaction statistics from backend";
+        if (error.response?.status === 404) {
+          errorMessage = "Statistics endpoint not found";
+        } else if (error.response?.status === 403) {
+          errorMessage = "Insufficient permissions to access statistics";
+        } else if (error.response?.status >= 500) {
+          errorMessage = "Server error occurred while fetching statistics";
+        } else if (!error.response) {
+          errorMessage = "Network error - unable to connect to backend";
+        }
+
+        setError(errorMessage);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    }, [isAuthenticated]);
 
   // Load statistics
   const loadStatistics = useCallback(async () => {
     setIsLoading(true);
-    
+
     try {
       if (isAuthenticated) {
         const apiData = await fetchStatistics();
@@ -113,6 +116,6 @@ export const useTransactionStatistics = () => {
     error,
     isFromAPI,
     refreshStatistics,
-    loadStatistics
+    loadStatistics,
   };
 };

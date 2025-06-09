@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { adminService } from '@/services/api';
-import { useAuth } from '@/hooks/use-auth';
-import { User } from '@/types/users';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from "react";
+import { adminService } from "@/services/api";
+import { useAuth } from "@/hooks/use-auth";
+import { User } from "@/types/users";
 
 interface UseUserManagementReturn {
   users: User[];
@@ -50,12 +51,12 @@ export const useUserManagement = (): UseUserManagementReturn => {
       setLoading(true);
       setError(null);
       const usersData = await adminService.getAllUsers();
-      
+
       const formattedUsers: User[] = usersData.map(transformUser);
       setUsers(formattedUsers);
     } catch (error: any) {
-      console.error('Error fetching users:', error);
-      setError(error.response?.data?.detail || 'Failed to load users');
+      console.error("Error fetching users:", error);
+      setError(error.response?.data?.detail || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -66,19 +67,20 @@ export const useUserManagement = (): UseUserManagementReturn => {
    * @param userId - The ID of the user to update.
    * @param isActive - The new activation status.
    */
-  const updateUserActivation = async (userId: string, isActive: boolean): Promise<void> => {
+  const updateUserActivation = async (
+    userId: string,
+    isActive: boolean
+  ): Promise<void> => {
     try {
       await adminService.updateUserActivation(userId, isActive);
-      
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId 
-            ? { ...user, isActive }
-            : user
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, isActive } : user
         )
       );
     } catch (error: any) {
-      console.error('Error updating activation status:', error);
+      console.error("Error updating activation status:", error);
       throw error;
     }
   };
@@ -90,10 +92,10 @@ export const useUserManagement = (): UseUserManagementReturn => {
   const deleteUser = async (userId: string): Promise<void> => {
     try {
       await adminService.deleteUser(userId);
-      
-      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
     } catch (error: any) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting user:", error);
       throw error;
     }
   };
@@ -105,7 +107,7 @@ export const useUserManagement = (): UseUserManagementReturn => {
 
   // Initial fetch on mount
   useEffect(() => {
-    if(isAdmin){
+    if (isAdmin) {
       fetchUsers();
     }
   }, [isAdmin]);

@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { adminService } from '@/services/api';
-import { useAuth } from '@/hooks/use-auth';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { adminService } from "@/services/api";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MonthlyBalanceStats {
   month: string;
@@ -9,9 +10,9 @@ interface MonthlyBalanceStats {
   averageBalance: number;
   totalBalance: number;
   userCount: number;
-  avgTrend: 'up' | 'down' | 'stable';
-  totalTrend: 'up' | 'down' | 'stable';
-  userTrend: 'up' | 'down' | 'stable';
+  avgTrend: "up" | "down" | "stable";
+  totalTrend: "up" | "down" | "stable";
+  userTrend: "up" | "down" | "stable";
   avgChangePercentage: number;
   totalChangePercentage: number;
   userChangePercentage: number;
@@ -36,16 +37,19 @@ interface BalanceStatisticsData {
 
 // Standardized error handling
 const handleAPIError = (error: any): string => {
-  if (error.response?.status === 404) return 'Statistics endpoint not found';
-  if (error.response?.status === 403) return 'Insufficient permissions to access statistics';
-  if (error.response?.status >= 500) return 'Server error occurred while fetching statistics';
-  if (!error.response) return 'Network error - unable to connect to backend';
-  return error.message || 'Failed to load balance statistics from backend';
+  if (error.response?.status === 404) return "Statistics endpoint not found";
+  if (error.response?.status === 403)
+    return "Insufficient permissions to access statistics";
+  if (error.response?.status >= 500)
+    return "Server error occurred while fetching statistics";
+  if (!error.response) return "Network error - unable to connect to backend";
+  return error.message || "Failed to load balance statistics from backend";
 };
 
 export const useBalanceStatistics = () => {
   const { isAuthenticated } = useAuth();
-  const [statisticsData, setStatisticsData] = useState<BalanceStatisticsData | null>(null);
+  const [statisticsData, setStatisticsData] =
+    useState<BalanceStatisticsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFromAPI, setIsFromAPI] = useState(false);
@@ -54,29 +58,30 @@ export const useBalanceStatistics = () => {
   /**
    * Fetch balance statistics from the API
    */
-  const fetchStatistics = useCallback(async (): Promise<BalanceStatisticsData> => {
-    if (!isAuthenticated) {
-      throw new Error('User not authenticated');
-    }
+  const fetchStatistics =
+    useCallback(async (): Promise<BalanceStatisticsData> => {
+      if (!isAuthenticated) {
+        throw new Error("User not authenticated");
+      }
 
-    try {
-      setError(null);
-      const response = await adminService.getBalanceStatistics();
-      return response;
-    } catch (error: any) {
-      console.error('Error fetching balance statistics:', error);
-      const errorMessage = handleAPIError(error);
-      setError(errorMessage);
-      throw error;
-    }
-  }, [isAuthenticated]);
+      try {
+        setError(null);
+        const response = await adminService.getBalanceStatistics();
+        return response;
+      } catch (error: any) {
+        console.error("Error fetching balance statistics:", error);
+        const errorMessage = handleAPIError(error);
+        setError(errorMessage);
+        throw error;
+      }
+    }, [isAuthenticated]);
 
   /**
    * Load balance statistics
    */
   const loadStatistics = useCallback(async () => {
     setIsLoading(true);
-    
+
     try {
       if (isAuthenticated) {
         const apiData = await fetchStatistics();
@@ -90,7 +95,7 @@ export const useBalanceStatistics = () => {
     } catch (error: any) {
       setStatisticsData(null);
       setIsFromAPI(false);
-      
+
       toast({
         title: "loadStatistics Error",
         description: "Backend connection failed.",
@@ -112,6 +117,6 @@ export const useBalanceStatistics = () => {
     error,
     isFromAPI,
     refreshStatistics,
-    loadStatistics
+    loadStatistics,
   };
 };

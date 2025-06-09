@@ -1,17 +1,29 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { useAuth, User } from './use-auth';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+} from "react";
+import { useAuth, User } from "./use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { walletService } from '@/services/api';
+import { walletService } from "@/services/api";
 
-import { Transaction } from '@/types/payment';
-import { errorProcess } from '@/lib/utils';
+import { Transaction } from "@/types/payment";
+import { errorProcess } from "@/lib/utils";
 
 type WalletContextType = {
   balance: number;
   isLoading: boolean;
   transactions: Transaction[];
   withdraw: (amount: number, cardId: string) => Promise<boolean>;
-  transfer: (recipient: string, amount: number, description?: string) => Promise<boolean>;
+  transfer: (
+    recipient: string,
+    amount: number,
+    description?: string
+  ) => Promise<boolean>;
   deposit: (cardId: string, amount: number) => Promise<boolean>;
   allTransactions: Transaction[];
   allUsers: User[];
@@ -26,7 +38,9 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
  * @param param0 - The props for the provider component.
  * @returns The WalletProvider component.
  */
-export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { user, isAuthenticated } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -34,10 +48,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Initialize balance and fetch transactions when user changes
   useEffect(() => {
-    if(isAuthenticated && user?.isVerified) {
+    if (isAuthenticated && user?.isVerified) {
       loadWalletData();
     } else {
       setBalance(0);
@@ -59,18 +73,18 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const userBalance = await walletService.getBalance();
       setBalance(userBalance);
-      
+
       const userTransactionData = await walletService.getTransactions();
-      
+
       const formattedTransactions = userTransactionData.map((tx: any) => ({
         ...tx,
         senderId: tx.sender_id,
         recipientId: tx.recipient_id,
         cardId: tx.card_id,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        timestamp: tx.created_at
+        status: tx.status as "completed" | "pending" | "failed",
+        timestamp: tx.created_at,
       }));
-      
+
       setTransactions(formattedTransactions);
     } catch (error) {
       errorProcess(error, toast, "Failed to load wallet data", "destructive");
@@ -86,7 +100,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const refreshTransactions = async () => {
     if (!isAuthenticated || !user) return;
     setIsLoading(true);
-    
+
     try {
       const userTransactionData = await walletService.getTransactions();
       const formattedTransactions = userTransactionData.map((tx: any) => ({
@@ -94,17 +108,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         senderId: tx.sender_id,
         recipientId: tx.recipient_id,
         cardId: tx.card_id,
-        status: tx.status as 'completed' | 'pending' | 'failed',
-        timestamp: tx.created_at
+        status: tx.status as "completed" | "pending" | "failed",
+        timestamp: tx.created_at,
       }));
       setTransactions(formattedTransactions);
     } catch (error) {
-      errorProcess(error, toast, "Failed to refresh transaction data", "destructive");
+      errorProcess(
+        error,
+        toast,
+        "Failed to refresh transaction data",
+        "destructive"
+      );
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   /**
    * Withdraws money from the user's wallet.
    * @param amount - The amount to withdraw.
@@ -114,19 +133,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const withdraw = async (amount: number, cardId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
 
-    setIsLoading(true);    
+    setIsLoading(true);
     try {
       const result = await walletService.withdraw(amount, cardId);
-      
+
       setBalance(result.balance);
-      
+
       await refreshTransactions();
-      
+
       toast({
         title: "Top up successful",
-        description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been added to your wallet.`
+        description: `${amount.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+        })} has been added to your wallet.`,
       });
-      
+
       return true;
     } catch (error: any) {
       errorProcess(error, toast, "Failed to top up wallet.", "destructive");
@@ -147,7 +169,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       toast({
         title: "Authentication required",
         description: "Please log in to make a deposit.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
@@ -156,7 +178,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       toast({
         title: "Invalid amount",
         description: "Deposit amount must be greater than zero.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
@@ -165,7 +187,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       toast({
         title: "Payment method required",
         description: "Please select a payment card.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
@@ -174,30 +196,33 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     try {
       const result = await walletService.deposit(cardId, amount);
-      
+
       if (result.balance !== undefined) {
         setBalance(result.balance);
       } else {
-        setBalance(prevBalance => prevBalance + amount);
+        setBalance((prevBalance) => prevBalance + amount);
       }
-      
+
       await refreshTransactions();
-      
+
       toast({
         title: "Deposit successful",
-        description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been added to your wallet.`
+        description: `${amount.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+        })} has been added to your wallet.`,
       });
-      
+
       return true;
     } catch (error: any) {
-      let errorMessage = "Failed to process deposit.";
+      const errorMessage = "Failed to process deposit.";
       errorProcess(error, toast, errorMessage, "destructive");
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   /**
    * Transfers money to another user.
    * @param recipientIdentifier - The identifier of the recipient (email or user ID).
@@ -205,20 +230,27 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
    * @param description - An optional description for the transfer.
    * @returns {Promise<boolean>} - Whether the transfer was successful.
    */
-  const transfer = async (recipientIdentifier: string, amount: number, description?: string): Promise<boolean> => {
+  const transfer = async (
+    recipientIdentifier: string,
+    amount: number,
+    description?: string
+  ): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
     setIsLoading(true);
-    
+
     try {
       await walletService.transfer(recipientIdentifier, amount, description);
-      
+
       await refreshTransactions();
-      
+
       toast({
         title: "Transfer successful",
-        description: `${amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} has been sent.`
+        description: `${amount.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+        })} has been sent.`,
       });
-      
+
       setBalance(balance - amount);
 
       return true;
@@ -229,7 +261,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setIsLoading(false);
     }
   };
-  
+
   // Value to provide
   const value: WalletContextType = {
     balance,
@@ -242,14 +274,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     allUsers,
     loadWalletData,
   };
-  
-  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
+
+  return (
+    <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
+  );
 };
 
 export const useWallet = () => {
   const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
 };

@@ -1,24 +1,33 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { useAuth } from './use-auth';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { useAuth } from "./use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocket } from './use-websocket';
-import { notificationService } from '@/services/api';
-import { useTransactionStatistics } from './use-transation-statistics';
+import { useWebSocket } from "./use-websocket";
+import { notificationService } from "@/services/api";
 
-import { Notification, NotificationContextType } from '@/types/notification';
-import { useStatistics } from './use-statistics';
-import { useWallet } from './use-wallet';
-import { errorProcess } from '@/lib/utils';
+import { Notification, NotificationContextType } from "@/types/notification";
+import { useStatistics } from "./use-statistics";
+import { useWallet } from "./use-wallet";
+import { errorProcess } from "@/lib/utils";
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
-
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
 /**
  * NotificationProvider component to provide notification context to the application.
  * @param param0 - React props
  * @returns NotificationProvider component
  */
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { user, isAuthenticated } = useAuth();
   const { loadWalletData } = useWallet();
   const { refreshStatistics } = useStatistics();
@@ -28,18 +37,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(()=>{
-    unreadCountRef.current=unreadCount;
-  },[unreadCount]);
+  useEffect(() => {
+    unreadCountRef.current = unreadCount;
+  }, [unreadCount]);
 
   // WebSocket event handlers
   const handleNewNotification = (notification: any) => {
     setUnreadCount(unreadCountRef.current + 1);
-    console.log('WebSocket: Unread count updated to:', unreadCountRef.current + 1);
-    
+    console.log(
+      "WebSocket: Unread count updated to:",
+      unreadCountRef.current + 1
+    );
+
     const transformedNotification = transformNotification(notification);
-    setNotifications(prev => [transformedNotification, ...prev]);
-    
+    setNotifications((prev) => [transformedNotification, ...prev]);
+
     toast({
       title: notification.title,
       description: notification.message,
@@ -75,23 +87,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       amount: apiNotification.extra_data?.amount,
     },
     timestamp: new Date(apiNotification.timestamp),
-    read: apiNotification.read
+    read: apiNotification.read,
   });
 
   // Get all notifications
   const getNotifications = async (): Promise<void> => {
     if (!isAuthenticated || !user) return;
-    
+
     setLoading(true);
     try {
       const response = await notificationService.getNotifications();
-      
+
       const formattedNotifications = response.map(transformNotification);
       setNotifications(formattedNotifications);
-      
-      const unreadFromAPI = formattedNotifications.filter(notif => !notif.read).length;
+
+      const unreadFromAPI = formattedNotifications.filter(
+        (notif) => !notif.read
+      ).length;
       setUnreadCount(unreadFromAPI);
-      
     } catch (error) {
       errorProcess(error, toast, "Failed to load notifications", "destructive");
     } finally {
@@ -102,21 +115,26 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Mark notification as read
   const markAsRead = async (notificationId: string): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
-    
+
     try {
       await notificationService.markAsRead(notificationId);
-      
-      setNotifications(prev => 
-        prev.map(notif => 
+
+      setNotifications((prev) =>
+        prev.map((notif) =>
           notif.id === notificationId ? { ...notif, read: true } : notif
         )
       );
-      
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
+
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+
       return true;
     } catch (error) {
-      errorProcess(error, toast, "Failed to mark notification as read", "destructive");
+      errorProcess(
+        error,
+        toast,
+        "Failed to mark notification as read",
+        "destructive"
+      );
       return false;
     }
   };
@@ -124,54 +142,68 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Mark all notifications as read
   const markAllAsRead = async (): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
-    
+
     try {
       await notificationService.markAllAsRead();
-      
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, read: true }))
+
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, read: true }))
       );
-      
+
       setUnreadCount(0);
-      
+
       toast({
         title: "Success",
-        description: "All notifications marked as read"
+        description: "All notifications marked as read",
       });
-      
+
       return true;
     } catch (error) {
-      errorProcess(error, toast, "Failed to mark all notifications as read", "destructive");
+      errorProcess(
+        error,
+        toast,
+        "Failed to mark all notifications as read",
+        "destructive"
+      );
       return false;
     }
   };
 
   // Delete notification
-  const deleteNotification = async (notificationId: string): Promise<boolean> => {
+  const deleteNotification = async (
+    notificationId: string
+  ): Promise<boolean> => {
     if (!isAuthenticated || !user) return false;
-    
-    const notificationToDelete = notifications.find(notif => notif.id === notificationId);
+
+    const notificationToDelete = notifications.find(
+      (notif) => notif.id === notificationId
+    );
     const wasUnread = notificationToDelete && !notificationToDelete.read;
-    
+
     try {
       await notificationService.deleteNotification(notificationId);
-      
-      setNotifications(prev => 
-        prev.filter(notif => notif.id !== notificationId)
+
+      setNotifications((prev) =>
+        prev.filter((notif) => notif.id !== notificationId)
       );
-      
+
       if (wasUnread) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
-      
+
       toast({
         title: "Success",
-        description: "Notification deleted"
+        description: "Notification deleted",
       });
-      
+
       return true;
     } catch (error) {
-      errorProcess(error, toast, "Failed to delete notification", "destructive");
+      errorProcess(
+        error,
+        toast,
+        "Failed to delete notification",
+        "destructive"
+      );
       return false;
     }
   };
@@ -191,9 +223,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    refreshNotifications
+    refreshNotifications,
   };
-  
+
   return (
     <NotificationContext.Provider value={value}>
       {children}
@@ -204,7 +236,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 };
