@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatedBackground } from "@/components/animated-background";
@@ -27,9 +28,14 @@ const Verify: React.FC = () => {
   const [verificationType, setVerificationType] =
     useState<VerificationType>("email");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [timeLeft, setTimeLeft] = useState<number>(60);
-  const { verifyAccount, user, isAuthenticated, resendVerification } =
-    useAuth();
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const {
+    verifyAccount,
+    user,
+    isNowSigned,
+    isAuthenticated,
+    resendVerification,
+  } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if user is not authenticated or already verified
@@ -39,6 +45,8 @@ const Verify: React.FC = () => {
       navigate("/signin");
     } else if (user?.isVerified) {
       navigate("/dashboard");
+    } else if (isNowSigned) {
+      setTimeLeft(60);
     }
   }, []);
 

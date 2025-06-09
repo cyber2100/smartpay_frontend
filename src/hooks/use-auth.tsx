@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/api";
@@ -16,6 +17,7 @@ export type User = {
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
+  isNowSigned: boolean;
   isLoading: boolean;
   signin: (email: string, password: string) => Promise<boolean>;
   signup: (
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isNowSigned, setIsNowSigned] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const [isAdminPanelView, setIsAdminPanelView] = useState(false);
@@ -153,6 +156,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser(appUser);
 
+      setIsNowSigned(true);
+
       toast({
         title: "Signup successful",
         description: "Please verify your account to continue.",
@@ -176,6 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signout = () => {
     authService.signout();
     setUser(null);
+    setIsNowSigned(false);
 
     toast({
       title: "Signed out",
@@ -318,6 +324,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     isAuthenticated: !!user,
+    isNowSigned,
     isLoading,
     signin,
     signup,
